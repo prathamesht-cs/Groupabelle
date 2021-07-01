@@ -17,7 +17,7 @@ lemma add_Zero: "add m 0 = m"
 lemma add_Suc: "Suc(add m n) = add m (Suc n)"
   by (induction m, auto)
 
-lemma add_Comm: "add m n = add m n"
+lemma add_Comm: "add m n = add n m"
   by (induction m, simp add: add_Zero, simp add: add_Suc)
 
 primrec double :: "nat \<Rightarrow>  nat" where
@@ -105,7 +105,7 @@ primrec mirror :: "'a tree \<Rightarrow>'a tree" where
 |"mirror (Node l a r) = Node (mirror r) a (mirror l)"
 
 lemma pre_mirror_post :"pre_order (mirror t) = rev (post_order t)"
-  by (induct_tac t, auto) 
+  by (induction t, auto) 
 
 (*2.8: intersperse a [x 1 , ..., x n ] = [x 1 , a, x 2 , a, ..., a, x n ]*)
 
@@ -145,24 +145,24 @@ primrec pow :: "nat => nat => nat" where
 | "pow x (Suc n) = x * pow x n"
 
 lemma pow_add: "pow x (y + z) = pow x y * pow x z"
-  by (induct z, auto)
+  by (induction z, auto)
    
 theorem pow_mult: "pow x (m * n) = pow (pow x m) n"
-  by (induct n, auto simp add: pow_add)
+  by (induction n, auto simp add: pow_add)
 
 primrec sum :: "nat list => nat" where
   "sum []     = 0"
 | "sum (x#xs) = x + sum xs"
 
 lemma sum_append: "sum (xs @ ys) = sum xs + sum ys"
-  by (induct xs, auto)
+  by (induction xs, auto)
   
 primrec rev :: "'a list \<Rightarrow> 'a list" where
  "rev [] = []" 
 |"rev (x # xs) = rev xs @ [x]"
 
 theorem sum_rev: "sum (rev xs) = sum xs"
-  by (induct xs,auto simp add: sum_append)
+  by (induction xs,auto simp add: sum_append)
 
    
 
