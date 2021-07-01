@@ -137,7 +137,7 @@ primrec explode :: "nat\<Rightarrow> tree0 \<Rightarrow> tree0" where
  "explode 0 t = t"
 |"explode (Suc n) t = explode n (Node' t t)"
 
-(* equation expressing the size of a tree after exploding it not proven*)
+(* equation expressing the size of a tree after exploding it not proven.*)
 
 (*Not excercises*)
 primrec pow :: "nat => nat => nat" where
