@@ -9,17 +9,17 @@ primrec inverse :: " 'a gentype \<Rightarrow> 'a gentype"
 "inverse (C x) = InvG x"
 |"inverse (InvG x) = C x"
 
-primrec ngenset :: "nat \<Rightarrow> ('a gentype) set"
+primrec genset :: "('a gentype) list ⇒ ('a gentype) list"
   where
-"ngenset 0 = {C 0}"
-|"ngenset (Suc n) = (ngenset(n+1)) \<union> {C (n-1)}"
+"genset [] = []"
+|"genset (x#xs) = (x#[inverse x]) @ (genset xs)"
 
 type_synonym 'a word = "('a gentype) list"
 
 inductive_set spanset :: "nat \<Rightarrow> ('a gentype \<Rightarrow> 'a gentype \<Rightarrow> 'a gentype) \<Rightarrow> ('a gentype) set"
   for n :: "nat" and f :: "('a gentype\<Rightarrow> 'a gentype\<Rightarrow> 'a gentype)"
   where
-"x \<in> ngenset n \<Longrightarrow> x \<in> spanset n f"
+"x \<in> genset n \<Longrightarrow> x \<in> spanset n f"
 |"x \<in> spanset n f \<Longrightarrow> y \<in> spanset n f \<Longrightarrow> (f x y) \<in> spanset n f"
 
 fun is_inverse :: "'a word \<Rightarrow> bool"
