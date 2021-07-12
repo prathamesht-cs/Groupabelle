@@ -16,11 +16,11 @@ primrec genset :: "('a gentype) list ⇒ ('a gentype) list"
 
 type_synonym 'a word = "('a gentype) list"
 
-inductive_set spanset :: "nat \<Rightarrow> ('a gentype \<Rightarrow> 'a gentype \<Rightarrow> 'a gentype) \<Rightarrow> ('a gentype) set"
-  for n :: "nat" and f :: "('a gentype\<Rightarrow> 'a gentype\<Rightarrow> 'a gentype)"
+inductive_set spanset :: "('a gentype list) ⇒('a gentype ⇒ 'a gentype ⇒ 'a gentype) ⇒ ('a gentype) set"
+  for S :: "('a gentype) list" and f :: "('a gentype⇒ 'a gentype⇒ 'a gentype)" 
   where
-"x \<in> genset n \<Longrightarrow> x \<in> spanset n f"
-|"x \<in> spanset n f \<Longrightarrow> y \<in> spanset n f \<Longrightarrow> (f x y) \<in> spanset n f"
+"x ∈ genset S ⟹ x ∈ spanset S f"
+|"x ∈ spanset S f ⟹ y ∈ spanset S f ⟹ (f x y) ∈ spanset S f"
 
 fun is_inverse :: "'a word \<Rightarrow> bool"
   where
