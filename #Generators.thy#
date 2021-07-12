@@ -1,0 +1,273 @@
+theory Generators
+imports Main  "HOL-Library.FuncSet" "HOL-Algebra.Group"
+begin
+
+
+datatype ('a,'b) monoidgentype = C 'a  'b (infix "!" 63)
+
+datatype ('a,'b) groupgentype = P "('a,'b) monoidgentype"
+                               | N  "('a,'b) monoidgentype"
+
+type_synonym ('a,'b) word = "(('a,'b) groupgentype) list"
+
+primrec inverse::"('a,'b) groupgentype \<Rightarrow> ('a,'b) groupgentype"
+  where
+"inverse (P x) = (N x)"
+|"inverse (N x) = (P x)"
+
+primrec wordinverse::"('a,'b) word \<Rightarrow> ('a, 'b) word"
+  where
+"wordinverse [] = []"
+|"wordinverse (x#xs) =  (wordinverse xs)@[inverse x]"
+
+
+inductive_set spanset::"('a,'b) word set\<Rightarrow> ('a,'b) word set"
+  for S::"('a,'b) word set"
+  where
+"x \<in> S \<Longrightarrow> x \<in> spanset S"
+|"x \<in> inver ` S \<Longrightarrow> x \<in> spanset S"
+|"x \<in> S \<Longrightarrow> y \<in> spanset S \<Longrightarrow> x@y \<in> spanset S"
+|"x \<in> inver ` S \<Longrightarrow> ys \<in> spanset S \<Longrightarrow> x@y \<in> spanset S"
+
+definition setlistcross::"'a set \<Rightarrow> 'a list \<Rightarrow> 'a list set"
+ where
+"setlistcross S xs = {[s]@xs | s. s \<in> S}"
+
+value "setlistcross {(1::nat), 2, 3} [(4::nat), 5, 6]"
+
+primrec lengthword::"nat \<Rightarrow> 'a set \<Rightarrow> 'a list set"
+  where
+"lengthword 0 S = {[s] | s. s \<in> S}"
+|"lengthword (Suc n) S = \<Union> {setlistcross S xs | xs. xs \<in> (lengthword n S)}"
+
+
+abbreviation "ngroupword \<equiv> \<lambda> n (S::('a,'b) word set). lengthword n (S \<union> (wordinverse ` S))" 
+
+datatype char = G | H
+
+value "ngroupword 1 {[P (C G (1::nat))], [N (C G (2::nat))], [P (C H (3::nat))]}" 
+
+(*reduction removes cancellations next to each other*)
+fun reduction:: "('a,'b) word \<Rightarrow> ('a,'b) word"
+ where
+"reduction [] = []"
+|"reduction [x] = [x]"
+|"reduction (g1#g2#wrd) = (if (g1 = inverse g2) 
+                             then reduction wrd 
+                             else (g1#(reduction (g2#wrd))))"
+
+value "reduction [P (C G (3::nat)), N (C G (3::nat)), (N (C G (2::nat)))]"
+
+fun reduced::"('a,'b) word \<Rightarrow> bool"
+  where
+"reduced [] = True"
+|"reduced [g] = True"
+|"reduced (g#h#wrd) = (if (g \<noteq> inverse h) then reduced (h#wrd) else False)"
+
+primrec iter::"nat \<Rightarrow>('a \<Rightarrow> 'a) \<Rightarrow> ('a \<Rightarrow> 'a)"
+  where
+"iter 0 f = (\<lambda> x. x)"
+|"iter (Suc n) f = (\<lambda> x. f ((iter n f) x))"
+
+(*Prove the following*)
+lemma assumes "f x = x"
+  shows "iter (n+1) f x = x"
+  using assms
+proof(induction n)
+  case 0
+  then show ?case by simp 
+next
+  case (Suc n)
+  then show ?case by simp
+qed
+
+lemma assumes "iter (n+1) f x = iter n f x" 
+  shows "iter (k+(n+1)) f x = iter (k+n) f x"
+  using assms
+proof(induction k)
+  case 0
+  then show ?case 
+    by force
+next
+  case (Suc m)
+  have "iter (m + (n + 1)) f x = iter (Suc m + n) f x" by simp
+  then show ?case sorry
+qed
+
+(*prove converse of the following too*)
+lemma assumes "reduced wrd"
+  shows "reduction wrd = wrd"
+  using assms
+proof(induction wrd rule: reduction.induct)
+  case 1
+  then show ?case by simp
+next
+  case (2 x)
+  then show ?case by simp
+next
+  case (3 g1 g2 wrd)
+  then show ?case
+  proof(cases "g1 = inverse g2")
+    case True
+      then show ?thesis using 3 
+        by force
+    next
+    case False
+    have "reduced (g2#wrd)" using False 3 by force
+      then show ?thesis using False 3 by force
+    qed
+qed
+
+lemma "length (reduction wrd) \<le> length wrd"
+proof(induction wrd rule: reduction.induct)
+case 1
+  then show ?case by simp
+next
+case (2 x)
+  then show ?case by simp
+next
+  case (3 g1 g2 wrd)
+  then show ?case 
+  proof(cases "g1 = inverse g2")
+    case True 
+    then show ?thesis using 3 by force
+  next
+    case False
+    then show ?thesis using 3 
+    by auto 
+ qed  
+qed
+
+lemma decreasing_length:
+  assumes "reduction wrd \<noteq> wrd"
+  shows "length (reduction wrd) < length wrd"
+  using assms
+proof(induction wrd rule: reduction.induct)
+case 1
+  then show ?case by simp
+next
+  case (2 x)
+  then show ?case by simp
+next
+  case (3 g1 g2 wrd)
+  then show ?case 
+  proof(cases "g1 = inverse g2")
+    case True
+    then have red_inv:"reduction (g1#g2#wrd) = reduction wrd" by auto
+    then show ?thesis 
+    proof(cases "reduction wrd = wrd")
+      case True
+      then have "reduction (g1#g2#wrd) = wrd" using red_inv by auto
+      then have "length (reduction (g1#g2#wrd)) = length wrd" by auto    
+      then show ?thesis 
+        by simp
+    next
+      case False
+      then have "length (reduction wrd) < length wrd" using 3 True by argo
+      then show ?thesis using red_inv by force
+    qed
+  next
+    case False
+    have prem:"reduction (g1#g2#wrd) \<noteq> (g1#g2#wrd)" using 3 by argo
+    then have "reduction (g1#g2#wrd) = g1#reduction (g2#wrd)" using False by auto
+    then have "reduction (g2#wrd) \<noteq> g2#wrd" using prem by fastforce
+    then have "length (g2#wrd) > length (reduction (g2#wrd))" using 3 False by blast
+    then have "length (g1#g2#wrd) > length (reduction (g1#g2#wrd))" using False by force
+    then show ?thesis by fast
+  qed  
+qed
+
+lemma assumes "g = inverse h"
+  shows "length (reduction (g#h#wrd)) < length (g#h#wrd)"
+  using assms
+proof(induction "length wrd")
+  case 0
+  then show ?case by auto
+next
+  case (Suc x)
+  then show ?case sorry
+qed
+
+
+lemma assumes "length (reduction (wrd)) = length wrd"
+  shows "reduction wrd = wrd"
+  using assms
+proof(induction wrd rule: reduction.induct)
+case 1
+  then show ?case 
+    by simp 
+next
+  case (2 x)
+  then show ?case by simp
+next
+case (3 g1 g2 wrd)
+  then show ?case
+  proof(cases "g1 = inverse g2")
+    case True
+    then have "reduction (g1#g2#wrd) = reduction (wrd)" by simp     
+    then have "length (reduction (g1#g2#wrd)) = length (reduction (wrd))" try0
+      by auto
+    moreover have "length (wrd) > length (reduction wrd)" using 3 sorry
+    then show ?thesis using 3 sorry
+  next
+    case False
+    then show ?thesis sorry
+  qed
+qed
+
+lemma assumes "reduction wrd = wrd"
+  shows "reduced wrd"
+  using assms
+proof(induction wrd rule:reduction.induct)
+case 1
+then show ?case by simp
+next
+case (2 x)
+  then show ?case by simp
+next
+  case (3 g1 g2 wrd)
+  then show ?case sorry
+
+qed
+
+
+(*Show that length decreases if and only the word after reduction is not the same as the original word*)
+
+(*show that if after reduction of a word it does not change, that subsequent reductions will be ineffective*)
+
+(*use the word length argument decrement argument to show that the reduced word is finally reduced*)
+
+
+value "reduced  [P (C G (1::nat)), N (C G (2::nat)), P (C G (1::nat))]" 
+
+
+(*The following lemma is not true: Because it does not account for cases like ([1,2,-2,-1,3])*)
+
+lemma "reduction (reduction wrd) = reduction wrd"
+proof(induction wrd rule: reduction.induct)
+case 1
+then show ?case by simp
+next
+  case (2 x)
+  then show ?case by simp
+next
+  case (3 g1 g2 wrd)
+  then show ?case 
+  proof(cases "g1 = inverse g2")
+    case True
+     have "reduction (reduction wrd) = reduction wrd" 
+      by (simp add: "3.IH"(1) True)
+    then show ?thesis using True by simp
+    next
+      case False
+      have "reduction (reduction (g2 # wrd)) = reduction (g2 # wrd)" using False 3 by argo
+      then show ?thesis using False 3 sorry
+qed
+
+
+(*Define a iterative reduce and show that it reduces after reducing it equal to length of
+the word or some such factor*)
+
+(*Show two way cancellation and show that it shows
+qed
+
