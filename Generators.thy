@@ -246,7 +246,7 @@ value "reduced  [P (C G (1::nat)), N (C G (2::nat)), P (C G (1::nat))]"
 
 inductive reln::"('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool" (infixr "~" 65)
   where
-refl: "a ~ a" |
+refl[intro!]: "a ~ a" |
 sym: "a ~ b \<Longrightarrow> b ~ a" |
 trans: "a ~ b \<Longrightarrow> b ~ c \<Longrightarrow> a ~ c" |
 base: "[g, inverse g] ~ []" |
@@ -307,10 +307,66 @@ definition wordeq::"('a,'b) word \<Rightarrow> ('a,'b) word set" ("[[_]]")
 
 (*Prove the following:
   (1) if xs and ys can be reduced to same element, they are related. 
-  (2) if xs and ys are related, they have the same reduction. 
-  (3) If xs is a related to a reduced word, it is unique. 
+  (2) if xs and ys are related, they have the same final reduction. 
+  (3) If xs is a related to a reduced word, the reduced word is unique. 
   (4) Every element is related to its reduced form. 
 *)
+
+(*
+(1) Every element is related to the reduced word obtained by applying 
+   the iter algorithm. 
+(2) If two elements reduce to the same word obtained by the iter algorithm, they are related. 
+(3) Reduced word obtained by our (iter application) algorithm is unique in the equivalence
+class.
+(4) If two elements have the same reduced word (obtained by applying the iter
+algorithm), the two elements are related. 
+*)
+
+
+lemma reln_of_iter:"xs ~ iter n (reduction) xs"
+proof(induction n)
+  case 0
+  then show ?case using reln.refl[of "xs"] unfolding iter.simps .
+next
+  case (Suc n)
+  have loc:"iter n (reduction) xs ~ iter (Suc n) reduction xs" unfolding iter.simps(2) 
+    using rel_to_reduction[of "iter n (reduction) xs "] .
+  show ?case using reln.trans[OF "Suc" loc] .
+qed
+
+lemma iter_eq_implies_reln:
+  assumes "iter n reduction xs = iter m reduction ys"
+  shows "xs ~ ys"
+proof-
+  have "xs ~ iter n reduction xs" using reln_of_iter[of "xs" "n"] .
+  moreover have "ys ~ iter m reduction ys" using reln_of_iter[of "ys" "m"] .
+  ultimately show ?thesis using assms reln.refl reln.trans 
+    by (metis reln.sym)
+qed
+
+
+
+ 
+
+lemma   "wrd1 ~ wrd2 \<Longrightarrow> reduced wrd1 \<Longrightarrow> reduced wrd2 \<Longrightarrow> wrd1 = wrd2"
+proof(induction rule: reln.induct)
+  case (refl a)
+  then show ?case by fast
+next
+  case (sym a b)
+  then show ?case by simp
+next
+  case (trans a b c)
+  then show ?case sorry
+next
+  case (base g)
+  then show ?case using reduced.simps 
+    by (metis inverse_of_inverse)
+next
+  case (mult xs xs' ys ys')
+  then show ?case sorry
+  (*use the result that if (xs@ys) is reduced, xs and ys are reduced *)
+qed
 
 quotient_type ('a,'b) wordclass = "('a,'b) word"/"reln"
   using reln.refl reln.sym reln.trans  equivpI reflpI sympI transpI
@@ -328,7 +384,10 @@ Same for Rep_wordclass and rep_wordclass*)
 lemma "abs_wordclass (wrd) * abs_wordclass (wrd') = abs_wordclass (wrd@wrd')"
   by (simp add: mult.abs_eq)
 
+
+lemma "Rep_wordclass (Abs_wordclass wrdset) = wrdset"
+
 (*Try to finish this lemma along with the lemmas above*)
-lemma "Rep_wordclass (abs_wordclass wrd) = [[wrd]]"
+lemma "rep_wordclass (abs_wordclass wrd) = wrd"
   unfolding wordeq_def sorry
 qed
