@@ -152,3 +152,32 @@ qed
 (*3. lemma assumes length wrd = n shows iter (n+k) reduction = iter n reduction*)
 lemma assumes "length wrd = n" 
   shows " iter (n+k) reduction = iter n reduction"
+  
+  (*if xs@ys is reduced then xs is reduced*)
+lemma assumes "reduced (xs@ys)"
+  shows "reduced xs"
+  using assms
+proof (induction xs rule : reduction.induct)
+case 1
+then show ?case try
+  by simp
+next
+  case (2 x)
+  then show ?case try
+    by simp
+next
+  case (3 g1 g2 wrd)
+  then show ?case
+  proof (cases "g1 =  inverse g2")
+    case True    
+then show ?thesis 
+  using "3.prems" by force
+next
+  case False
+  have "reduced ((g2 # wrd) @ ys)" 
+    by (metis "3.prems" append_Cons reduced.simps(3))
+  then have "reduced (g2#wrd)" 
+    using "3.IH"(2) False by auto
+  then show ?thesis by (simp add: False)
+qed
+qed
