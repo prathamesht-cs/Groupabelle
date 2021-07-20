@@ -305,6 +305,88 @@ definition wordeq::"('a,'b) word \<Rightarrow> ('a,'b) word set" ("[[_]]")
 "wordeq wrd = {wrds. wrd ~ wrds}"
 
 
+(*This is approach for normal form using newsmans lemma*)
+
+definition cancel_at :: "nat \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word"
+where "cancel_at i l = take i l @ drop (2+i) l"
+
+
+definition cancels_to_1_at ::  "nat \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
+where  "cancels_to_1_at i l1 l2 = (0\<le>i \<and> (1+i) < length l1
+                              \<and> (inverse (l1 ! i) = (l1 ! (1+i)))
+                              \<and> (l2 = cancel_at i l1))"
+
+definition cancels_to_1 :: "('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
+where "cancels_to_1 l1 l2 = (\<exists>i. cancels_to_1_at i l1 l2)"
+
+definition cancels_to  :: "('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
+where "cancels_to = (cancels_to_1)^**"
+
+
+lemma "cancels_to wrd (reduction wrd)"
+  sorry
+
+lemma "cancels_to wrd (iter n reduction wrd)"
+  sorry
+
+
+lemma cancels_to_trans [trans]:
+  "\<lbrakk> cancels_to a b; cancels_to b c \<rbrakk> \<Longrightarrow> cancels_to a c"
+  sorry
+
+lemma "cancels_to x y \<Longrightarrow> x ~ y"
+  unfolding cancels_to_def
+proof(induction rule: rtranclp.induct)
+  case (rtrancl_refl a)
+  then show ?case by blast
+next
+  case (rtrancl_into_rtrancl a b c)
+  then have "cancels_to_1 b c" by simp
+  then obtain i where i:"cancels_to_1_at i b c" unfolding cancels_to_1_def by meson
+  then have c_def:"(take i b)@(drop (i + 2) b) = c" unfolding cancels_to_1_at_def cancel_at_def
+    by force
+  moreover have "b!i = inverse (b!(i+1))" using i  unfolding cancels_to_1_at_def cancel_at_def
+    using inverse_of_inverse 
+    by (simp add: inverse_of_inverse add.commute)
+  then have "[b!i, b!(i+1)] ~ []" 
+    by (metis base inverse_of_inverse)
+  then have "([b!i, b!(i+1)]@(drop (i+2) b)) ~ []@(drop (i+2) b)"
+    using reln.refl reln.mult by fast
+  then have "((take i b)@(([b!i, b!(i+1)]@(drop (i+2) b)))) ~ (take i b)@(drop (i+2) b)"
+    using reln.refl reln.mult 
+    by (simp add: mult reln.refl)
+  then have "b ~ c" using c_def 
+    by (metis Cons_nth_drop_Suc add.commute add_2_eq_Suc' append_Cons append_self_conv2 cancels_to_1_at_def i id_take_nth_drop linorder_not_less plus_1_eq_Suc trans_le_add2)
+  then show ?case using reln.trans rtrancl_into_rtrancl(3) by fast
+qed
+
+definition cancels_eq::"('a,'b) word \<Rightarrow> ('a,'b)  word \<Rightarrow> bool"
+  where
+"cancels_eq = (\<lambda> wrd1 wrd2. cancels_to wrd1 wrd2 \<or> cancels_to wrd2 wrd1)^**"
+
+(*results to prove: cancels eq a b, then (1) cancels eq c@a c@b and (2) cancels eq a@c and b@c*)
+
+(*Try proving this*)
+lemma  "x ~ y \<Longrightarrow> cancels_eq x y"
+proof(induction rule:reln.induct)
+case (refl a)
+then show ?case unfolding cancels_eq_def cancels_to_def by simp
+next
+  case (sym a b)
+  then show ?case unfolding cancels_eq_def 
+    by (metis (no_types, lifting) sympD sympI symp_rtranclp)
+next
+  case (trans a b c)
+  then show ?case sorry
+next
+  case (base g)
+  then show ?case sorry
+next
+  case (mult xs xs' ys ys')
+  then show ?case sorry
+qed
+
+lemma "x ~ y \<longleftrightarrow>  cancels_eq x y"
 (*Prove the following:
   (1) if xs and ys can be reduced to same element, they are related. 
   (2) if xs and ys are related, they have the same final reduction. 
