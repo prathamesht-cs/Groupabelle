@@ -1,4 +1,4 @@
-theory Generators
+theory append_lemmas
 imports Main  "HOL-Library.FuncSet" "HOL-Algebra.Group"
 begin
 
@@ -346,7 +346,7 @@ proof-
   moreover then have 4: "c @ b = cancel_at (length c + i) (c @ a)" using cancel_at_leftappend assms(1) assms(2) by metis
   ultimately show "0 \<le> length c + i \<and>
     1 + (length c + i) < length (c @ a) \<and>
-    Generators.inverse ((c @ a) ! (length c + i)) = (c @ a) ! (1 + (length c + i)) \<and>
+    inverse ((c @ a) ! (length c + i)) = (c @ a) ! (1 + (length c + i)) \<and>
     c @ b = cancel_at (length c + i) (c @ a)" using "2" "3" by blast
 qed
 
@@ -362,7 +362,7 @@ proof-
   have "(b = cancel_at i a)" using assms(3)using cancels_to_1_at_def by auto
   moreover then have 4: "b@c = cancel_at i (a@c)" using cancel_at_rightappend assms(1) assms(2) by metis
   ultimately show "0 \<le> i \<and>
-    1 + i < length (a @ c) \<and> Generators.inverse ((a @ c) ! i) = (a @ c) ! (1 + i) \<and> b @ c = cancel_at i (a @ c)" using "2" "3" by blast
+    1 + i < length (a @ c) \<and> inverse ((a @ c) ! i) = (a @ c) ! (1 + i) \<and> b @ c = cancel_at i (a @ c)" using "2" "3" by blast
 qed
 
 definition cancels_to_1 :: "('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
@@ -376,7 +376,7 @@ lemma cancels_to_1_leftappend:
 proof-
   obtain i where "cancels_to_1_at i a b" using assms cancels_to_1_def by auto
   then have "i\<ge>0 \<and> (1+i) < length a" using cancels_to_1_at_def by auto
-  then have "cancels_to_1_at (length c + i) (c@a) (c@b)" using  cancels_to_1_at_leftappend by (simp add: cancels_to_1_at_leftappend \<open>cancels_to_1_at i a b\<close>)
+  then have "cancels_to_1_at (length c + i) (c@a) (c@b)" using \<open>cancels_to_1_at i a b\<close> cancels_to_1_at_leftappend by auto
   then show "\<exists>i. cancels_to_1_at i (c @ a) (c @ b)" by auto
 qed
 
@@ -423,7 +423,6 @@ next
   then show "cancels_to_1\<^sup>*\<^sup>* (a@z) (c@z)" using 1 by auto
 qed
 
-
 lemma "cancels_to x y \<Longrightarrow> x ~ y"
   unfolding cancels_to_def
 proof(induction rule: rtranclp.induct)
@@ -454,10 +453,8 @@ definition cancels_eq::"('a,'b) word \<Rightarrow> ('a,'b)  word \<Rightarrow> b
   where
 "cancels_eq = (\<lambda> wrd1 wrd2. cancels_to wrd1 wrd2 \<or> cancels_to wrd2 wrd1)^**"
 
-(*results to prove: cancels eq a b, then (1) cancels eq c@a c@b and (2) cancels eq a@c and b@c*)
-
-(*This one for AABID*)
-lemma "cancels_eq a b \<longrightarrow> cancels_eq (z@a) (z@b)"
+lemma cancels_eq_leftappend:
+"cancels_eq a b \<longrightarrow> cancels_eq (z@a) (z@b)"
   unfolding cancels_eq_def
   apply(rule impI)
 proof(induction rule:rtranclp.induct)
@@ -470,7 +467,8 @@ next
   then show "(\<lambda>wrd1 wrd2. cancels_to wrd1 wrd2 \<or> cancels_to wrd2 wrd1)\<^sup>*\<^sup>* (z @ a) (z @ c)" unfolding cancels_eq_def using 1  by (metis (no_types, lifting) rtranclp.simps)
 qed
 
-lemma "cancels_eq a b \<longrightarrow> cancels_eq (a@z) (b@z)"
+lemma cancels_eq_rightappend:
+"cancels_eq a b \<longrightarrow> cancels_eq (a@z) (b@z)"
   unfolding cancels_eq_def
   apply(rule impI)
 proof(induction rule:rtranclp.induct)
@@ -483,7 +481,6 @@ next
   then show "(\<lambda>wrd1 wrd2. cancels_to wrd1 wrd2 \<or> cancels_to wrd2 wrd1)\<^sup>*\<^sup>* (a@z) (c@z)" unfolding cancels_eq_def using 1  by (metis (no_types, lifting) rtranclp.simps)
 qed
 
-(*Try proving this*)
 lemma  "x ~ y \<Longrightarrow> cancels_eq x y"
 proof(induction rule:reln.induct)
 case (refl a)
@@ -499,97 +496,12 @@ next
   case (base g)
   then have "cancels_to_1_at 0 [g, inverse g] []" unfolding cancels_to_1_at_def cancel_at_def by auto
   then have "cancels_to [g, inverse g] []" unfolding cancels_to_def using cancels_to_1_def by auto
-  then show ?case  unfolding cancels_eq_def by (simp add: r_into_rtranclp)
+  then show ?case unfolding cancels_eq_def by (simp add: r_into_rtranclp)
 next
   case (mult xs xs' ys ys')
-  then show ?case  sorry
-qed
-
-(*lemma "x ~ y \<longleftrightarrow>  cancels_eq x y"
-  sorry*)
-(*Prove the following:
-  (1) if xs and ys can be reduced to same element, they are related. 
-  (2) if xs and ys are related, they have the same final reduction. 
-  (3) If xs is a related to a reduced word, the reduced word is unique. 
-  (4) Every element is related to its reduced form. 
-*)
-
-(*
-(1) Every element is related to the reduced word obtained by applying 
-   the iter algorithm. 
-(2) If two elements reduce to the same word obtained by the iter algorithm, they are related. 
-(3) Reduced word obtained by our (iter application) algorithm is unique in the equivalence
-class.
-(4) If two elements have the same reduced word (obtained by applying the iter
-algorithm), the two elements are related. 
-*)
-
-
-lemma reln_of_iter:"xs ~ iter n (reduction) xs"
-proof(induction n)
-  case 0
-  then show ?case using reln.refl[of "xs"] unfolding iter.simps .
-next
-  case (Suc n)
-  have loc:"iter n (reduction) xs ~ iter (Suc n) reduction xs" unfolding iter.simps(2) 
-    using rel_to_reduction[of "iter n (reduction) xs "] .
-  show ?case using reln.trans[OF "Suc" loc] .
-qed
-
-lemma iter_eq_implies_reln:
-  assumes "iter n reduction xs = iter m reduction ys"
-  shows "xs ~ ys"
-proof-
-  have "xs ~ iter n reduction xs" using reln_of_iter[of "xs" "n"] .
-  moreover have "ys ~ iter m reduction ys" using reln_of_iter[of "ys" "m"] .
-  ultimately show ?thesis using assms reln.refl reln.trans 
-    by (metis reln.sym)
-qed
-
-
-
- 
-
-lemma   "wrd1 ~ wrd2 \<Longrightarrow> reduced wrd1 \<Longrightarrow> reduced wrd2 \<Longrightarrow> wrd1 = wrd2"
-proof(induction rule: reln.induct)
-  case (refl a)
-  then show ?case by fast
-next
-  case (sym a b)
-  then show ?case by simp
-next
-  case (trans a b c)
-  then show ?case sorry
-next
-  case (base g)
-  then show ?case using reduced.simps 
-    by (metis inverse_of_inverse)
-next
-  case (mult xs xs' ys ys')
-  then show ?case sorry
-  (*use the result that if (xs@ys) is reduced, xs and ys are reduced *)
-qed
-
-quotient_type ('a,'b) wordclass = "('a,'b) word"/"reln"
-  using reln.refl reln.sym reln.trans  equivpI reflpI sympI transpI
-  by metis
-
-lift_definition mult::"('a,'b) wordclass \<Rightarrow> ('a,'b) wordclass \<Rightarrow> ('a,'b) wordclass" (infixr "*" 65)
- is List.append
-  by (simp add: mult)
-
-(*Prove the following: Product of Abs of two wordclasses is the Abs of the product*)
-
-(*Look up the difference between Abs_wordclasss and abs_wordclass, by experiment or reading. 
-Same for Rep_wordclass and rep_wordclass*)
-
-lemma "abs_wordclass (wrd) * abs_wordclass (wrd') = abs_wordclass (wrd@wrd')"
-  by (simp add: mult.abs_eq)
-
-
-lemma "Rep_wordclass (Abs_wordclass wrdset) = wrdset"
-
-(*Try to finish this lemma along with the lemmas above*)
-lemma "rep_wordclass (abs_wordclass wrd) = wrd"
-  unfolding wordeq_def sorry
+  have "cancels_eq xs xs'" by (simp add: mult.IH(1))
+  then have 1:"cancels_eq (xs@ys) (xs'@ys)"  by (simp add: cancels_eq_rightappend)
+  have "cancels_eq ys ys'"  by (simp add: mult.IH(2))
+  then have 2:"cancels_eq (xs'@ys) (xs'@ys')" by (simp add: cancels_eq_leftappend)
+  then show "cancels_eq (xs@ys) (xs'@ys')" using 1 2  by (metis (no_types, lifting) cancels_eq_def rtranclp_trans)
 qed
