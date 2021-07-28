@@ -641,31 +641,6 @@ proof(induction xs arbitrary: i j)
   qed
 qed(auto)
 
-lemma assumes "i < j"
-  shows  "drop i ((take j xs)@(drop (j+2) xs)) =  ((drop i (take j xs))) @(drop (j+2) xs)"
-  using assms
-proof(induction xs arbitrary: i j)
-  case Nil
-  then show ?case by simp
-next
-  case (Cons a xs)  
-  then show ?case
-  proof (cases "i = 0")
-case True
-  then show ?thesis by simp
-next
-  case False
-  have a: "i > 0" using False by auto
-  have b : "j > 1" using Cons.prems False by auto
-  then have c : "take j (a#xs) = a # (take (j - 1)) xs" by (metis gr_implies_not0 take_Cons')
-  have d : "drop (j + 2) (a # xs) = drop (j + 1) xs" by simp
-  then have 1: "take j (a#xs)@drop (j + 1) xs = a # (take (j - 1)) xs@drop (j + 1) xs" by (simp add: c)
-  
-  then show ?thesis sorry
-qed
-   
-qed
-
 lemma cancels_to_reduced :
   assumes "i\<ge>0" "(1+i)<length x" "cancels_to x y"  "cancels_to x z" "reduced y" "reduced z" 
   shows "y = z"
