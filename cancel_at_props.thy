@@ -668,36 +668,37 @@ proof-
   then show "cancel_at (j-2) (cancel_at i wrd) = cancel_at i (cancel_at j wrd)" sorry 
 qed
 
-lemma "diamond (\<lambda> x y. (cancels_to_1 x y) \<or> x = y)"
+
+lemma "diamond (λ x y. (cancels_to_1 x y) ∨ x = y)"
   unfolding  diamond_def cancels_to_1_def commute_def square_def 
   apply (rule allI, rule allI, rule impI, rule allI, rule impI)
 proof-
   fix x y z :: "('a,'b) word"
-  assume 1:"(\<exists>i. cancels_to_1_at i x y) \<or> x = y"
-  assume 2:"(\<exists>i. cancels_to_1_at i x z) \<or> x = z"
-  show "\<exists>u. ((\<exists>i. cancels_to_1_at i y u) \<or> y = u) \<and> ((\<exists>i. cancels_to_1_at i z u) \<or> z = u)"
-  proof (cases "x = y \<or> x = z")
+  assume 1:"(∃i. cancels_to_1_at i x y) ∨ x = y"
+  assume 2:"(∃i. cancels_to_1_at i x z) ∨ x = z"
+  show "∃u. ((∃i. cancels_to_1_at i y u) ∨ y = u) ∧ ((∃i. cancels_to_1_at i z u) ∨ z = u)"
+  proof (cases "x = y ∨ x = z")
   case True
-  have "(\<exists>i. cancels_to_1_at i y z) \<or> (\<exists>i. cancels_to_1_at i z y) \<or> z = y" using "1" "2" True by auto
+  have "(∃i. cancels_to_1_at i y z) ∨ (∃i. cancels_to_1_at i z y) ∨ z = y" using "1" "2" True by auto
   then show ?thesis by auto
   next
   case False
-  then have "x \<noteq> y" "x \<noteq> z" by auto
+  then have "x ≠ y" "x ≠ z" by auto
   then show ?thesis
   proof (cases "y = z")
 case True
   then show ?thesis by auto
 next
   case False
-  then have asm1:"(\<exists>i. cancels_to_1_at i x y)" using "1" False  \<open>x \<noteq> y\<close> by auto
+  then have asm1:"(∃i. cancels_to_1_at i x y)" using "1" False  ‹x ≠ y› by auto
   then obtain i where i: "cancels_to_1_at i x y" by auto
-  have asm2 :"(\<exists>i. cancels_to_1_at i x z)" using "2" False  \<open>x \<noteq> z\<close> by auto
+  have asm2 :"(∃i. cancels_to_1_at i x z)" using "2" False  ‹x ≠ z› by auto
   then obtain j where j: "cancels_to_1_at j x z" by auto
-  define overlapping where "overlapping \<equiv> \<lambda> m (n :: nat). m \<in> {n, n + 1} \<or> n \<in> {m, m + 1}" 
+  define overlapping where "overlapping ≡ λ m (n :: nat). m ∈ {n, n + 1} ∨ n ∈ {m, m + 1}" 
   then show ?thesis 
       proof (cases "overlapping i j")
       case True
-      then have ovl:"i \<in> {j, j + 1} \<or> j \<in> {i, i + 1}" using overlapping_def by auto
+      then have ovl:"i ∈ {j, j + 1} ∨ j ∈ {i, i + 1}" using overlapping_def by auto
       then show ?thesis 
         proof (cases "i = j")
         case True
@@ -705,23 +706,39 @@ next
         then show ?thesis by auto
         next
         case False
-        then have "(i > j) \<or> (i < j)" by auto 
-        then have "i = j + 1 \<or> j = i + 1" using ovl by blast 
+        then have "(i > j) ∨ (i < j)" by auto 
+        then have "i = j + 1 ∨ j = i + 1" using ovl by blast 
         then show ?thesis 
         proof (cases "j = i + 1")
         case True
-         then have y: "y = z" using  cancels_to_1_at_def by (metis True i j) sorry
-        then show ?thesis sorry
+        have t: "j = i + 1" using True by auto
+        then have a: "inverse (x ! i) = x ! (i + 1)" using cancels_to_1_at_def i by fastforce
+        have b : "inverse (x ! j) = x ! (j + 1)" by (metis add.commute cancels_to_1_at_def j)
+        then have "inverse (x ! (i + 1)) =  x ! (i + 2)" using t by simp
+        then have m: "((nth x (i + 2)) = (nth x i))" using a b t inverse_of_inverse by metis
+        then have n: "cancel_at i x = y" using "1" i cancels_to_1_at_def cancel_at_def by metis
+        have "cancel_at j x = z" using "1" i cancels_to_1_at_def cancel_at_def by (metis True j)
+        then have "take i x @ drop (2 + i) x = take j x @ drop (2 + j) x" using a b m n sorry
+        then have y: "y = z" using m n a b cancel_at_def by (metis ‹cancel_at j x = z›)
+        then show ?thesis by auto
         next
         case False
-        then have "i = j + 1" using \<open>i = j + 1 \<or> j = i + 1\<close> by blast
-        then show ?thesis sorry
+        then have t: "i = j + 1" using ‹i = j + 1 ∨ j = i + 1› by blast
+        then have a: "inverse (x ! j) = x ! (j + 1)" using cancels_to_1_at_def j by fastforce
+        have b : "inverse (x ! i) = x ! (i + 1)" using cancels_to_1_at_def i by auto
+        then have "inverse (x ! (j + 1)) =  x ! (j + 2)" using t by simp
+        then have m: "((nth x (j + 2)) = (nth x j))" using a b t inverse_of_inverse by metis
+        then have n: "cancel_at j x = z" using "1" j cancels_to_1_at_def cancel_at_def by metis
+        have "cancel_at i x = y" using "1" i cancels_to_1_at_def cancel_at_def by (metis True j)
+        then have "take i x @ drop (2 + i) x = take j x @ drop (2 + j) x" using a b m n sorry
+        then have y: "y = z" using m n a b cancel_at_def by (metis ‹cancel_at i x = y›)
+        then show ?thesis by auto
         qed
        qed
       next
       case False
-      then have novl1:"\<not>(i \<in> {j, j + 1})" by (simp add: overlapping_def)
-      have novl2: "\<not>(j \<in> {i, i + 1})" using False by (simp add: overlapping_def)
+      then have novl1:"¬(i ∈ {j, j + 1})" by (simp add: overlapping_def)
+      have novl2: "¬(j ∈ {i, i + 1})" using False by (simp add: overlapping_def)
       then show ?thesis 
         proof (cases "i<j")
         case True
@@ -729,20 +746,20 @@ next
         have "cancels_to_1_at j x z" using j by auto
         then have b: "(j + 1) < length x" using cancels_to_1_at_def by auto
         have "cancels_to_1_at i x y" using i by auto
-        then have c: "i \<ge> 0" by simp
+        then have c: "i ≥ 0" by simp
         then have  "cancel_at i (cancel_at j x) = cancel_at (j - 2) (cancel_at i x)" using a b novl[of i j x] by simp
         then have "cancel_at (j - 2) y = cancel_at i z" using cancels_to_1_at_def by (metis i j)
         then have "(nth x i) = (nth z i)" sorry
-        then show ?thesis using i j sorry
+        then show ?thesis sorry
         next
         case False
-        then have "i \<noteq> j" using novl1 by auto
+        then have "i ≠ j" using novl1 by auto
         then have "i > j" using False by auto
         then have a:"(j + 1) < i" using i j overlapping_def using novl1 by force
         have "cancels_to_1_at i x y" using i by auto
         then have b: "(i + 1) < length x" using cancels_to_1_at_def by auto
         have "cancels_to_1_at j x z" using j by auto
-        then have c: "j \<ge> 0" by simp
+        then have c: "j ≥ 0" by simp
         then have  "cancel_at j (cancel_at i x) = cancel_at (i - 2) (cancel_at j x)" using a b novl[of j i x] by simp
         then have "cancel_at (i - 2) z = cancel_at j y" using cancels_to_1_at_def by (metis i j)
         then have "(nth x j) = (nth z j)" sorry
@@ -752,6 +769,3 @@ next
     qed
   qed  
  qed
-qed
-
-
