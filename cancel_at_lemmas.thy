@@ -593,7 +593,7 @@ next
   qed
 qed
 
-lemma
+lemma take_assoc:
   assumes "i \<le> j"
 (*take i (cancel_at j xs) = take i xs*)
   shows  "take i ((take j xs)@(drop (j+2) xs)) = take i xs"
@@ -623,7 +623,7 @@ proof(induction xs arbitrary: i j)
   qed
 qed(auto)
 
-lemma assumes "i +1 < j" "j + 1 < length xs"
+lemma cancel_order: assumes "i +1 < j" "j + 1 < length xs"
   shows "cancel_at i (cancel_at j xs) = (cancel_at (j-2) (cancel_at i xs))"
   using assms
 proof(induction xs arbitrary: i j)
@@ -773,8 +773,14 @@ proof-
           case True
           then have l: "i < j + 1"  by linarith
           have m: "1 + j  < length x" using \<open>cancels_to_1_at j x z\<close> cancels_to_1_at_def by (simp add: cancels_to_1_at_def)
-          then have n: "cancel_at i (cancel_at j x) = cancel_at (j-2) (cancel_at i x)" using cancel_order l m by (metis False True add.commute discrete insert_iff le_neq_implies_less less_or_eq_imp_le)
+          then have n: "cancel_at i (cancel_at j x) = cancel_at (j-2) (cancel_at i x)" using cancel_order l m by (metis False True add.commute discrete insert_iff le_neq_implies_less)
           then have "cancel_at i z = cancel_at (j-2) y" using \<open>cancels_to_1_at j x z\<close> \<open>cancels_to_1_at i x y\<close> cancels_to_1_at_def by (simp add: cancels_to_1_at_def)
+          have "take i z = take i x" using take_assoc cancel_at_def l m by (metis True \<open>cancels_to_1_at j x z\<close> add.commute cancels_to_1_at_def)
+          then have o: "(nth (take i z) i) = (nth (take i x) i)" by simp
+          moreover have "z = take i z @ drop i z" by simp
+          moreover have "x = take i x @ drop i x" by simp
+          ultimately have "(nth z i) = (nth x i)" using o l m sorry
+          (*Show that inverse (z!i) = (z!(i+1)) and inverse (y!(j-2)) = (y!(j-2 + 1))*)
           then show ?thesis sorry
         next
           case False
