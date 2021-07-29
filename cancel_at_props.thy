@@ -710,9 +710,7 @@ next
         then show ?thesis 
         proof (cases "j = i + 1")
         case True
-        then have "((nth x (i + 2)) = (nth x i))" using j i inverse_of_inverse sorry
-        then have "cancel_at i x = cancel_at (i + 1) x" using "1" cancels_to_1_at cancel_at_def sorry
-        then have y: "y = z" using  cancels_to_1_at_def by (metis True i j)
+         then have y: "y = z" using  cancels_to_1_at_def by (metis True i j) sorry
         then show ?thesis sorry
         next
         case False
