@@ -702,6 +702,112 @@ next
   qed  
 qed
 
+lemma takenth: assumes  "take i x = take i y" "i \<ge> 0" "j < i"
+  shows "(nth x j) = (nth y j)"
+  by (metis assms(1) assms(3) nth_take)
+
+lemma Con_nth: assumes "(nth x i) = (nth y j)" 
+  shows "(nth (a#x) (i+1)) = (nth (a#y) (j+1))"
+  by (simp add: assms)
+ 
+lemma zero:"(a::nat) + 1 - 1 = a"
+  by simp
+
+lemma comm: assumes "a > 0"
+  shows "(a::nat) - 1 + 1 = a + 1 - 1" 
+  by (simp add: assms)
+
+lemma cancel_atnth: assumes "j > i + 1" "j < length x"
+  shows "(nth x j) = (nth (cancel_at i x) (j-2))"
+  using assms
+  unfolding cancel_at_def
+  proof(induction x arbitrary: i j)
+    case Nil
+    have "j < 0" using Nil assms(2) by auto
+    then show ?case by simp
+next
+  case (Cons a x)
+  then show ?case
+  proof(cases "i > 0")
+    case True
+  have i: "i > 0" using True by simp
+  have a:"(j - 1) < length x" using Cons(3) Cons.prems(1) by auto
+  have b: "(i - 1) + 1 < (j - 1)" using Cons True i by linarith
+  have "(nth x (j - 1)) = nth (take (i - 1) x @ drop (2 + (i - 1)) x) ((j - 1) - 2)" using Cons(1)[of "i - 1" "j - 1"]  a b by metis
+  then have c: "(nth (a#x) (j - 1 + 1)) = nth (a#(take (i - 1) x @ drop (2 + (i - 1)) x)) ((j - 1 - 2 + 1))" using Con_nth[of "x" "j - 1" "(take (i - 1) x @ drop (2 + (i - 1)) x)" "j - 1 - 2" "a"] by metis
+  then have "(nth (a#x) j) = nth (a#(take (i - 1) x @ drop (2 + (i - 1)) x)) ((j - 2))" by (smt (z3) add_eq_0_iff_both_eq_0 b diff_diff_left less_diff_conv less_nat_zero_code nat_1_add_1 nth_Cons' zero)
+  then have "(nth (a#x) j) = nth ((a#(take (i-1) x)) @ drop (2 + (i - 1)) x) ((j - 2))" by (smt (z3) append_Cons)
+  then have "(nth (a#x) j) = nth ((take i (a#x)) @ drop (2 + (i - 1)) x) ((j - 2))" using take_Cons' i  by (smt (z3) not_gr_zero)
+  then have "(nth (a#x) j) = nth ((take i (a#x)) @ drop (2 + i) (a#x)) (j - 2)" using drop_Cons' i  by (smt (z3) drop_drop gr_implies_not0)
+  then show ?thesis by metis
+  next
+    case False
+    then have i: "i = 0" by blast
+    then have a:"nth ((take i (a#x)) @ drop (2 + i) (a#x)) (j - 2) = nth (drop (2 + i) (a#x)) (j - 2)" by simp
+    have b:"... = nth (drop 2 (a#x)) (j - 2)" using i  by auto
+    have c:"... = nth (drop 1 x) (j - 2)" using drop_Cons' by simp
+    then have d: "... =  nth (tl x) (j - 2)" by (simp add: drop_Suc)
+    then have e: "... = nth x (j - 1)" using nth_tl by (smt (verit, ccfv_threshold) Cons.prems(1) Cons.prems(2) Suc_1 Suc_diff_Suc add_cancel_right_left add_diff_inverse_nat diff_diff_left drop_Suc_Cons i length_drop length_tl not_less_eq zero_less_diff)
+    have f: "(nth (a#x) j) = (nth x (j - 1))" by (metis Cons.prems(1) add_lessD1 i nth_Cons_pos)
+    then show ?thesis using a b c d e by presburger
+  qed 
+qed
+
+lemma length_Cons: "(length xs) + 1 = (length (a#xs))"
+  by auto
+
+lemma assoc_Cons: "(a#(b@c)) = ((a#b)@c)"
+  by simp
+
+lemma cancel_at_length: assumes "0 \<le> i" "i + 1 < length x"
+  shows "length (cancel_at i x) = (length x) - 2"
+  using assms
+  unfolding cancel_at_def
+proof(induction x arbitrary: i)
+case Nil
+  then show ?case by auto
+next
+  case (Cons a x)
+  then show ?case
+  proof(cases "length x \<ge> 1")
+    case True
+    then have lx: "length x \<ge> 1" by simp
+    then show ?thesis
+  proof(cases "i > 0")
+    case True 
+    have a: "0 \<le> i - 1" using Cons.prems(1) by simp
+  have b: "(i - 1) + 1 \<le> length x" using Cons.prems(2) True by fastforce
+  have "length (take (i - 1) x @ drop (2 + (i - 1)) x) = length x - 2" using a b Cons(1)[of "i - 1"] by (metis Cons.prems(2) True cancel_at_lemmas.length_Cons comm le_neq_implies_less less_not_refl3 zero)
+  then have "(length (take (i - 1) x @ drop (2 + (i - 1)) x)) + 1 = (length x - 2) + 1" by presburger
+  then have "(length (take (i - 1) x @ drop (2 + (i - 1)) x)) + 1 = (length x + 1) - 2" using lx Nat.add_diff_assoc2 Cons.prems(1) True  by (smt (z3) Cons.prems(2) cancel_at_lemmas.length_Cons comm diff_add diff_diff_left diff_is_0_eq' less_diff_conv nat_1_add_1 nat_less_le zero_less_diff)
+  then have "(length (take (i - 1) x @ drop (2 + (i - 1)) x)) + 1 = (length (a#x)) - 2" using length_Cons[of "x" "a"] by argo
+  then have "(length (a#(take (i - 1) x @ drop (2 + (i - 1)) x))) = (length (a#x)) - 2" using length_Cons[of  "(take (i - 1) x @ drop (2 + (i - 1)) x)" "a"] by argo
+  then have "(length ((a#take (i - 1) x) @ drop (2 + (i - 1)) x)) = (length (a#x)) - 2" using assoc_Cons[of "a" "take (i - 1) x" "drop (2 + (i - 1)) x"] by argo
+  then have "length ((take i (a#x)) @ drop (2 + (i - 1)) x) = (length (a#x)) - 2" using True take_Cons' [of "i" "a" "x"] by presburger
+  then have "length ((take i (a#x)) @ drop (2 + i) (a#x)) = (length (a#x)) - 2" using True drop_Cons' Cons.prems(1) by simp
+  then show ?thesis  by blast
+  next
+    case False
+    have i: "i = 0" using Cons.prems(1) False by auto
+    then have 1: "length ((take i (a#x)) @ drop (2 + i) (a#x)) = length (drop (2 + i) (a#x))" by simp
+    have 2: "... = length (drop 2 (a#x))"  using i by simp
+    have 3: "... = length (drop 1 (a#x)) - 1"  by simp
+    have 4: "... = length (drop 0 (a#x)) - 2" by simp
+    have 5: "... = (length (a#x)) - 2" by auto
+    then show ?thesis using "1" "2" "3" "4" by presburger
+  qed
+  next
+    case False
+    then have 1: "length x < 1" by linarith
+    then have 2: "length x = 0"  by auto
+    then have 3: "x = []" by auto
+    then have 4: "(a#x) = [a]" by simp
+    have "i + 1 \<ge> 1" using Cons.prems(2) by simp
+    then have "i + 1 \<ge> length (a#x)" using 4 by simp
+    then show ?thesis using Cons(3) by linarith
+  qed
+qed
+
 lemma diamond_cancel:
   shows "diamond (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)"
   unfolding diamond_def cancels_to_1_def commute_def square_def
@@ -743,7 +849,7 @@ proof-
         then show ?thesis using a by auto 
         next
           case False
-          then have ij: "i = j + 1 \<or> j = i + 1" using True by blast
+          then have ij: "i = j + 1 \<or> j = i + 1" using True by auto
           have xi: "inverse (x!i) = (x!(1+i))" using cancels_to_1_at_def \<open>cancels_to_1_at i x y\<close> by auto
           have xj: "inverse (x!j) = (x!(1+j))" using cancels_to_1_at_def \<open>cancels_to_1_at j x z\<close> by auto
         then show ?thesis
@@ -766,102 +872,85 @@ proof-
         qed
       next
         case False
+        then have ij: " \<not> (i \<in> {j, j + 1} \<or> j \<in> {i, i + 1})" by auto
         have xi: "inverse (x!i) = (x!(1+i))" using cancels_to_1_at_def \<open>cancels_to_1_at i x y\<close> by auto
         have xj: "inverse (x!j) = (x!(1+j))" using cancels_to_1_at_def \<open>cancels_to_1_at j x z\<close> by auto
         then show ?thesis
         proof(cases "i \<le> j")
           case True
-          then have l: "i < j + 1"  by linarith
+          then have l: "i + 1 < j"  by (metis False discrete insert_iff le_neq_implies_less)
+          then have j1: "i + 1 < j + 1" by linarith
+          have i0: "i\<ge>0" by simp
+          have j0: "j \<ge> 0"  by simp
+          then have j20: "j - 2 \<ge> 0" by simp
+          have z: "z = cancel_at j x" using \<open>cancels_to_1_at j x z\<close> cancels_to_1_at_def by auto
+          have y: "y = cancel_at i x"  using \<open>cancels_to_1_at i x y\<close> cancels_to_1_at_def by auto
+          have il: "1 + i < length x" using  \<open>cancels_to_1_at i x y\<close> by (simp add: cancels_to_1_at_def)
           have m: "1 + j  < length x" using \<open>cancels_to_1_at j x z\<close> cancels_to_1_at_def by (simp add: cancels_to_1_at_def)
-          then have n: "cancel_at i (cancel_at j x) = cancel_at (j-2) (cancel_at i x)" using cancel_order l m by (metis False True add.commute discrete insert_iff le_neq_implies_less)
-          then have "cancel_at i z = cancel_at (j-2) y" using \<open>cancels_to_1_at j x z\<close> \<open>cancels_to_1_at i x y\<close> cancels_to_1_at_def by (simp add: cancels_to_1_at_def)
-          have "take i z = take i x" using take_assoc cancel_at_def l m by (metis True \<open>cancels_to_1_at j x z\<close> add.commute cancels_to_1_at_def)
-          then have o: "(nth (take i z) i) = (nth (take i x) i)" by simp
-          moreover have "z = take i z @ drop i z" by simp
-          moreover have "x = take i x @ drop i x" by simp
-          ultimately have "(nth z i) = (nth x i)" using o l m sorry
-          (*Show that inverse (z!i) = (z!(i+1)) and inverse (y!(j-2)) = (y!(j-2 + 1))*)
-          then show ?thesis sorry
+          then have jl: "j + 1 < length x" by auto
+          then have "i + 1 + 2 < length x" using l  by linarith
+          then have zz: "i + 1 < length x - 2" by simp
+          have "length x - 2 = length (cancel_at i x)" using cancel_at_length[of "i" "x"] il i0 by presburger
+          then have "length x - 2 = length y" using y by simp
+          then have "j + 1 < length y + 2" using jl  by linarith
+          then have j2y: "(j - 2) + 1 < length y" using l by linarith
+          have "length x - 2 = length (cancel_at j x)" using cancel_at_length[of "j" "x"]  jl j0 by metis
+          then have "length x - 2 = length z" using z by simp
+          then have iz: "i + 1 < length z" using zz  by simp
+          have j: "j < length x" using m by linarith
+          then have n: "cancel_at i (cancel_at j x) = cancel_at (j-2) (cancel_at i x)" using cancel_order l m by (metis add.commute)
+          then have eq: "cancel_at i z = cancel_at (j-2) y" using \<open>cancels_to_1_at j x z\<close> \<open>cancels_to_1_at i x y\<close> cancels_to_1_at_def by (simp add: cancels_to_1_at_def)
+          have take: "take j z = take j x" using take_assoc cancel_at_def l m by (metis \<open>cancels_to_1_at j x z\<close> add.commute cancels_to_1_at_def eq_imp_le)
+          then have o: "(nth x i) = (nth z i)" using l i0 by (metis add_lessD1 nth_take)
+          have p: "(nth x (i+1)) = (nth z (i+1))" using l i0 take takenth by (metis True order.trans)
+          then have "inverse (nth z i) = (nth x (i+1))" using xi o by (smt (z3) add.commute) 
+          then have "inverse (nth z i) = (nth z (i+1))" using p by (smt (z3))
+          then have inv1: "inverse (nth z i) = (nth z (1+i))" by simp
+          have zeq: "(cancel_at i z) = cancel_at i z" by simp
+          have zu: "cancels_to_1_at i z (cancel_at i z)"  using i0 iz inv1 zeq unfolding cancels_to_1_at_def by linarith
+          have "y = cancel_at i x" using  \<open>cancels_to_1_at i x y\<close> cancels_to_1_at_def by (simp add: cancels_to_1_at_def)
+          then have q: "(nth x j) = (nth y (j - 2))" using cancel_atnth l j by blast
+          have r: "(nth x (j + 1)) = (nth y ((j - 2) + 1))"  using cancel_atnth j1 m by (smt (verit) \<open>y = cancel_at i x\<close> add.commute comm diff_add_inverse diff_diff_left diff_is_0_eq' l le_add2 nat_1_add_1 nat_less_le zero_less_diff)
+          have s: "inverse (nth y (j - 2)) = (nth x (j + 1))" using xj q  by auto
+          then have inv2:"inverse (nth y (j - 2)) = (nth y ((j - 2) + 1))" using r  by fastforce
+          have yeq: "cancel_at (j - 2) y = cancel_at (j - 2) y" by simp
+          have yu: "cancels_to_1_at (j - 2) y (cancel_at (j - 2) y)" using j20 j2y  inv2 yeq unfolding cancels_to_1_at_def by auto
+          then show ?thesis using yu zu eq by auto
         next
           case False
-          then show ?thesis sorry
-        qed
-      qed
+          then have j1i: "j + 1 < i" using ij by (metis discrete insertCI leI le_neq_implies_less)
+          then have j1i1: "j + 1 < i + 1" by linarith
+          have i0: "i\<ge>0" by simp
+          then have i20: "i - 2 \<ge> 0" by simp
+          have j0: "j \<ge> 0"  by simp
+          have z: "z = cancel_at j x" using \<open>cancels_to_1_at j x z\<close> cancels_to_1_at_def by auto
+          have y: "y = cancel_at i x"  using \<open>cancels_to_1_at i x y\<close> cancels_to_1_at_def by auto
+          have jl: "1 + j  < length x" using \<open>cancels_to_1_at j x z\<close> cancels_to_1_at_def by (simp add: cancels_to_1_at_def)
+          have il: "1 + i < length x" using  \<open>cancels_to_1_at i x y\<close> by (simp add: cancels_to_1_at_def)
+          have "length x - 2 = length (cancel_at j x)" using cancel_at_length[of "j" "x"] jl j0 by presburger
+          then have  "length x = length (cancel_at j x) + 2" using jl by linarith
+          then have "i + 1 < (length z) + 2" using il i0 z  by auto
+          then have i2z: "(i - 2) + 1 < length z" using j1i by linarith
+          have "length x - 2 = length (cancel_at i x)" using cancel_at_length[of "i" "x"] il i0 by presburger
+          then have xy: "length x - 2 = length y" using y  by simp
+          have "j + 1 + 2 < length x" using j1i il  by linarith
+          then have "j + 1 < length x - 2" using jl  by linarith
+          then have jy: "j + 1 < length y" using xy by simp
+          have "cancel_at j (cancel_at i x) = cancel_at (i-2) (cancel_at j x)" using j1i il cancel_order by auto
+          then have eq: "cancel_at j y = cancel_at (i-2) z" using y z by simp
+          have take: "take i x = take i y" using take_assoc cancel_at_def j1i by (metis add_diff_inverse_nat diff_add_inverse diff_add_inverse2 diff_le_self less_imp_diff_less less_nat_zero_code y zero_less_diff)
+          have nth: "(nth x j) = (nth y j)" using takenth i0 j1i1 add_less_imp_less_right take by blast
+          have nth1: "(nth x (j+1)) = (nth y (j+1))" using takenth i0 j1i1 j1i take by auto
+          have "inverse (nth y j) = (nth x (j+1))" using xj nth by fastforce
+          then have invj: "inverse (nth y j) = (nth y (j+1))" using nth1 by (smt (z3))
+          have yu:  "cancels_to_1_at j y (cancel_at j y)" using j0 jy invj cancels_to_1_at_def by fastforce
+          have nthi: "(nth x i) = (nth z (i - 2))" using z j1i  il cancel_atnth by (metis trans_le_add2 verit_comp_simplify1(3))
+          have nthi1: "(nth x (i+1)) = (nth z ((i - 2) + 1))"  using z j1i1 il by (metis Nat.add_diff_assoc2 add.commute add_lessD1 cancel_atnth discrete j1i nat_1_add_1)
+          then have "inverse (nth z (i - 2)) = (nth x (i + 1))" using xi nthi by fastforce
+          then have invi: "inverse (nth z (i - 2)) = (nth z ((i - 2) + 1))" using nthi1 by (smt (z3))
+          have zu: "cancels_to_1_at (i - 2) z (cancel_at (i - 2) z)" using i20 i2z invi cancels_to_1_at_def by (metis add.commute)
+          then show ?thesis using eq yu zu by auto
+       qed
     qed
   qed
 qed
-
-lemma assumes "reduced xs" "reduced ys" "inverse (last xs) \<noteq> (hd ys)"
-  shows "reduced (xs@ys)"
-proof(induction xs arbitrary: ys)
-case Nil
-  then show ?case sorry
-next
-  case (Cons a xs)
-  then show ?case sorry
-qed
-
-lemma assumes "reduced (xs@ys)"
-  shows "reduced xs"
-  using assms
-proof (induction xs rule : reduction.induct)
-case 1
-then show ?case by simp
-next
-  case (2 x)
-  then show ?case by simp
-next
-  case (3 g1 g2 wrd)
-  then show ?case
-  proof (cases "g1 =  inverse g2")
-    case True    
-then show ?thesis 
-  using "3.prems" by force
-next
-  case False
-  have "reduced ((g2 # wrd) @ ys)" 
-    by (metis "3.prems" append_Cons reduced.simps(3))
-  then have "reduced (g2#wrd)" 
-    using "3.IH"(2) False by auto
-  then show ?thesis by (simp add: False)
-qed
-qed
-
-lemma reduced_append: assumes "reduced (xs@ys)"
-  shows "reduced ys"
-  using assms
-proof (induction ys arbitrary: xs rule : reduction.induct)
-  case 1
-  then show ?case by simp
-next
-  case (2 x)
-  then show ?case by simp
-next
-  case (3 g1 g2 wrd)
-  then show ?case
-  proof (cases "g1 =  inverse g2")
-    case True
-    then show ?thesis sorry
-  next
-    case False
-    then show ?thesis sorry
-  qed
-qed
-
-lemma reduced_no_cancels_to_1_at: 
-  assumes "reduced xs"
-  shows "(\<nexists>i . cancels_to_1_at i xs ys)"
-proof(rule ccontr)
-  assume assm: "\<not>(\<nexists>i . cancels_to_1_at i xs ys)"
-  hence "\<exists>i . cancels_to_1_at i xs ys" by auto
-  then obtain i where "cancels_to_1_at i xs ys" by auto
-  then have 1:"inverse (xs!i) = (xs!(i+1))" using cancels_to_1_at_def by (simp add: cancels_to_1_at_def)
-  have 2: "i + 1 < length xs" by (metis \<open>cancels_to_1_at i xs ys\<close> add.commute cancels_to_1_at_def)
-  then have "xs = (take i xs) @ ((xs!i)#(xs!(i+1))#(drop (i+2) xs))" by (metis Cons_nth_drop_Suc Suc_1 Suc_eq_plus1 add_Suc_right add_lessD1 append_take_drop_id)
-  then have "reduced ((xs!i)#(xs!(i+1))#(drop (i+2) xs))" using assms reduced_append by metis
-  then show "False" using reduced.simps  by (simp add: "1" inverse_of_inverse)
-qed
-
-lemma assumes "cancels_to xs ys" "cancels_to xs zs" "reduced ys" "reduced zs" 
-  shows "ys = zs"
-  sorry
