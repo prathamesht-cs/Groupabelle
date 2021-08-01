@@ -18,7 +18,7 @@ lemma cancel_at_rightappend:
   shows "cancel_at i (a@c) = (b@c)"
 proof-
   have "take i (a@c) = take i a" using assms(1) assms (2) by simp
-  moreover have "(drop (2+i) a)@c = drop (2+i) (a@c)" using assms(1) assms(2) by simp
+  moreover have "(drop (2 + i) a)@c = drop (2+i) (a@c)" using assms(1) assms(2) by simp
   ultimately show ?thesis unfolding cancel_at_def by (metis append.assoc assms(3) cancel_at_def)
 qed
 
