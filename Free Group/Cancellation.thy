@@ -7,7 +7,7 @@ definition cancel_at :: "nat \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) wo
 
 definition cancels_to_1_at ::  "nat \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
 where "cancels_to_1_at i l1 l2 = (0\<le>i \<and> (1+i) < length l1
-                              \<and> (inverse (l1 ! i) = (l1 ! (1+i)))
+                              \<and> (inverse (l1 ! i) = (l1 ! (1 + i)))
                               \<and> (l2 = cancel_at i l1))"
 
 definition cancels_to_1 :: "('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
