@@ -1,5 +1,5 @@
 theory CancelLemmas
-imports "FreeGroupMain" "Cancellation" "Reln" "Reduction"
+imports "FreeGroupMain" "Cancellation" "Reduction"
 begin
 
 (*1. Cancellation append lemmas*)
