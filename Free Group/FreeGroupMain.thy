@@ -8,7 +8,7 @@ type_synonym ('a,'b) groupgentype = "('a,'b) monoidgentype \<times> bool"
 
 type_synonym ('a,'b) word = "(('a,'b) groupgentype) list"
 
-fun inverse::"('a,'b) groupgentype \<Rightarrow> ('a,'b) groupgentype"
+fun inverse::"('a,'b) groupgentype \<Rightarrow> ('a, 'b) groupgentype"
   where
 "inverse (x, True) = (x, False)"
 |"inverse (x, False) = (x, True)"
