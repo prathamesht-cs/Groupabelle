@@ -226,7 +226,7 @@ next
       by (metis append_Cons append_Nil)
 next
   case False
-  then have "([g1]@(g2#wrd)) ~ ([g1]@(reduction (g2#wrd)))" using 3(2) reln.mult reln.refl 
+  then have "([g1]@(g2#wrd)) ~ ([g1] @(reduction (g2#wrd)))" using 3(2) reln.mult reln.refl 
     by blast
   then have "([g1]@(g2#wrd)) ~ (reduction (g1#g2#wrd))" using False by simp
   then show ?thesis by simp
