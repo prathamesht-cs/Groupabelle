@@ -148,17 +148,86 @@ proof-
   qed
 qed
 
-(*2. Uniqueness of cancels_to*)
-
-lemma cancels_to_reduced :
-  assumes "i\<ge>0" "(i+1) <length x" "cancels_to x y"  "cancels_to x z" "reduced y" "reduced z" 
+lemma cancels_to_1_reduced :
+  assumes "cancels_to_1 x y"  "cancels_to_1 x z" "reduced y" "reduced z" 
   shows "y = z"
   using assms
-  unfolding cancels_to_def
-  sorry  
-  
+  unfolding cancels_to_1_def
+proof-
+  have 1: "(\<exists>i. cancels_to_1_at i x y) \<or> x = y" using assms(1) cancels_to_1_def by blast
+  have 2: "(\<exists>i. cancels_to_1_at i x z) \<or> x = z" using assms(2) cancels_to_1_def by blast
+  have "diamond (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" using diamond_cancel by simp
+  then have "commute  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" using diamond_def by auto
+  then have "square  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" using commute_def by blast
+  then have "(\<forall>x y. (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) x y --> (\<forall>z. (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) x z --> (\<exists>u. (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) y u \<and> (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) z u)))" using square_def[of "(\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" "(\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" "(\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" "(\<lambda> x y . (cancels_to_1 x y) \<or> x = y)"] by blast
+  then have "(\<exists>u. (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) y u \<and> (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) z u)" using 1 2  assms(1) assms(2) by blast
+  then have "\<exists>u . (y = u \<and>  z = u)" using cancels_to_1_red assms(3) assms(4) by (simp add: cancels_to_1_red)
+  then show ?thesis by simp
+qed
+
+lemma diamondlemmaapp: 
+  assumes  "(\<exists>i. cancels_to_1_at i x y) \<or> x = y" "(\<exists>i. cancels_to_1_at i x z) \<or> x = z"
+  shows "\<exists>u. ((\<exists>i. cancels_to_1_at i y u) \<or> y = u) \<and> ((\<exists>i. cancels_to_1_at i z u) \<or> z = u)"
+proof-
+  have "diamond (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" using diamond_cancel by simp
+  then have "commute  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" using diamond_def by auto
+  then have "square  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)  (\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" using commute_def by blast
+  then have "(\<forall>x y. (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) x y --> (\<forall>z. (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) x z --> (\<exists>u. (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) y u \<and> (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) z u)))" using square_def[of "(\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" "(\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" "(\<lambda> x y . (cancels_to_1 x y) \<or> x = y)" "(\<lambda> x y . (cancels_to_1 x y) \<or> x = y)"] by blast
+  then have "(\<exists>u. (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) y u \<and> (\<lambda> x y . (cancels_to_1 x y) \<or> x = y) z u)" by (metis assms(1) assms(2) cancels_to_1_def)
+  then show ?thesis by (simp add: cancels_to_1_def)
+qed
+
+lemma confluent_cancels_to_1: "confluent cancels_to_1"
+proof(rule lconfluent_confluent)
+  show "wfP cancels_to_1\<inverse>\<inverse>" by (rule canceling_terminates)
+next
+  fix a b c
+  assume "cancels_to_1 a b"
+  then have 1: "(\<exists>i. cancels_to_1_at i a b)" by (simp add: cancels_to_1_def)
+  assume "cancels_to_1 a c"
+  then have 2: "\<exists>j. cancels_to_1_at j a c" by (simp add: cancels_to_1_def)
+  show "\<exists>d. cancels_to_1\<^sup>*\<^sup>* b d \<and> cancels_to_1\<^sup>*\<^sup>* c d"
+  proof-
+    have "\<exists>d. ((\<exists>i. cancels_to_1_at i b d) \<or> b = d) \<and> ((\<exists>i. cancels_to_1_at i c d) \<or> c = d)" using 1 2 diamondlemmaapp by blast
+    then obtain d where "((\<exists>i. cancels_to_1_at i b d) \<or> b = d) \<and> ((\<exists>i. cancels_to_1_at i c d) \<or> c = d)" by force
+    then have "((\<exists>i. cancels_to_1_at i b d) \<or> b = d) \<and> ((\<exists>i. cancels_to_1_at i c d) \<or> c = d)"  by simp
+    then have "(cancels_to b d) \<and> (cancels_to c d)" by (simp add: rtrancancel)
+    then have "cancels_to_1\<^sup>*\<^sup>* b d \<and> cancels_to_1\<^sup>*\<^sup>* c d" using cancels_to_def by metis      
+    then show ?thesis by auto
+  qed
+qed
+
+(*2. Uniqueness of cancels_to*)
+
+lemma unique_reduced_cancel:
+  assumes "cancels_to x y" "cancels_to x z" "reduced y" "reduced z"
+  shows "y = z"
+proof(rule confluent_unique_normal_form)
+  have "cancels_to_1^** = cancels_to" using cancels_to_def  by metis
+  show "confluent cancels_to_1" using confluent_cancels_to_1 by simp
+next
+  show "cancels_to_1\<^sup>*\<^sup>* x y" using assms(1) cancels_to_def by metis
+next
+  show "cancels_to_1\<^sup>*\<^sup>* x z" using assms(2) cancels_to_def by metis
+next
+  show "\<not> Domainp cancels_to_1 y" using assms(3) reduced_normal by blast
+next
+  show "\<not> Domainp cancels_to_1 z" using assms(4) reduced_normal by blast
+qed  
 
 (*3. Uniqueness of cancel_eq*) 
-lemma "cancels_eq x y \<Longrightarrow> reduced x \<Longrightarrow> reduced y \<Longrightarrow> x = y" sorry 
+lemma reduced_cancel_eq:
+  assumes "cancels_eq x y" "reduced x" "reduced y"
+  shows "x = y"
+proof-
+  have "confluent cancels_to_1" using confluent_cancels_to_1 by blast
+  then have 1: "Church_Rosser cancels_to_1" using Church_Rosser_confluent by (simp add: Church_Rosser_confluent)
+  have "(symclp cancels_to)^** x y" using assms(1) eq_symp by metis
+  then have "(symclp cancels_to_1)^** x y" using sympstar by metis
+  then have 2: "(sup cancels_to_1 cancels_to_1^--1)^** x y" using symclp_pointfree[of "cancels_to_1"] by metis
+  have 3: "\<not> Domainp cancels_to_1 x" using assms(2) reduced_normal by blast
+  have 4: "\<not> Domainp cancels_to_1 y" using assms(3) reduced_normal by blast
+  show ?thesis using 1 2 3 4 Church_Rosser_unique_normal_form[of "cancels_to_1" "x" "y"] by blast
+qed
 
 end

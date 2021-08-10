@@ -1,5 +1,5 @@
 theory CancelLemmas
-imports "FreeGroupMain" "Cancellation" "Reduction"
+imports "FreeGroupMain" "Cancellation" "Reduction" "HOL-Proofs-Lambda.Commutation"
 begin
 
 (*1. Cancellation append lemmas*)
@@ -216,6 +216,34 @@ proof(rule ccontr)
   then show "False" using assms by simp
 qed
 
+lemma reduced_normal:
+  assumes "reduced x"
+  shows "(\<not> Domainp cancels_to_1 x)"
+proof-
+  show ?thesis using assms cancels_to_1_red by (simp add: cancels_to_1_red Domainp.simps)
+qed
+
+(*Lemmas about cancels_eq*)
+
+lemma eq_symp: "cancels_eq = (symclp cancels_to)^**"
+  unfolding cancels_eq_def symclp_def
+  by simp
+
+lemma symp_sup:"(symclp cancels_to)^** = (sup cancels_to cancels_to^--1)^**"
+proof-
+  show ?thesis using symclp_pointfree[of "cancels_to"] by metis
+qed
+
+lemma sympstar:"(symclp cancels_to)^** = (symclp cancels_to_1)^**"
+proof-
+  have 1:"(symclp cancels_to)^** = (sup cancels_to cancels_to^--1)^**" using symp_sup by simp
+  have 2: "... = (sup cancels_to_1^** (cancels_to_1^**)^--1)^**" using cancels_to_def by metis
+  have 3: "... = (sup cancels_to_1 cancels_to_1^--1)^**" using rtranclp_sup_rtranclp rtranclp_conversep by metis
+  have 4: "... = (symclp cancels_to_1)^**"  using symclp_pointfree[of "cancels_to_1"] by metis
+  show ?thesis by(simp add: 1 2 3 4)
+qed
+
+
 (*Useful lemmas about order of cancellation.*)
 
 lemma a1: 
@@ -240,18 +268,6 @@ case 0
 next
 case (Suc j)
   then show ?case by (metis add.commute add_lessD1 append_assoc plus_1_eq_Suc take_Suc_conv_app_nth)
-qed
-
-lemma assumes "j\<le>0" "j + 2 < Suc i" "Suc i + 1 \<le> length x"
-  shows "cancel_at j (cancel_at (Suc i) x) = take (i - 2) (cancel_at j (cancel_at i x)) @ [(nth x i)] @ drop (i - 1) (cancel_at j (cancel_at i x))"
-  unfolding cancel_at_def
-  using assms
-proof(induction j arbitrary: i)
-case 0
-  then show ?case sorry
-next
-  case (Suc j)
-then show ?case sorry
 qed
 
 lemma drop_assoc: assumes "i \<le> j"
@@ -516,7 +532,51 @@ next
   qed
 qed
 
+lemma rtrancancel:
+  assumes  "((\<exists>i. cancels_to_1_at i y u) \<or> y = u)"
+  shows "cancels_to y u"
+  by (metis assms cancels_to_1_def cancels_to_def rtranclp.simps)
+
+(*Useful term-rewriting lemmas*)
+
+theorem lconfluent_confluent:
+  "\<lbrakk> wfP (R^--1); \<And>a b c. R a b \<Longrightarrow> R a c \<Longrightarrow> \<exists>d. R^** b d \<and> R^** c d  \<rbrakk> \<Longrightarrow> confluent R"
+by(auto simp add: diamond_def commute_def square_def intro: newman)
+
+lemma confluentD:
+  "\<lbrakk> confluent R; R^** a b; R^** a c  \<rbrakk> \<Longrightarrow> \<exists>d. R^** b d \<and> R^** c d"
+by(auto simp add: commute_def diamond_def square_def)
+
+lemma tranclp_DomainP: "R^++ a b \<Longrightarrow> Domainp R a"
+by(auto elim: converse_tranclpE)
+
+lemma confluent_unique_normal_form:
+  "\<lbrakk> confluent R; R^** a b; R^** a c; \<not> Domainp R b; \<not> Domainp R c  \<rbrakk> \<Longrightarrow> b = c"
+  by(fastforce dest!: confluentD[of R a b c] dest: tranclp_DomainP rtranclpD[where a=b] rtranclpD[where a=c])
+
+lemma Church_Rosser_unique_normal_form:
+  assumes "Church_Rosser R" "(sup R (R\<inverse>\<inverse>))\<^sup>*\<^sup>* a b"  "\<not> Domainp R a" "\<not> Domainp R b"
+  shows " a = b"
+proof-
+  have "\<exists>c. R^** a c \<and> R^** b c" using assms(1, 2) using Church_Rosser_def by fastforce
+  then obtain c where "R^** a c \<and> R^** b c" by blast
+  then have 1: "(a = c \<or> a \<noteq> c \<and> R\<^sup>+\<^sup>+ a c) \<and> (b = c \<or> b \<noteq> c \<and> R\<^sup>+\<^sup>+ b c)" by (simp add: rtranclpD)
+  have a: "\<not> (R\<^sup>+\<^sup>+ a c)" using assms(3) tranclp_DomainP by metis
+  have b: "\<not> (R\<^sup>+\<^sup>+ b c)" using assms(4) tranclp_DomainP by metis
+  have "a = c \<and> b = c" using 1 a b by auto
+  then show ?thesis by simp
+qed
+
+lemma canceling_terminates: "wfP (cancels_to_1^--1)"
+proof-
+  have "wf (measure length)" by auto
+  moreover
+  have "{(x, y). cancels_to_1 y x} \<subseteq> measure length"
+    by (auto simp add: cancels_to_1_def cancel_at_def cancels_to_1_at_def)
+  ultimately
+  have "wf {(x, y). cancels_to_1 y x}"
+    by(rule wf_subset)
+  thus ?thesis by (simp add:wfP_def)
+qed
+
 end
-
-
-
