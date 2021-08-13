@@ -72,7 +72,7 @@ inductive_set group_spanset::"('a,'b) groupgentype set \<Rightarrow> ('a,'b) wor
 |"x \<in> S \<Longrightarrow> [y] \<in> \<llangle>S\<rrangle> \<Longrightarrow> [x]@[y] \<in> \<llangle>S\<rrangle>"
 
 definition conj_bool :: "('a,'b) groupgentype set \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
-  where "conj_bool S x y = (if (\<exists>s.(s\<in>\<llangle>S\<rrangle>) \<and> s@y = x@s \<and> x \<in> \<llangle>S\<rrangle> \<and> y \<in> \<llangle>S\<rrangle>)
+  where "conj_bool S x y = (if (\<exists>s.(s\<in>\<llangle>S\<rrangle>) \<and> y = s@x@(inv_list s) \<and> x \<in> \<llangle>S\<rrangle> \<and> y \<in> \<llangle>S\<rrangle>)
                            then True else False)"
 
 definition conj_class ::"('a,'b) groupgentype set \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word set"
