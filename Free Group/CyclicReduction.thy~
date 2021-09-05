@@ -228,10 +228,6 @@ next
 qed
 
 
-
-
-function cyc_perm:: "('a,'b) word \<Rightarrow> ('a,'b) word set"
-  where "cyc_perm [] = {wrds. (\<forall>(0 < i < length wrd)(wrd!i = wrds!(i+1)))}"
   
 
 
