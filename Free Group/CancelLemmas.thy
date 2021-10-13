@@ -329,23 +329,6 @@ proof(induction xs arbitrary: i j)
   qed
 qed(auto)
 
-lemma cancels_to_1_at_suci:
-  assumes "j = i + 1" "cancels_to_1_at i x y" "cancels_to_1_at j x z"
-  shows "y = z"
-proof-
-  have 1: "inverse (x ! i) = x ! (i + 1)" using cancels_to_1_at_def assms by auto
-  have "inverse (x ! j) = x ! (j + 1)" using cancels_to_1_at_def assms by auto
-  then have 2: "inverse (x ! (i + 1)) = x ! (i + 2)" using assms(1) by force
-  have "(i + 1) < length x" using cancels_to_1_at_def assms by auto
-  have "(j + 1) < length x" using cancels_to_1_at_def assms by auto
-  then have "(i + 2) < length x" using assms(1) by auto
-  have 3: "(nth x i) = (nth x (i + 2))" using 1 2 inverse_of_inverse by metis
-  have 4: "z = (take (i + 1) x) @ (drop (i + 3) x)" using assms(3) assms(1) cancels_to_1_at_def cancel_at_def by (metis ab_semigroup_add_class.add_ac(1) add.commute nat_1_add_1 numeral_Bit1 numerals(1))
-  have  "... = take i x @ drop (i + 2) x" using 3 sorry
-  have "... = y" using assms(1) cancels_to_1_at_def cancel_at_def by (metis add.commute assms(2))
-  then show ?thesis using 4 \<open>take (i + 1) x @ drop (i + 3) x = take i x @ drop (i + 2) x\<close> by presburger
-qed
-
 lemma cancel_order: assumes "i +1 < j" "j + 1 < length xs"
   shows "cancel_at i (cancel_at j xs) = (cancel_at (j-2) (cancel_at i xs))"
   using assms
