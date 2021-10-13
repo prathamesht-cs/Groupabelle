@@ -159,9 +159,18 @@ qed
 qed
 
 lemma reduced_leftappend:
-  assumes "reduced (xs@ys)" 
+  assumes "reduced (xs@ys)"
   shows "reduced ys"
-  sorry
+  using assms
+proof(induction xs rule:reduced.induct)
+  case (2 g)
+  then show ?case using reduced.simps
+    by (metis (mono_tags, hide_lams) append_Cons append_Nil reduced.elims(3))
+next
+  case (3 g h wrd)
+  then show ?case
+    by force
+qed (simp)
 
 lemma assumes "\<not>(reduced ys)"
   shows  "\<not>(reduced (xs@ys))"
