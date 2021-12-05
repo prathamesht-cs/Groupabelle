@@ -83,8 +83,6 @@ next
   ultimately show ?thesis using reduced_rightappend by metis
 qed
 
-
-
 lemma reduced_uncycle: assumes "reduced xs"
   shows "reduced (uncycle xs)"
   using assms
@@ -208,7 +206,6 @@ next
   then show ?case using  group_spanset.invgen  by (metis Cons_eq_appendI)
 qed
 
-
 lemma span_cons: assumes "(x#xs) \<in> \<llangle>S\<rrangle>" shows "xs \<in> \<llangle>S\<rrangle>"
   using assms
 proof(induction xs)
@@ -265,7 +262,6 @@ next
   then show ?case using 1  by auto
 qed
 
-
 lemma wordinverse_append: "(wordinverse x) @ (wordinverse y) = (wordinverse (y@x))"
 proof(induction y)
   case Nil
@@ -298,7 +294,6 @@ proof-
   then show ?thesis using wordinverse_of_wordinverse by metis
 qed
 
-
 lemma inverse_wordinverse: "((wordinverse xs) @  xs) ~ []"
 proof-
   let ?ys = "wordinverse xs"
@@ -328,9 +323,27 @@ next
   ultimately show ?case  by simp
 qed
 
-
 definition conj_rel :: "('a,'b) groupgentype set \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
   where "conj_rel S x y = ( x \<in> \<llangle>S\<rrangle> \<and> y \<in> \<llangle>S\<rrangle> \<and> (\<exists>a\<in>\<llangle>S\<rrangle> . (a @ x @ (wordinverse a)) ~ y))" 
+
+lemma conj_rel_symm:
+  assumes "conj_rel S x y" 
+  shows "conj_rel S y x"
+  using assms
+proof-
+  have "conj_rel S x y" using assms by simp
+  then obtain a where 1: "a \<in> \<llangle>S\<rrangle> \<and> ((a @ x @ (wordinverse a)) ~ y)" using assms conj_rel_def by blast
+  then have "y ~ (a @ x @ (wordinverse a))" using reln.sym by auto
+  then have "((wordinverse a) @ y) ~ (wordinverse a @ a @ x @ (wordinverse a))" by (simp add: mult reln.refl)
+  then have "((wordinverse a) @ y @ a) ~ (wordinverse a @ a @ x @ (wordinverse a) @ a)" using mult by fastforce
+  have "((wordinverse a) @ a) ~ []" by (metis wordinverse_of_wordinverse wordinverse_inverse)
+  then have "((wordinverse a) @ y @ a) ~ ([] @ x @ [])" using 1 by (metis (no_types, hide_lams) append.assoc mult reln.refl reln.trans)
+  then have "((wordinverse a) @ y @ a) ~ x" by simp
+  then have "((wordinverse a) @ y @ wordinverse(wordinverse a)) ~ x" by (metis wordinverse_of_wordinverse)
+  then obtain b where "(b = wordinverse a) \<and> (b @ y @ (wordinverse b)) ~ x" by auto
+  moreover then have "b \<in> \<llangle>S\<rrangle>" by (simp add: ‹a \<in> \<llangle>S\<rrangle> ∧ (a @ x @ wordinverse a) ~ y› span_wordinverse)
+  ultimately show ?thesis using assms conj_rel_def by blast
+qed 
 
 lemma conj_rel_trans: assumes "conj_rel S x y" "conj_rel S y z"
   shows "conj_rel S x z"
