@@ -326,6 +326,18 @@ qed
 definition conj_rel :: "('a,'b) groupgentype set \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
   where "conj_rel S x y = ( x \<in> \<llangle>S\<rrangle> \<and> y \<in> \<llangle>S\<rrangle> \<and> (\<exists>a\<in>\<llangle>S\<rrangle> . (a @ x @ (wordinverse a)) ~ y))" 
 
+lemma conj_rel_refl:
+  assumes "x \<in> \<llangle>S\<rrangle>"
+  shows "conj_rel S x x"
+  using assms
+proof-
+  have 1: "[] \<in> \<llangle>S\<rrangle>" by (simp add: group_spanset.empty)
+  have "[] @ x @ [] = x" by simp
+  moreover then have "x ~ x" by auto
+  ultimately then have "([] @ x @ []) ~ x" by simp
+  then show ?thesis using assms conj_rel_def 1 by force
+qed
+ 
 lemma conj_rel_symm:
   assumes "conj_rel S x y" 
   shows "conj_rel S y x"
@@ -388,6 +400,23 @@ proof-
   moreover have "(cycle_at_i xs i) \<in>  \<llangle>S\<rrangle>" unfolding cycle_at_i_def using d t span_append by blast
   ultimately show ?thesis unfolding conj_rel_def using assms a by blast
 qed
+
+lemma "conj_rel S xs (cyclic_reduct xs)"
+proof(induction xs)
+  case Nil
+  have "length [] = 0" by simp
+  moreover have "iter 0 reduct [] = []" by simp
+  ultimately have "uncycle [] = []" by simp
+  then have 1: "cyclic_reduct [] = []"  by (simp add: cyclic_reduct_def)  
+  have "[] @ [] @ [] = []" by simp
+  moreover then have "[] ~ []" by (simp add: reln.refl)
+  ultimately have "([] @ [] @ []) ~ []" by simp
+  then show ?case using 1 by (smt (verit, ccfv_SIG) conj_rel_def group_spanset.empty wordinverse.simps(1))
+next
+  case (Cons a xs)
+  then show ?case sorry
+qed
+
 
  
 
