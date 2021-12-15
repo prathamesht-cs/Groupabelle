@@ -136,7 +136,7 @@ qed
 
 (*2. Cancellation and Reduction relation.*)
 
-lemma "cancels_to x y \<Longrightarrow> x ~ y"
+lemma cancels_imp_rel: "cancels_to x y \<Longrightarrow> x ~ y"
   unfolding cancels_to_def
 proof(induction rule: rtranclp.induct)
   case (rtrancl_refl a)

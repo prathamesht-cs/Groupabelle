@@ -30,7 +30,7 @@ next
   qed
 qed
 
-lemma assumes "iter (length xs) reduct xs = iter (length ys) reduct ys"
+lemma iter_imp_cancels: assumes "iter (length xs) reduct xs = iter (length ys) reduct ys"
   shows "cancels_eq xs ys"
 proof-
   have "cancels_to xs (iter (length xs) reduct xs)" using iter_cancels_to by auto
