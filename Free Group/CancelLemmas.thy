@@ -162,7 +162,7 @@ next
   then show ?case using reln.trans rtrancl_into_rtrancl(3) by fast
 qed
 
-lemma  "x ~ y \<Longrightarrow> cancels_eq x y"
+lemma  reln_imp_cancels: "x ~ y \<Longrightarrow> cancels_eq x y"
 proof(induction rule:reln.induct)
 case (refl a)
 then show ?case unfolding cancels_eq_def cancels_to_def by simp
