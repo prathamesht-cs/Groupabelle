@@ -501,8 +501,64 @@ proof-
   moreover have "conj_rel S (uncycle (iter (length xs) reduct xs)) (iter (length xs) reduct xs)" using assms iter_reduct_span conj_uncycle by fast
   ultimately show ?thesis  unfolding cyclic_reduct_def  using conj_rel_trans by blast
   qed
+  
+lemma rel_cyc_red :
+  assumes "cyclic_reduced x" "cyclic_reduced y" "x ~ y" 
+  shows "cyclicp x y"
+  using assms
+  sorry
+
+lemma cyclicp_length : assumes "cyclicp x y" shows "length x = length y" 
+proof(rule ccontr)
+  assume 1: "\<not>(length x = length y)"
+  have "(\<exists>i. cyclicp_at_i x y i)" using assms cyclicp_def by auto
+  then obtain i where "cycle_at_i x i = y" using cyclicp_at_i_def by auto
+  then have "((drop i x)@(take i x)) = y" using cycle_at_i_def by metis
+  then have "length x = length y" using 1 by (metis append_take_drop_id length_rotate rotate_append)
+  then show False using "1" by auto
+qed
+ 
+lemma cyc_red_inv :
+  assumes "(a1 @ a2) \<in> \<llangle>S\<rrangle>" "cyclic_reduced x" "cyclic_reduced y" "((a1 @ a2) @ x @ wordinverse (a1 @ a2)) ~ y"
+  shows "(a2 @ x @ (wordinverse a2)) ~ y" (*cabc-c = bca*)
+  using assms
+proof(induction x)
+  case Nil
+  have "((a1 @ a2) @ [] @ wordinverse (a1 @ a2)) ~ y" using Nil.prems(4) by auto
+  then have "((a1 @ a2) @ wordinverse (a1 @ a2)) ~ y" by simp
+  then have 1: "[] ~ y" using reln.sym reln.trans wordinverse_inverse by blast
+  have "(a2 @ [] @ (wordinverse a2)) ~ []" by (simp add: wordinverse_inverse)   
+  then show ?case using 1 reln.trans by simp
+next
+  case (Cons a x)
+  then show ?case sorry
+qed
+
+
+(*D. Any two cyclically reduced words that are conjugate are of the same length.*)
+lemma 
+  assumes "cyclic_reduced x" "cyclic_reduced y" "conj_rel S x y" 
+  shows "length x = length y"
+  using assms
+proof-
+  obtain a where "a \<in> \<llangle>S\<rrangle> \<and> (a @ x @ (wordinverse a)) ~ y" using assms(3) conj_rel_def by blast
+  then show ?thesis proof(induction a)
+    case Nil
+    then have "x ~ y" by simp
+    then have "cyclicp x y" using assms by (simp add: rel_cyc_red)   
+    then show ?case using assms by (simp add: cyclicp_length)
+  next
+    case (Cons a1 a2)
+    have "a1 # a2 \<in> \<llangle>S\<rrangle>" using Cons.prems span_cons by blast
+    then have "((a1 # a2) @ x @ wordinverse (a1 # a2)) ~ y" using Cons.prems by auto
+    then have 1: "(a2 @ x @ wordinverse a2) ~ y" by (metis (no_types, lifting) Cons.prems Cons_eq_appendI append_self_conv2 assms(1) assms(2) cyc_red_inv)
+    have "a2 \<in> \<llangle>S\<rrangle>" using Cons.prems span_cons by blast
+    then show ?case using 1 by (simp add: Cons.IH)
+  qed
+
+
+  
 
 
 
-
-
+ 
