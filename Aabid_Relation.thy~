@@ -61,7 +61,7 @@ lemma transp_redrel: "transp (redrel)"
 quotient_type ('a, 'b) wordclass = "('a, 'b) word"/"redrel"
   by(rule equivpI, simp add: reflp_redrel, simp add: symp_redrel, simp add: transp_redrel)
 
-quotient_definition "liftappend :: ('a, 'b) wordclass \<Rightarrow> ('a, 'b) wordclass \<Rightarrow> ('a, 'b) wordclass" 
+quotient_definition "f :: ('a, 'b) wordclass \<Rightarrow> ('a, 'b) wordclass \<Rightarrow> ('a, 'b) wordclass" 
   is
 "append :: ('a, 'b) word  \<Rightarrow> ('a, 'b) word  \<Rightarrow> ('a, 'b) word"
   by (simp add: welldefined)

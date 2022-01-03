@@ -67,6 +67,12 @@ trans: "a ~ b \<Longrightarrow> b ~ c \<Longrightarrow> a ~ c" |
 base: "[g, inverse g] ~ []" |
 mult: "xs ~ xs' \<Longrightarrow> ys ~ ys' \<Longrightarrow> (xs@ys) ~ (xs'@ys')"
 
+definition reln_set :: "(('a,'b) word \<times> ('a,'b) word) set"
+  where
+"reln_set = {(x,y).x~y}" 
+
+
+
 lemma reflp_reln: "reflp (reln)"
   unfolding reflp_def by (simp add: reln.refl)
 
@@ -89,34 +95,31 @@ quotient_definition "NilLift :: ('a, 'b) wordclass"
 "Nil :: ('a, 'b) word"
   done
 
-definition wordeq::"('a,'b) word \<Rightarrow> ('a,'b) word set" ("[[_]]")
-  where
-"wordeq wrd = {wrds. wrd ~ wrds}"
 
-inductive_set mapset ::"(('a,'b) word) set \<Rightarrow> ((('a, 'b) word) set) set"
-  for S :: "(('a, 'b) word) set"
+definition wordeq::"(('a, 'b) word) set \<Rightarrow>('a,'b) word \<Rightarrow> ('a,'b) word set" ("[[_]]")
   where
-"x \<in> S \<Longrightarrow> ((wordeq x) \<in> mapset S)"
+"wordeq S wrd = {wrds. wrd ~ wrds \<and> wrds \<in> S}"
+
+definition lift_append :: " (('a,'b) word) set \<Rightarrow> (('a,'b) word) set \<Rightarrow> (('a,'b) word) set \<Rightarrow>(('a, 'b) word) set"
+  where
+"lift_append S a b = {x \<in> Rep_wordclass (liftappend (Abs_wordclass a) (Abs_wordclass b)). x \<in> S}"
+
+
+
+
 
 definition return_red :: "('a,'b) word set \<Rightarrow> ('a,'b) word"
   where
-"return_red S \<equiv> (SOME x. (x \<in> S \<and> reduced x))"
+"return_red S \<equiv> (THE x. (x \<in> S \<and> reduced x))"
 
-definition freegroup :: "('a,'b) monoidgentype set \<Rightarrow> ('a,'b) word set set"
+
+definition freegroup :: "('a,'b) monoidgentype set \<Rightarrow> (('a,'b) word set) monoid"
   where
 "freegroup S \<equiv> \<lparr>
-     carrier = mapset \<langle>S\<rangle>,
-     mult = \<lambda> x y. wordeq ((return_red x) @ (return_red y)),
-     one = wordeq []
+     carrier =  quotient \<langle>S\<rangle> reln_set,
+     mult = lift_append \<langle>S\<rangle>,
+     one = wordeq \<langle>S\<rangle> []
   \<rparr>"
 
-(*definition free_group :: "'a set => ((bool * 'a) list) monoid" ("\<F>\<index>")
-where 
-  "\<F>gens \<equiv> (|
-     carrier = {l\<in>lists (UNIV \<times> gens). canceled l },
-     mult = \<lambda> x y. normalize (x @ y),
-     one = []
-  |)),"
-*)
   
 end
