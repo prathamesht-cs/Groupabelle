@@ -1454,7 +1454,7 @@ Lemmas to be done:
    b. wordinverse xs ~ wordinverse ("iter" xs)
 *)
 
-lemma CP_OnlyIf_Ex: assumes  "conj_rel S xs ys" shows "cyclicp (cyclic_reduct xs) (cyclic_reduct ys)"
+lemma assumes  "conj_rel S xs ys" shows "cyclicp (cyclic_reduct xs) (cyclic_reduct ys)"
 proof-
    have xs: "xs\<in>\<llangle>S\<rrangle>" using assms conj_rel_def by blast
    then have cxs:"conj_rel S xs (cyclic_reduct xs)" by (simp add: conj_cyclicreduct conj_rel_symm)
@@ -1465,7 +1465,7 @@ proof-
    ultimately show ?thesis using conj_red by blast
  qed
 
-lemma CP_If_Ex: assumes "xs\<in>\<llangle>S\<rrangle>" "ys\<in>\<llangle>S\<rrangle>"  "cyclicp (cyclic_reduct xs) (cyclic_reduct ys)" shows "conj_rel S xs ys"
+lemma assumes "xs\<in>\<llangle>S\<rrangle>" "ys\<in>\<llangle>S\<rrangle>"  "cyclicp (cyclic_reduct xs) (cyclic_reduct ys)" shows "conj_rel S xs ys"
 proof-
   have cxs:"conj_rel S xs (cyclic_reduct xs)" using assms(1) by (simp add: conj_cyclicreduct conj_rel_symm)
   have cys:"conj_rel S ys (cyclic_reduct ys)" using assms(2) by (simp add: conj_cyclicreduct conj_rel_symm)
@@ -1473,81 +1473,5 @@ proof-
   then show ?thesis using conj_rel_symm conj_rel_trans cxs cys by blast
 qed
 
-fun checkcycleeq :: "nat \<Rightarrow> ('a, 'b) word \<Rightarrow> ('a, 'b) word \<Rightarrow> bool"
-  where
-"checkcycleeq (Suc n) x y = ((cycle_at_i x (Suc n) = y) \<or> (checkcycleeq n x y))"|
-"checkcycleeq 0 x y = (cycle_at_i x 0 = y)"
-
-definition ccyclicp :: "('a, 'b) word \<Rightarrow> ('a, 'b) word \<Rightarrow> bool"
-  where
-"ccyclicp x y = checkcycleeq (length x) x y"
-
-lemma Ex_Con: assumes "cyclicp x y" shows "ccyclicp x y"
-proof-
-  have "(\<exists>i. cycle_at_i x i = y)" using assms unfolding cyclicp_def cyclicp_at_i_def by blast
-  then obtain i where i:"cycle_at_i x i = y" by blast
-  then show ?thesis
-  proof(cases "i < length x")
-    case False
-    then have "cycle_at_i x (length x) = y" using i unfolding cycle_at_i_def  by simp
-then show ?thesis using ccyclicp_def checkcycleeq.simps(1) checkcycleeq.simps(2) by (metis not0_implies_Suc)
-next
-  case True
-  then show ?thesis unfolding cyclicp_def cyclicp_at_i_def cycle_at_i_def  ccyclicp_def using  i
-  proof(induction rule: checkcycleeq.induct)
-    case (1 n x y)
-    then show ?case
-    proof(cases "n > i")
-      case True
-      then show ?thesis using 1 by auto
-    next
-      case False
-      then have "n = i" using 1 by auto
-      then have "checkcycleeq n x y" using 1 checkcycleeq.elims(3) by auto
-      then show ?thesis by simp
-    qed
-  next
-    case (2 x y)
-    then show ?case  by auto
-  qed
-  qed
-qed
-
-lemma Con_Ex: assumes "ccyclicp x y" shows "cyclicp x y"
-  using assms unfolding ccyclicp_def
-proof(induction rule:checkcycleeq.induct)
-  case (1 n x y)
-  then show ?case
-  proof(cases "(cycle_at_i x (Suc n) = y)")
-    case True
-    then show ?thesis unfolding cyclicp_def cyclicp_at_i_def by auto
-  next
-    case False
-    then have "checkcycleeq n x y" using 1 by auto
-    then show ?thesis using 1 by simp
-  qed
-next
-  case (2 x y)
-  then have "(cycle_at_i x 0 = y)" by auto
-  then show ?case unfolding cyclicp_def cyclicp_at_i_def by auto
-qed
-
-lemma assumes  "conj_rel S xs ys" shows "ccyclicp (cyclic_reduct xs) (cyclic_reduct ys)"
-proof-
-  show ?thesis using assms Ex_Con CP_OnlyIf_Ex by blast
-qed
-
-lemma assumes "xs\<in>\<llangle>S\<rrangle>" "ys\<in>\<llangle>S\<rrangle>"  "ccyclicp (cyclic_reduct xs) (cyclic_reduct ys)" shows "conj_rel S xs ys"
-proof-
-  show ?thesis using assms Con_Ex CP_If_Ex by blast
-qed
-
-definition check_conj :: "('a, 'b) word \<Rightarrow> ('a, 'b) word \<Rightarrow> bool"
-  where "check_conj a b = ( ccyclicp (cyclic_reduct a) (cyclic_reduct b))"
-
-export_code check_conj in Haskell
-module_name CP file_prefix cp
-
-end
 
 
