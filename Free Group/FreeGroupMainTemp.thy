@@ -118,7 +118,6 @@ next
   ultimately show ?case  by simp
 qed
 
-
 definition spanset::"('a,'b) monoidgentype set \<Rightarrow> ('a,'b) word set" ("\<langle>_\<rangle>")
   where
 "spanset S = group_spanset (invgen S)"
@@ -161,6 +160,69 @@ mult: "xs ~ xs' \<Longrightarrow> ys ~ ys' \<Longrightarrow> (xs@ys) ~ (xs'@ys')
 definition reln_set :: "(('a,'b) word) set \<Rightarrow>(('a,'b) word \<times> ('a,'b) word) set"
   where
 "reln_set S = {(x,y).x~y \<and> x \<in> S \<and> y \<in> S}" 
+
+
+lemma wordinverse_inverse: "(xs @ (wordinverse xs)) ~ []"
+proof(induction xs)
+  case Nil
+  have "[] = []" by simp
+  then show ?case by (simp add: reln.refl)
+next
+  case (Cons a xs)
+  have "wordinverse (a#xs) = (wordinverse xs) @ [inverse a]"  by simp
+  moreover have "(a#xs) = [a] @ xs" by simp
+  ultimately have 1: "((a # xs) @ wordinverse (a # xs)) = [a] @ xs @ (wordinverse xs) @  [inverse a]" by (metis append_assoc)
+  have "([a] @ xs @ (wordinverse xs)) ~ [a] @ []"  using Cons.IH mult by blast
+  then have "([a] @ xs @ (wordinverse xs)) ~ [a]"  by auto
+  moreover have "[inverse a] ~ [inverse a]" by (simp add: reln.refl)
+  ultimately have "([a] @ xs @ (wordinverse xs) @  [inverse a]) ~ [a] @ [inverse a]" using mult by (metis append_assoc)
+  then have "([a] @ xs @ (wordinverse xs) @  [inverse a]) ~ []" by (simp add: base reln.trans)
+  then show ?case using 1  by auto
+qed
+
+
+lemma wordinverse_append: "(wordinverse x) @ (wordinverse y) = (wordinverse (y@x))"
+proof(induction y)
+  case Nil
+  have "wordinverse [] = []" by simp
+  then show ?case by simp
+next
+  case (Cons a y)
+  have "(wordinverse x) @ (wordinverse (a # y)) = (wordinverse x) @ (wordinverse y) @ [inverse a]" by simp
+  moreover have "(wordinverse ((a#y)@x)) = (wordinverse (y@x)) @ [inverse a]" by simp
+  ultimately show ?case using "Cons.IH" by simp
+qed
+
+lemma wordinverse_of_wordinverse:  "wordinverse (wordinverse xs) = xs"
+proof(induction xs)
+  case Nil
+  then show ?case by auto
+next
+  case (Cons a xs)
+  have 1: "wordinverse (a#xs) = (wordinverse xs) @ [inverse a]" by auto
+  have "wordinverse [inverse a] = [a]" using inverse_of_inverse  by (metis append.left_neutral wordinverse.simps(1) wordinverse.simps(2))
+  then have 2:"wordinverse ((wordinverse xs) @ [inverse a]) = [a] @ wordinverse (wordinverse xs)" using wordinverse_append by metis
+  then have "[a] @ wordinverse (wordinverse xs) = [a] @ xs" using Cons by auto
+  moreover have "[a] @ xs = (a#xs)" by simp
+  ultimately show ?case using 1 2 by simp
+qed
+
+lemma wordinverse_symm :assumes "wordinverse xs = ys" shows "xs = wordinverse ys"
+proof-
+  have "wordinverse (wordinverse xs) = wordinverse ys"  using assms by auto
+  then show ?thesis using wordinverse_of_wordinverse by metis
+qed
+
+
+lemma inverse_wordinverse: "((wordinverse xs) @  xs) ~ []"
+proof-
+  let ?ys = "wordinverse xs"
+  have "(wordinverse ?ys = xs)" by (simp add: wordinverse_of_wordinverse)
+  moreover have "(?ys @ wordinverse ?ys) ~ []" using wordinverse_inverse by blast
+  ultimately show ?thesis using wordinverse_of_wordinverse by simp
+qed
+
+
 
 
 
@@ -375,6 +437,11 @@ proof-
   then show ?thesis unfolding ProjFun2_def by simp
 qed
 
+lemma lift_append_wd: assumes "x \<in> \<langle>S\<rangle>" "y \<in> \<langle>S\<rangle>" shows "(lift_append \<langle>S\<rangle> ((reln_set \<langle>S\<rangle>)``{x}) ((reln_set \<langle>S\<rangle>)``{y})) = (reln_set \<langle>S\<rangle>) `` {append x y}"
+proof-
+  show ?thesis using reln_equiv[of "S"] append_congruent[of "S"] assms equiv_2f_wd[of "\<langle>S\<rangle>" "(reln_set \<langle>S\<rangle>)" "append" "x" "y"] unfolding lift_append_def  by simp
+qed
+
 lemma projfun2_assoc:assumes "equiv A r" and "Congruent2 r f" and "\<forall>x \<in> A. \<forall> y \<in> A. \<forall> z \<in> A. f x (f y z) = f (f x y) z" "C1\<in>A//r" "C2\<in>A//r" "C3\<in>A//r" "g=(ProjFun2 A r f)" shows "(g (g C1 C2) C3) = (g C1 (g C2 C3))"
 proof-
   obtain x y z where A:"C1=r``{x} \<and> C2=r``{y} \<and>  C3=r``{z} \<and>  x\<in>A \<and>  y\<in>A \<and>  z\<in>A" by (meson assms(4) assms(5) assms(6) quotientE)
@@ -393,7 +460,7 @@ proof-
   show ?thesis using assms reln_equiv[of "S"] append_congruent[of "S"] append_assoc2[of "\<langle>S\<rangle>"] projfun2_assoc[of "\<langle>S\<rangle>" "(reln_set \<langle>S\<rangle>)" "append" "C1" "C2" "C3"] unfolding lift_append_def by simp
 qed
 
-theorem freegroup_is_group: "group (freegroup S)"
+lemma freegroup_is_group: "group (freegroup S)"
 proof
   fix x y
   assume "x \<in> carrier (freegroup S)" hence x: "x \<in>(quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>))" by(auto simp add:freegroup_def) 
@@ -405,44 +472,45 @@ proof
 next
   fix x y z assume x:"x \<in> carrier (freegroup S)" assume y: "y \<in> carrier (freegroup S)" assume z: "z \<in> carrier (freegroup S)"
   from x and y and z
-  have  "x \<otimes>\<^bsub>freegroup S\<^esub> y \<otimes>\<^bsub>freegroup S\<^esub> z = x \<otimes>\<^bsub>freegroup S\<^esub> (y \<otimes>\<^bsub>freegroup S\<^esub> z)" by (simp add: freegroup_def lift_append_assoc)
+  show  "x \<otimes>\<^bsub>freegroup S\<^esub> y \<otimes>\<^bsub>freegroup S\<^esub> z = x \<otimes>\<^bsub>freegroup S\<^esub> (y \<otimes>\<^bsub>freegroup S\<^esub> z)" by (simp add: freegroup_def lift_append_assoc)
 next
   have "[] \<in> \<langle>S\<rangle>" unfolding spanset_def using empty by auto
   then have "(reln_set \<langle>S\<rangle>) `` {[]} \<in> quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)" by (simp add: quotientI)
   then show "\<one>\<^bsub>freegroup S\<^esub> \<in> carrier (freegroup S)"  by (auto simp add:freegroup_def)
 next
-  fix x
-  assume "x \<in> carrier \<F>\<^bsub>gens\<^esub>"
-  thus "\<one>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> \<otimes>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> x = x"
-    by (auto simp add:free_group_def)
+  fix x assume "x \<in> carrier (freegroup S)"
+  moreover then obtain x1 where x:"(reln_set \<langle>S\<rangle>)``{x1} = x" by (metis freegroup_def partial_object.select_convs(1) quotientE)
+  ultimately have "x1 \<in> \<langle>S\<rangle>"   by (metis freegroup_def partial_object.select_convs(1) proj_def proj_in_iff reln_equiv)
+  moreover have "[] \<in> \<langle>S\<rangle>" using empty spanset_def by auto
+  ultimately have "lift_append \<langle>S\<rangle> ((reln_set \<langle>S\<rangle>) `` {[]}) ((reln_set \<langle>S\<rangle>)``{x1}) = ((reln_set \<langle>S\<rangle>)``{x1})" by (simp add: lift_append_wd)
+  then show "\<one>\<^bsub>freegroup S\<^esub> \<otimes>\<^bsub>freegroup S\<^esub> x = x" using x by (simp add: freegroup_def)
 next
-  fix x
-  assume "x \<in> carrier \<F>\<^bsub>gens\<^esub>"
-  thus "x \<otimes>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> \<one>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> = x"
-    by (auto simp add:free_group_def)
+ fix x assume "x \<in> carrier (freegroup S)"
+  moreover then obtain x1 where x:"(reln_set \<langle>S\<rangle>)``{x1} = x" by (metis freegroup_def partial_object.select_convs(1) quotientE)
+  ultimately have "x1 \<in> \<langle>S\<rangle>"   by (metis freegroup_def partial_object.select_convs(1) proj_def proj_in_iff reln_equiv)
+  moreover have "[] \<in> \<langle>S\<rangle>" using empty spanset_def by auto
+  ultimately have "lift_append \<langle>S\<rangle>  ((reln_set \<langle>S\<rangle>)``{x1}) ((reln_set \<langle>S\<rangle>) `` {[]}) = ((reln_set \<langle>S\<rangle>)``{x1})" by (simp add: lift_append_wd)
+  then show "x \<otimes>\<^bsub>freegroup S\<^esub> \<one>\<^bsub>freegroup S\<^esub> = x" using x by (simp add: freegroup_def)
 next
-  show "carrier \<F>\<^bsub>gens\<^esub> \<subseteq> Units \<F>\<^bsub>gens\<^esub>"
-  proof (simp add:free_group_def Units_def, rule subsetI)
-    fix x :: "'a word_g_i"
-    let ?x' = "inv_fg x"
-    assume "x \<in> {y\<in>lists(UNIV\<times>gens). canceled y}"
-    hence "?x' \<in> lists(UNIV\<times>gens) \<and> canceled ?x'"
-      by (auto elim:inv_fg_closure1 simp add:inv_fg_closure2)
-    moreover
-    have "normalize (?x' @ x) = []"
-     and "normalize (x @ ?x') = []"
-      by (auto simp add:inv_fg_cancel inv_fg_cancel2)
-    ultimately
-    have "\<exists>y. y \<in> lists (UNIV \<times> gens) \<and>
-                  canceled y \<and>
-                  normalize (y @ x) = [] \<and> normalize (x @ y) = []"
-      by auto
-    with \<open>x \<in> {y\<in>lists(UNIV\<times>gens). canceled y}\<close>
-    show "x \<in> {y \<in> lists (UNIV \<times> gens).  canceled y  \<and>
-          (\<exists>x. x \<in> lists (UNIV \<times> gens) \<and>
-                  canceled x \<and>
-                  normalize (x @ y) = [] \<and> normalize (y @ x) = [])}"
-      by auto
+  show "carrier (freegroup S) \<subseteq> Units (freegroup S)"
+  proof (simp add:freegroup_def Units_def, rule subsetI)
+    fix x assume 1:"x \<in> \<langle>S\<rangle> // reln_set \<langle>S\<rangle>"
+    moreover then obtain x1 where x:"(reln_set \<langle>S\<rangle>)``{x1} = x" by (metis quotientE)
+    ultimately have x1:"x1 \<in> \<langle>S\<rangle>"  by (metis  proj_def proj_in_iff reln_equiv)
+    then have ix1:"wordinverse x1 \<in> \<langle>S\<rangle>" by (simp add: span_wordinverse spanset_def)
+    then have 2:"(reln_set \<langle>S\<rangle>)``{wordinverse x1} \<in> \<langle>S\<rangle> // reln_set \<langle>S\<rangle>" by (simp add: quotientI)
+    have nil: "[] \<in> \<langle>S\<rangle>" using empty spanset_def by auto
+    have "lift_append \<langle>S\<rangle> ((reln_set \<langle>S\<rangle>)``{x1}) ((reln_set \<langle>S\<rangle>)``{wordinverse x1}) = reln_set \<langle>S\<rangle> `` {x1@(wordinverse x1)}"  by (simp add: ix1 lift_append_wd x1)
+    moreover have "x1@(wordinverse x1) \<in> \<langle>S\<rangle>" using ix1 span_append spanset_def x1 by blast
+    moreover then have "((x1@(wordinverse x1)), []) \<in> reln_set \<langle>S\<rangle>" using nil wordinverse_inverse reln_set_def by auto
+    moreover then have "reln_set \<langle>S\<rangle> `` {x1@(wordinverse x1)} = reln_set \<langle>S\<rangle> `` {[]}" by (metis equiv_class_eq reln_equiv)
+    ultimately have 3:"lift_append \<langle>S\<rangle> ((reln_set \<langle>S\<rangle>)``{x1}) ((reln_set \<langle>S\<rangle>)``{wordinverse x1}) = reln_set \<langle>S\<rangle> `` {[]}" by simp
+    have "lift_append \<langle>S\<rangle>  ((reln_set \<langle>S\<rangle>)``{wordinverse x1}) ((reln_set \<langle>S\<rangle>)``{x1}) = reln_set \<langle>S\<rangle> `` {(wordinverse x1)@x1}"  by (simp add: ix1 lift_append_wd x1)
+    moreover have "(wordinverse x1)@x1 \<in> \<langle>S\<rangle>" using ix1 span_append spanset_def x1 by blast
+    moreover then have "(((wordinverse x1)@x1), []) \<in> reln_set \<langle>S\<rangle>" using nil inverse_wordinverse reln_set_def by auto
+    moreover then have "reln_set \<langle>S\<rangle> `` {(wordinverse x1)@x1} = reln_set \<langle>S\<rangle> `` {[]}" by (metis equiv_class_eq reln_equiv)
+    ultimately have 4:"lift_append \<langle>S\<rangle> ((reln_set \<langle>S\<rangle>)``{wordinverse x1}) ((reln_set \<langle>S\<rangle>)``{x1}) = reln_set \<langle>S\<rangle> `` {[]}" by simp
+    show "x \<in> {y \<in> \<langle>S\<rangle> // reln_set \<langle>S\<rangle>.\<exists>x\<in>\<langle>S\<rangle> // reln_set \<langle>S\<rangle>.lift_append \<langle>S\<rangle> x y = reln_set \<langle>S\<rangle> `` {[]} \<and> lift_append \<langle>S\<rangle> y x = reln_set \<langle>S\<rangle> `` {[]}}"  using 1 2 3 4 x by auto
   qed
 qed
 
