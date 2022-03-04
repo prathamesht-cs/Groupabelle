@@ -40,7 +40,7 @@ proof-
   then show ?thesis using a b unfolding cancels_eq_def using assms by auto
 qed
 
-lemma assumes "cancels_eq xs ys"
+lemma cancels_imp_iter: assumes "cancels_eq xs ys"
   shows "iter (length xs) reduct xs = iter (length ys) reduct ys"
 proof-
   have "cancels_to xs (iter (length xs) reduct xs)" using iter_cancels_to by auto
