@@ -11,6 +11,8 @@ definition freeg :: "_  \<Rightarrow> bool"
 definition inclusion ("\<iota>")
   where "\<iota> g = [(g, True)]"
 
+definition unlift where "unlift f S G r = (SOME h . \<forall> s \<in> S. \<forall> g \<in> G.   (r `` {g} = s) \<longrightarrow>  h g = f s)"  
+
 lemma (in group) genmap_closed:
   assumes cl: "f \<in> (\<iota> ` (gens ::('a, 'b) monoidgentype set)) \<rightarrow> carrier G"
       and "g \<in> (\<iota> ` gens) \<union> (wordinverse ` (\<iota> ` gens))"
@@ -336,9 +338,41 @@ proof-
 qed
 
 lemma (in group) genmapext_lift_hom:
-  assumes "f \<in> (\<iota> ` S) \<rightarrow> carrier G"
+  assumes "f \<in> (\<iota> ` (S::('a,'b) monoidgentype set)) \<rightarrow> carrier G"
   shows "genmapext_lift (\<iota> ` S) f \<in> hom (freegroup S) G"
-  sorry
-
-
+proof-
+  { 
+  fix x
+  assume "x \<in> carrier (freegroup S)"
+  then have x2: "x \<in>   quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)" unfolding freegroup_def by simp
+  moreover then obtain x1 where x1:"x1 \<in> x" by (metis all_not_in_conv in_quotient_imp_non_empty reln_equiv)
+  ultimately have xx1: "x = ((reln_set \<langle>S\<rangle>)``{x1})"  by (metis (no_types, lifting) Image_singleton_iff equiv_class_eq quotientE reln_equiv)
+  then have xin: "x1 \<in> \<langle>S\<rangle>" by (meson in_mono in_quotient_imp_subset reln_equiv x1 x2)
+  have "genmapext_lift (\<iota> ` S) f x = genmapext (\<iota> ` S) f x1" using genmapext_lift_wd x2 x1 assms(1) by simp
+  then have "genmapext_lift (\<iota> ` S) f x \<in> carrier G" using genmapext_closed  assms(1) xin by simp
+}
+  moreover
+  {
+  fix x assume x:"x \<in> carrier (freegroup S)"
+  fix y assume y:"y \<in> carrier (freegroup S)"
+  have x2:"x \<in>   quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)" using freegroup_def x by (metis partial_object.select_convs(1))
+  moreover then obtain x1 where x1:"x1 \<in> x" by (metis all_not_in_conv in_quotient_imp_non_empty reln_equiv)
+  ultimately have xx1: "x = ((reln_set \<langle>S\<rangle>)``{x1})"  by (metis (no_types, lifting) Image_singleton_iff equiv_class_eq quotientE reln_equiv)
+  then have xin: "x1 \<in> \<langle>S\<rangle>" by (meson in_mono in_quotient_imp_subset reln_equiv x1 x2)
+  have y2:"y \<in>   quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)" using freegroup_def y by (metis partial_object.select_convs(1))
+  moreover then obtain y1 where y1:"y1 \<in> y" by (metis all_not_in_conv in_quotient_imp_non_empty reln_equiv)
+  ultimately have yy1:"y = ((reln_set \<langle>S\<rangle>)``{y1})"  by (metis (no_types, lifting) Image_singleton_iff equiv_class_eq quotientE reln_equiv)
+  then have yin:"y1 \<in> \<langle>S\<rangle>" by (meson in_mono in_quotient_imp_subset reln_equiv y1 y2)
+  have 1:"x \<otimes>\<^bsub>(freegroup S)\<^esub> y = lift_append \<langle>S\<rangle> (x) (y)" by (simp add: freegroup_def)
+  then have "x \<otimes>\<^bsub>(freegroup S)\<^esub> y = lift_append \<langle>S\<rangle> ((reln_set \<langle>S\<rangle>)``{x1}) ((reln_set \<langle>S\<rangle>)``{y1})" using xx1 yy1 by simp
+  then have 2:"x \<otimes>\<^bsub>(freegroup S)\<^esub> y = ((reln_set \<langle>S\<rangle>)``{x1@y1})" using lift_append_wd x2 y2 x1 y1 reln_equiv by (metis (no_types, lifting)   quotient_eq_iff refl_onD1 reln_refl)
+  then have "genmapext_lift (\<iota> ` S) f (x \<otimes>\<^bsub>(freegroup S)\<^esub> y) = genmapext_lift (\<iota> ` S) f ((reln_set \<langle>S\<rangle>)``{x1@y1})" by simp
+  moreover  have "((reln_set \<langle>S\<rangle>)``{x1@y1}) \<in> quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)"  by (metis 1 2 lift_append_clos x2 y2)
+  moreover have "(x1@y1) \<in> ((reln_set \<langle>S\<rangle>)``{x1@y1})" using append_congruent eq_equiv_class equiv_2f_clos reln_equiv x1 x2 y1 y2 by fastforce 
+  ultimately have "genmapext_lift (\<iota> ` S) f (x \<otimes>\<^bsub>(freegroup S)\<^esub> y) = genmapext (\<iota> ` S) f (x1@y1)" using genmapext_lift_wd[of "((reln_set \<langle>S\<rangle>)``{x1@y1})" "S" "(x1@y1)" "f"] using assms by presburger
+  then have "genmapext_lift (\<iota> ` S) f (x \<otimes>\<^bsub>(freegroup S)\<^esub> y) = genmapext (\<iota> ` S) f x1 \<otimes> genmapext (\<iota> ` S) f y1" using genmapext_append xin yin assms(1) by auto
+  then have "genmapext_lift (\<iota> ` S) f (x \<otimes>\<^bsub>(freegroup S)\<^esub> y) = (genmapext_lift (\<iota> ` S) f x) \<otimes> (genmapext_lift (\<iota> ` S) f y)" using genmapext_lift_wd x2 x1 y2 y1  assms(1) by presburger
+}
+  ultimately show ?thesis by (simp add: homI)
+qed
 
