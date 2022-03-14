@@ -11,7 +11,8 @@ definition freeg :: "_  \<Rightarrow> bool"
 definition inclusion ("\<iota>")
   where "\<iota> g = [(g, True)]"
 
-definition unlift where "unlift f S G r = (SOME h . \<forall> s \<in> S. \<forall> g \<in> G.   (r `` {g} = s) \<longrightarrow>  h g = f s)"  
+definition unlift :: "(('a, 'b) word set\<Rightarrow> 'c) \<Rightarrow> ('a, 'b) monoidgentype set\<Rightarrow> (('a, 'b) word set) set \<Rightarrow> ('a, 'b) word \<Rightarrow> 'c"
+  where "unlift f gens S x = f (reln_set \<langle>gens\<rangle> `` {x})"  
 
 lemma (in group) genmap_closed:
   assumes cl: "f \<in> (\<iota> ` (gens ::('a, 'b) monoidgentype set)) \<rightarrow> carrier G"
@@ -36,6 +37,8 @@ qed
 fun (in group) genmapext
   where "genmapext S f [] = \<one>"|
 "genmapext S f (x#xs) = (genmap S f [x]) \<otimes> (genmapext S f xs)"
+
+
 
 
 lemma gen_spanset: assumes "xs \<in> \<llangle>S\<rrangle>" "xs \<noteq> []" shows "hd xs \<in> S"
@@ -375,4 +378,26 @@ proof-
 }
   ultimately show ?thesis by (simp add: homI)
 qed
+
+definition liftgen where "liftgen S = (\<Union>x \<in> (\<iota> ` S).{reln_set \<langle>S\<rangle> ``{x}})"
+
+lemma unlift_gens: assumes "f \<in> liftgen S \<rightarrow> carrier G"
+  shows "unlift f S (liftgen S) \<in> (\<iota> ` (S::('a,'b) monoidgentype set)) \<rightarrow> carrier G"
+proof(rule funcsetI)
+  fix x assume assm:"x \<in> \<iota> ` S"
+  have "(reln_set \<langle>S\<rangle> ``{x}) \<in> (\<Union>x \<in> (\<iota> ` (S::('a,'b) monoidgentype set)).{reln_set \<langle>S\<rangle> ``{x}} )" using assm by blast
+  then have "f (reln_set \<langle>S\<rangle> ``{x}) \<in> carrier G" using assms Pi_split_insert_domain unfolding liftgen_def by fastforce
+  moreover have "f (reln_set \<langle>S\<rangle> ``{x}) = unlift f S (liftgen S) x"  by (simp add: unlift_def)
+  ultimately show "unlift f S (liftgen S) x \<in> carrier G" by simp
+qed
+
+lemma (in group) unlift_gens: assumes "f \<in> liftgen (S::('a,'b) monoidgentype set) \<rightarrow> carrier G"
+  shows "genmapext_lift (\<iota> ` S) (unlift f S (liftgen S)) \<in> hom (freegroup S) G"
+proof-
+  have "unlift f S (liftgen S) \<in> (\<iota> ` S) \<rightarrow> carrier G" by (simp add: unlift_gens assms)
+  then show ?thesis using genmapext_lift_hom by blast
+qed
+
+lemma "(liftgen S) \<subseteq> quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)"
+  sorry
 
