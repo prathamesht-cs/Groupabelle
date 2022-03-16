@@ -1,5 +1,5 @@
 theory UniversalProperty
-  imports "FreeGroupMain" "CancelResults" "Iter_Reduction_Results"
+  imports "Generators" "FreeGroupMain" "CancelResults" "Iter_Reduction_Results"
 begin
 
 definition (in group) genmap
@@ -398,6 +398,22 @@ proof-
   then show ?thesis using genmapext_lift_hom by blast
 qed
 
+lemma inclusion_subset_spanset:"(\<iota> ` S) \<subseteq> \<langle>S\<rangle>"
+proof(rule subsetI)
+  fix x assume assms:"x \<in> \<iota> ` S"
+  then have "fst (hd x) \<in> S" by (metis fstI image_iff inclusion_def list.sel(1))
+  moreover have "snd (hd x) \<in> {True, False}" by simp
+  ultimately have "hd x \<in> invgen S" unfolding invgen_def by (simp add: mem_Times_iff)
+  moreover have "x = ((hd x)#[])" using assms inclusion_def by (metis image_iff list.sel(1))
+  ultimately show "x \<in> \<langle>S\<rangle>" unfolding spanset_def using empty gen by metis
+qed
+
 lemma "(liftgen S) \<subseteq> quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)"
-  sorry
+proof(rule subsetI)
+  fix x assume assms:"x \<in> liftgen S"
+  then have "x \<in> (\<Union>x \<in> (\<iota> ` S).{reln_set \<langle>S\<rangle> ``{x}})" by (simp add: liftgen_def)
+  then obtain x1 where "x = (reln_set \<langle>S\<rangle> ``{x1}) \<and> x1 \<in> (\<iota> ` S)" by blast
+  then moreover have "x1 \<in> \<langle>S\<rangle>" using inclusion_subset_spanset by auto
+  ultimately show "x \<in> \<langle>S\<rangle> // reln_set \<langle>S\<rangle>" by (simp add: quotientI)
+qed
 
