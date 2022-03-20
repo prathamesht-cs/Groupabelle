@@ -1,12 +1,12 @@
 theory UniversalProperty
-  imports "FreeGroupMain" "CancelResults" "Iter_Reduction_Results"
+imports "Generators" "FreeGroupMain" "CancelResults" "Iter_Reduction_Results"
 begin
 
 definition (in group) genmap
   where "genmap S f g = (if g \<in> S then f g else inv (f (wordinverse g)))"
 
 definition freeg :: "_  \<Rightarrow> bool"
-  where "freeg G  = ((group G) \<and> (\<exists>X \<subseteq> carrier G . \<forall>group H .(\<forall>f \<in> X \<rightarrow> carrier H . (\<exists>g \<in> hom G H . (\<forall>x \<in> X . f x = g x) \<and> (\<forall>h \<in> hom G H. \<forall>y \<in> carrier G. g y = h y)))))"
+  where "freeg G  = ((group G) \<and> (\<exists>X \<subseteq> carrier G . \<forall>group H .(\<forall>f \<in> X \<rightarrow> carrier H . (\<exists>g \<in> hom G H . (\<forall>x \<in> X . f x = g x) \<and> (\<forall>h \<in> hom G H. \<forall>x \<in> X .f x = h x \<longrightarrow> (\<forall>y \<in> carrier G.  g y = h y))))))"
 
 definition inclusion ("\<iota>")
   where "\<iota> g = [(g, True)]"
@@ -290,8 +290,6 @@ next
 qed
 qed *)
 
-
-
 lemma (in group) congruentlift: assumes "f \<in> (\<iota> ` (S::('a,'b) monoidgentype set)) \<rightarrow> carrier G" shows "congruent (reln_set (FreeGroupMain.spanset S)) (genmapext (\<iota> ` S) f)"
   unfolding congruent_def
 proof-
@@ -381,7 +379,7 @@ qed
 
 definition liftgen where "liftgen S = (\<Union>x \<in> (\<iota> ` S).{reln_set \<langle>S\<rangle> ``{x}})"
 
-lemma unlift_gens: assumes "f \<in> liftgen S \<rightarrow> carrier G"
+lemma (in group) unlift_gens: assumes "f \<in> liftgen S \<rightarrow> carrier G"
   shows "unlift f S (liftgen S) \<in> (\<iota> ` (S::('a,'b) monoidgentype set)) \<rightarrow> carrier G"
 proof(rule funcsetI)
   fix x assume assm:"x \<in> \<iota> ` S"
@@ -391,13 +389,303 @@ proof(rule funcsetI)
   ultimately show "unlift f S (liftgen S) x \<in> carrier G" by simp
 qed
 
-lemma (in group) unlift_gens: assumes "f \<in> liftgen (S::('a,'b) monoidgentype set) \<rightarrow> carrier G"
+lemma (in group) genmapext_unlift_hom: assumes "f \<in> liftgen (S::('a,'b) monoidgentype set) \<rightarrow> carrier G"
   shows "genmapext_lift (\<iota> ` S) (unlift f S (liftgen S)) \<in> hom (freegroup S) G"
-proof-
-  have "unlift f S (liftgen S) \<in> (\<iota> ` S) \<rightarrow> carrier G" by (simp add: unlift_gens assms)
-  then show ?thesis using genmapext_lift_hom by blast
+  by (simp add: assms genmapext_lift_hom unlift_gens)
+
+lemma inclusion_subset_spanset:"(\<iota> ` S) \<subseteq> \<langle>S\<rangle>"
+proof(rule subsetI)
+  fix x assume assms:"x \<in> \<iota> ` S"
+  then have "fst (hd x) \<in> S" by (metis fstI image_iff inclusion_def list.sel(1))
+  moreover have "snd (hd x) \<in> {True, False}" by simp
+  ultimately have "hd x \<in> invgen S" unfolding invgen_def by (simp add: mem_Times_iff)
+  moreover have "x = ((hd x)#[])" using assms inclusion_def by (metis image_iff list.sel(1))
+  ultimately show "x \<in> \<langle>S\<rangle>" unfolding spanset_def using empty gen by metis
 qed
 
-lemma "(liftgen S) \<subseteq> quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)"
-  sorry
+lemma liftgen_subset_quotient:"(liftgen S) \<subseteq> quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)"
+proof(rule subsetI)
+  fix x assume assms:"x \<in> liftgen S"
+  then have "x \<in> (\<Union>x \<in> (\<iota> ` S).{reln_set \<langle>S\<rangle> ``{x}})" by (simp add: liftgen_def)
+  then obtain x1 where "x = (reln_set \<langle>S\<rangle> ``{x1}) \<and> x1 \<in> (\<iota> ` S)" by blast
+  then moreover have "x1 \<in> \<langle>S\<rangle>" using inclusion_subset_spanset by auto
+  ultimately show "x \<in> \<langle>S\<rangle> // reln_set \<langle>S\<rangle>" by (simp add: quotientI)
+qed 
+
+lemma inclusion_hd: assumes "x \<in> (\<iota> ` S)"
+  shows "(hd x#[]) = x"
+proof-
+  show ?thesis using assms inclusion_def by (metis image_iff list.sel(1))
+qed
+
+lemma (in group) genmapext_unlift_ext: assumes "f \<in> liftgen (S::('a,'b) monoidgentype set) \<rightarrow> carrier G" 
+  shows "\<And>x. x \<in> (liftgen S) \<Longrightarrow> f x = genmapext_lift (\<iota> ` S) (unlift f S (liftgen S)) x"
+proof-
+  fix x assume assm:"x \<in> (liftgen S)"
+  then have x:"x \<in> quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)" using liftgen_subset_quotient by auto
+  have "x \<in> (\<Union>x \<in> (\<iota> ` S).{reln_set \<langle>S\<rangle> ``{x}})" using assm by (simp add: liftgen_def)
+  then obtain x1 where x1x:"x = (reln_set \<langle>S\<rangle> ``{x1}) \<and> x1 \<in> (\<iota> ` S)" by blast
+  then have x1s:"x1 \<in> \<langle>S\<rangle>" using inclusion_subset_spanset by blast
+  then have "x1 \<in> x" using reln_set_def reln_refl x1x by fastforce
+  then have A:"genmapext_lift (\<iota> ` S) (unlift f S (liftgen S)) x = genmapext (\<iota> ` S) (unlift f S (liftgen S)) x1" using  x assms genmapext_lift_wd[of "x" "S" "x1"] by (simp add: unlift_gens)
+  have "x1 = (hd x1#[])" using x1x by (metis inclusion_hd)
+  then have "genmapext (\<iota> ` S) (unlift f S (liftgen S)) x1 = (genmap (\<iota> ` S) (unlift f S (liftgen S)) x1) \<otimes> \<one>" using genmapext.simps by metis
+  then have "genmapext (\<iota> ` S) (unlift f S (liftgen S)) x1 = (genmap (\<iota> ` S) (unlift f S (liftgen S)) x1)" using genmap_closed[of "(unlift f S (liftgen S))" "S" "x1"] unlift_gens[of "f" "S"] assms by (simp add: x1x)
+  then have "genmapext (\<iota> ` S) (unlift f S (liftgen S)) x1 = (unlift f S (liftgen S)) x1" using x1x unfolding genmap_def by simp
+  then have "genmapext (\<iota> ` S) (unlift f S (liftgen S)) x1 = f x" using  x1x by (simp add: unlift_def)
+  then show "f x = genmapext_lift (\<iota> ` S) (unlift f S (liftgen S)) x" using A by simp
+qed
+
+lemma (in group) span_liftgen: "\<langle>liftgen S\<rangle>\<^bsub>(freegroup S)\<^esub>  \<subseteq> carrier (freegroup S)"
+proof-
+  have "carrier (freegroup S) = quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)" by (simp add: freegroup_def)
+  moreover have "(liftgen S)  \<subseteq> quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)" by (simp add: liftgen_subset_quotient)
+  ultimately show ?thesis by (metis freegroup_is_group group.gen_span_closed)
+qed
+
+lemma invgen_elem: assumes "x \<in> invgen S" shows "[x] \<in> (\<iota> ` S) \<or> wordinverse [x] \<in> (\<iota> ` S)"
+ proof(cases "snd x = True")
+   case True
+   moreover have fx:"fst x \<in> S" using assms invgen_def[of "S"] by (metis mem_Sigma_iff prod.collapse)
+  ultimately have "[x] \<in> (\<iota> ` S)" using assms fx inclusion_def  by (metis (mono_tags, lifting) image_iff prod.collapse)
+  then show "[x] \<in> (\<iota> ` S) \<or> wordinverse [x] \<in> (\<iota> ` S)"  by blast
+next
+  case False
+  then have "snd x = False" using assms by auto
+  moreover have "wordinverse [x] = (inverse x)#[]" by simp
+moreover have fx:"fst x \<in> S" using assms invgen_def[of "S"] by (metis mem_Sigma_iff prod.collapse)
+  ultimately have "wordinverse [x] \<in> (\<iota> ` S)" using inverse.simps(2) assms fx inclusion_def  by (metis (mono_tags, lifting) image_iff prod.collapse)
+  then show "[x] \<in> (\<iota> ` S) \<or> wordinverse [x] \<in> (\<iota> ` S)" by blast
+qed
+
+lemma (in group) wordinverse_inv: 
+  assumes "x \<in> carrier (freegroup S)" "x = (reln_set \<langle>S\<rangle>) `` {x1}"
+  shows "inv\<^bsub>(freegroup S)\<^esub> x = (reln_set \<langle>S\<rangle>) `` {wordinverse x1}"
+proof-
+  have nil: "[] \<in> \<langle>S\<rangle>" using spanset_def group_spanset.empty by auto
+  have 1:"x1 \<in> \<langle>S\<rangle>" using assms unfolding freegroup_def using in_quotient_imp_non_empty refl_onD1 reln_equiv reln_refl by fastforce
+  then have 2:"wordinverse x1 \<in> \<langle>S\<rangle>"  by (simp add: span_wordinverse)
+  then have A:"(reln_set \<langle>S\<rangle>) `` {wordinverse x1} \<in> carrier (freegroup S)" unfolding freegroup_def by (simp add: quotientI)
+  have "x \<otimes>\<^bsub>(freegroup S)\<^esub> (reln_set \<langle>S\<rangle>) `` {wordinverse x1} = (lift_append \<langle>S\<rangle>) ((reln_set \<langle>S\<rangle>) `` {x1}) ((reln_set \<langle>S\<rangle>) `` {wordinverse x1})" using assms  by (simp add: freegroup_def)
+  then have "x \<otimes>\<^bsub>(freegroup S)\<^esub> (reln_set \<langle>S\<rangle>) `` {wordinverse x1} = ((reln_set \<langle>S\<rangle>) `` {x1@wordinverse x1})" using lift_append_wd by (simp add: lift_append_wd 1 2)
+  moreover have "x1@(wordinverse x1) \<in> \<langle>S\<rangle>" using 1 2 span_append spanset_def by blast
+  moreover then have "((x1@(wordinverse x1)), []) \<in> reln_set \<langle>S\<rangle>" using nil wordinverse_inverse reln_set_def by auto
+  moreover then have "reln_set \<langle>S\<rangle> `` {x1@(wordinverse x1)} = reln_set \<langle>S\<rangle> `` {[]}" by (metis equiv_class_eq reln_equiv)
+  ultimately have "x \<otimes>\<^bsub>(freegroup S)\<^esub> (reln_set \<langle>S\<rangle>) `` {wordinverse x1} = reln_set \<langle>S\<rangle> `` {[]}" by simp
+  then have B:"x \<otimes>\<^bsub>(freegroup S)\<^esub> (reln_set \<langle>S\<rangle>) `` {wordinverse x1} = \<one>\<^bsub>(freegroup S)\<^esub>" by (simp add: freegroup_def)
+  have " (reln_set \<langle>S\<rangle>) `` {wordinverse x1}  \<otimes>\<^bsub>(freegroup S)\<^esub> x = (lift_append \<langle>S\<rangle>) ((reln_set \<langle>S\<rangle>) `` {wordinverse x1}) ((reln_set \<langle>S\<rangle>) `` {x1})"  using assms  by (simp add: freegroup_def)
+  then moreover have "lift_append \<langle>S\<rangle>  ((reln_set \<langle>S\<rangle>)``{wordinverse x1}) ((reln_set \<langle>S\<rangle>)``{x1}) = reln_set \<langle>S\<rangle> `` {(wordinverse x1)@x1}"  by (simp add: 1 2 lift_append_wd)
+  moreover have "(wordinverse x1)@x1 \<in> \<langle>S\<rangle>" using 1 2 span_append spanset_def by blast
+  moreover then have "(((wordinverse x1)@x1), []) \<in> reln_set \<langle>S\<rangle>" using nil inverse_wordinverse reln_set_def by auto
+  moreover then have "reln_set \<langle>S\<rangle> `` {(wordinverse x1)@x1} = reln_set \<langle>S\<rangle> `` {[]}" by (metis equiv_class_eq reln_equiv)
+  ultimately have C:"(reln_set \<langle>S\<rangle>) `` {wordinverse x1}  \<otimes>\<^bsub>(freegroup S)\<^esub> x = \<one>\<^bsub>(freegroup S)\<^esub>" by (simp add: freegroup_def)
+  show ?thesis by (simp add: A C assms(1) freegroup_is_group group.inv_equality inv_unique r_inv)
+qed
+
+lemma inclusion_liftgen: assumes "x \<in> (\<iota> ` S)" shows "(reln_set \<langle>S\<rangle> `` {x}) \<in> liftgen S"
+  using assms unfolding liftgen_def
+proof-
+  fix x assume "x \<in> \<iota> ` S"
+  then show "reln_set \<langle>S\<rangle> `` {x} \<in> (\<Union>x\<in>\<iota> ` S. {reln_set \<langle>S\<rangle> `` {x}})" by blast
+qed
+
+lemma (in group) liftgen_span: "carrier (freegroup S) \<subseteq> \<langle>liftgen S\<rangle>\<^bsub>(freegroup S)\<^esub>"
+proof(rule subsetI)
+  fix x assume assm: "x \<in> carrier (freegroup S)"
+  have "carrier (freegroup S) = quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)" by (simp add: freegroup_def)
+  then have x:"x \<in> quotient \<langle>S\<rangle> (reln_set \<langle>S\<rangle>)" using assm by simp
+  then show "x \<in> \<langle>liftgen S\<rangle>\<^bsub>freegroup S\<^esub>"
+  proof(cases "x = \<one>\<^bsub>freegroup S\<^esub>")
+case True
+  then show ?thesis by simp
+next
+  case False
+  then obtain x1 where def:"x = (reln_set \<langle>S\<rangle> ``{x1}) \<and> (x1 \<in> \<langle>S\<rangle>)"  by (meson x quotientE)
+  then have "(x1 \<in> \<langle>S\<rangle>)" by simp
+  then have "(reln_set \<langle>S\<rangle> ``{x1}) \<in> \<langle>liftgen S\<rangle>\<^bsub>freegroup S\<^esub>"
+  proof(induction x1)
+    case Nil
+    have "\<one>\<^bsub>freegroup S\<^esub> = reln_set \<langle>S\<rangle> `` {[]}" by (simp add: freegroup_def)
+  then show ?case  by (metis gen_span.gen_one)
+next
+  case (Cons a x1)
+  then have a: "[a] \<in> \<langle>S\<rangle>" using Cons cons_span  spanset_def by blast
+  moreover have c1:"x1  \<in> \<langle>S\<rangle>" using Cons span_cons  spanset_def by blast
+  ultimately have wd:"reln_set \<langle>S\<rangle> `` {a # x1} = (lift_append \<langle>S\<rangle>) (reln_set \<langle>S\<rangle> `` {[a]})  (reln_set \<langle>S\<rangle> `` {x1})"  by (simp add: lift_append_wd)
+  have x1in:"reln_set \<langle>S\<rangle> `` {x1} \<in> \<langle>liftgen S\<rangle>\<^bsub>freegroup S\<^esub>" using Cons by (simp add: c1)
+  have "wordinverse [a] \<in> \<langle>S\<rangle>" using a span_wordinverse by blast
+  then have inva: "reln_set \<langle>S\<rangle> `` {wordinverse [a]} \<in> carrier (freegroup S)" using freegroup_def by (simp add: freegroup_def quotientI)
+  have invgen:"a \<in> (invgen S)" using a by (metis group_spanset.cases list.inject not_Cons_self2 spanset_def)
+  then show ?case
+  proof(cases "[a]  \<in> (\<iota> ` S)")
+    case True
+    then have "(reln_set \<langle>S\<rangle> `` {[a]}) \<in> liftgen S" by (simp add: inclusion_liftgen)
+    then have "(reln_set \<langle>S\<rangle> `` {[a]}) \<in> \<langle>liftgen S\<rangle>\<^bsub>(freegroup S)\<^esub>"  by (simp add: gen_span.gen_gens)
+    then have "(lift_append \<langle>S\<rangle>) (reln_set \<langle>S\<rangle> `` {[a]})  (reln_set \<langle>S\<rangle> `` {x1}) \<in> \<langle>liftgen S\<rangle>\<^bsub>(freegroup S)\<^esub>" using freegroup_def x1in gen_mult[of "(reln_set \<langle>S\<rangle> `` {[a]})" "freegroup S" "liftgen S" "(reln_set \<langle>S\<rangle> `` {x1})"] by (metis monoid.select_convs(1))
+    then show ?thesis using wd by simp 
+next
+  case False
+  then have "wordinverse [a] \<in> \<iota> ` S" using invgen invgen_elem by blast
+  then have "(reln_set \<langle>S\<rangle> `` {wordinverse [a]}) \<in> liftgen S" by (simp add: inclusion_liftgen)
+  then have 1: "(reln_set \<langle>S\<rangle> `` {wordinverse [a]}) \<in> \<langle>liftgen S\<rangle>\<^bsub>(freegroup S)\<^esub>"  by (simp add: gen_span.gen_gens)
+  have "wordinverse (wordinverse [a]) = [a]"  using wordinverse_of_wordinverse by blast
+  then have "inv\<^bsub>(freegroup S)\<^esub> (reln_set \<langle>S\<rangle> `` {wordinverse [a]}) = (reln_set \<langle>S\<rangle> `` { [a]})" using inva wordinverse_inv[of "(reln_set \<langle>S\<rangle> `` {wordinverse [a]})" "S" "wordinverse [a]"] by auto
+  then have "(reln_set \<langle>S\<rangle> `` { [a]}) \<in> \<langle>liftgen S\<rangle>\<^bsub>(freegroup S)\<^esub>" using 1  by (metis gen_span.gen_inv)
+  then have "(lift_append \<langle>S\<rangle>) (reln_set \<langle>S\<rangle> `` {[a]})  (reln_set \<langle>S\<rangle> `` {x1}) \<in> \<langle>liftgen S\<rangle>\<^bsub>(freegroup S)\<^esub>" using freegroup_def x1in gen_mult[of "(reln_set \<langle>S\<rangle> `` {[a]})" "freegroup S" "liftgen S" "(reln_set \<langle>S\<rangle> `` {x1})"] by (metis monoid.select_convs(1))
+  then show ?thesis using wd by simp
+qed
+qed
+  then show ?thesis using def by simp
+qed
+qed
+
+lemma (in group) genmapext_unlift_uni:
+  assumes "group G"
+  and "f  \<in> liftgen (S::('a,'b) monoidgentype set) \<rightarrow> carrier G"
+  and "h \<in> hom (freegroup S) G"
+  and "\<forall> x \<in> (liftgen S) . f x = h x"
+shows "\<forall>y \<in> carrier (freegroup S).  (genmapext_lift (\<iota> ` S) (unlift f S (liftgen S))) y = h y"
+proof-
+  have 1:"group (freegroup S)" by (simp add: freegroup_is_group)
+  have "\<forall> x \<in> (liftgen S) . f x = (genmapext_lift (\<iota> ` S) (unlift f S (liftgen S))) x" using genmapext_unlift_ext assms(2) by blast
+  then have "\<forall> x \<in> (liftgen S) . (genmapext_lift (\<iota> ` S) (unlift f S (liftgen S))) x = h x" using assms(4) by auto
+  moreover have "(liftgen S) \<subseteq> carrier (freegroup S)" by (simp add: freegroup_def liftgen_subset_quotient)
+  moreover have "(genmapext_lift (\<iota> ` S) (unlift f S (liftgen S))) \<in> hom (freegroup S) G" using assms(2) by (simp add: genmapext_unlift_hom)
+  ultimately have "\<forall>x \<in> \<langle>(liftgen S)\<rangle>\<^bsub>(freegroup S)\<^esub>. (genmapext_lift (\<iota> ` S) (unlift f S (liftgen S))) x = h x" using hom_unique_on_span assms 1 by blast
+  then show ?thesis  using liftgen_span by blast
+qed
+
+lemma equiv_redelem:
+  assumes "w \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>))"
+  shows "\<exists>x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w)"
+proof-
+  obtain c where c: "w = (reln_set \<langle>S\<rangle>) `` {c}" by (meson assms quotientE)
+  then have cs: "c \<in> \<langle>S\<rangle>" using assms by (metis proj_def proj_in_iff reln_equiv)
+  obtain rc where rc: "rc = (iter (length c) reduct c)" by simp
+  then have "reduced rc" by (simp add: reduced_iter_length)
+  then have "c ~ rc" using rc cancels_imp_rel iter_cancels_to by auto
+  moreover then have "rc \<in> \<langle>S\<rangle>" using cs rc using cancels_to_preserves iter_cancels_to by blast
+  ultimately have crc: "(c, rc) \<in> reln_set \<langle>S\<rangle>" using cs reln_set_def by auto
+  then have "((reln_set \<langle>S\<rangle>)`` {rc} = w)"using c by (smt (verit, ccfv_SIG) equiv_class_eq_iff reln_equiv)
+  moreover then have "rc \<in> w" using c crc by simp
+  ultimately show ?thesis using \<open>reduced rc\<close> by auto
+qed
+
+lemma redelem_unique :
+  assumes "w \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>))"
+  shows "\<exists>!x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w)"
+proof(rule classical)
+  assume 1:"\<not>(\<exists>!x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w))"
+  have "\<exists>x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w)" using assms equiv_redelem by auto
+  then obtain x where x:"x \<in> w \<and> reduced x" by auto
+  obtain y where y:"(y \<in> w \<and> reduced y \<and> (reln_set \<langle>S\<rangle>)`` {x} = w) \<and> y \<noteq> x " using 1 x by (smt (verit, best) assms equiv_class_eq_iff equiv_class_self quotientE quotient_eq_iff reln_equiv)
+  then have "(x, y) \<in> reln_set \<langle>S\<rangle>" using x y by blast
+  then have "x ~ y" using reln_set_def by auto
+  then have "y = x" using x y using 1 reduced_cancel_eq reln_imp_cancels by blast
+  moreover then have "(reln_set \<langle>S\<rangle>)`` {x} = (reln_set \<langle>S\<rangle>)`` {y}" by simp
+  ultimately have False by (simp add: y)
+  then show "\<exists>!x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w)" by simp 
+qed
+
+definition equiv_red :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word"
+  where "equiv_red S w = (THE x. x \<in> w \<and> reduced x \<and> (w = reln_set \<langle>S\<rangle> `` {x}))"
+
+lemma equivred_equiv:
+  assumes "w \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>))"
+  shows "\<forall>x\<in>w. (reln_set \<langle>S\<rangle>) `` {x} = (reln_set \<langle>S\<rangle>) `` {equiv_red S w}"
+proof-
+  obtain x where x:"x \<in> w" using assms equiv_redelem by auto
+  then have xs: "x \<in> \<langle>S\<rangle>" using append_congruent assms equiv_2f_clos reln_equiv rightappend_span spanset_def by fastforce
+  have rw: "equiv_red S w \<in> w" using equiv_red_def redelem_unique by (metis (no_types, lifting) Uniq_I assms the1_equality')
+  then have rs: "equiv_red S w \<in> \<langle>S\<rangle>" using assms by (meson quotient_eq_iff refl_onD1 reln_equiv reln_refl)
+  then have "(x,equiv_red S w)\<in>(reln_set \<langle>S\<rangle>)" using xs x rs rw by (meson assms quotient_eq_iff reln_equiv)
+  then have "(reln_set \<langle>S\<rangle>) `` {x} = (reln_set \<langle>S\<rangle>) `` {equiv_red S w}" by (meson equiv_class_eq_iff reln_equiv)
+  then show ?thesis using x assms by (smt (verit, best)  equiv_class_eq_iff quotient_eq_iff reln_equiv)
+qed
+
+definition (in group) equivinv :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word set"
+  where "equivinv S w = (reln_set \<langle>S\<rangle> `` {wordinverse (equiv_red S w)})"
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
