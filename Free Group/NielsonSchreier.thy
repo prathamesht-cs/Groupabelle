@@ -36,7 +36,7 @@ definition lex_set where "lex_set A r = {(x, y). x \<in> A \<and> y \<in> A \<an
 
 fun lex_lift :: "('a,'b) monoidgentype set \<Rightarrow> ((('a,'b) groupgentype \<times> ('a,'b) groupgentype)) set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a,'b) word set \<Rightarrow> bool"
   where
-"lex_lift S r a b = (lex r (equiv_red S a) (equiv_red S b))"
+"lex_lift S r a b = (lex r (equiv_red S a) (equiv_red S b ))"
 
 definition lexlift_set :: "('a,'b) monoidgentype set \<Rightarrow> (('a,'b) word set) set \<Rightarrow> (('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> ((('a,'b) word set \<times> ('a,'b) word set)) set"
   where "lexlift_set S A r = {(a,b). a \<in> A \<and> b \<in> A \<and> lex_lift S r a b}"
@@ -45,7 +45,7 @@ lemma well_order_words :
   assumes "well_order_on A r"
   shows "well_order_on \<llangle>A\<rrangle> (lex_set \<llangle>A\<rrangle> r)"
   unfolding well_order_on_def
-  sorry
+sorry
 
 
 
