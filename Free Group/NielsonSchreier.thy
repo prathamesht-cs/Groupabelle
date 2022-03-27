@@ -309,7 +309,12 @@ lemma
       and "length a \<le> length c"
     shows "\<exists>x. c = a@x"
   using assms
-  sorry 
+  sorry
+
+lemma
+  assumes "a \<noteq> b"
+  and "length a = length b"
+shows "a \<noteq> [] \<and> b \<noteq> [] \<and> (\<exists>x y z. a = (x @ y) \<and> b = (x @ z) \<and> (hd y \<noteq> hd z))"
 
 lemma trans_compare:
   assumes "well_order_on (invgen A) r"
