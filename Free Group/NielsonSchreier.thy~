@@ -336,84 +336,11 @@ proof-
   then show ?thesis using 1 by (meson assms(5) assms(6) transD)
 qed
 
-lemma "noteq_eqlength":
+lemma ab_eqlen:
   assumes "a \<noteq> b"
   and "length a = length b"
 shows "a \<noteq> [] \<and> b \<noteq> [] \<and> (\<exists>x y z. a = (x @ y) \<and> b = (x @ z) \<and> (hd y \<noteq> hd z))"
-  using assms
-proof(induction a arbitrary: b)
-  case Nil
-  then have "b = []" by force
-  then show ?case using Nil.prems by simp
-next
-  case (Cons a1 a2)
-  then have A:"length a2 = length (tl b)" by fastforce
-   have 1:"(a1#a2) \<noteq> []" by simp
-  then have 2:"b \<noteq> []" using "Cons.prems"(2) by (metis length_0_conv)
-  show ?case
-  proof(cases "a2 = tl b")
-    case True
-    then have "a1 \<noteq> hd b" using Cons.prems(1) using 2 by auto
-    then have "(a1#a2) = ([] @ (a1#a2)) \<and> b = ([] @ b) \<and> (hd (a1#a2) \<noteq> hd b)" by simp
-    then show ?thesis using 1 2 by blast
-  next
-    case False
-    then have "a2 \<noteq> [] \<and> (tl b) \<noteq> [] \<and> (\<exists>x y z. a2 = x @ y \<and> (tl b)= x @ z \<and> hd y \<noteq> hd z)" using A Cons.IH by presburger
-    then obtain x y z where "(a2 = x @ y \<and> (tl b)= x @ z \<and> hd y \<noteq> hd z)"  by blast
-    then have "((a1#a2) = (a1#(x @ y)) \<and>  b = (hd b#(x @ z)) \<and> hd y \<noteq> hd z)" using 2 list.collapse by force
-    then have 3:"((a1#a2) = ((a1#x) @ y) \<and>  b = ((hd b#x) @ z) \<and> hd y \<noteq> hd z)"  by auto
-    then show ?thesis
-    proof(cases "a1 = hd b")
-      case True
-      then show ?thesis using 1 2 3 by blast
-    next
-      case False
-      then have "(a1#a2) = ([] @ (a1#a2)) \<and> b = ([] @ b) \<and> (hd (a1#a2) \<noteq> hd b)" by simp
-      then show ?thesis using 1 2 by blast
-    qed
-  qed
-qed
-
-lemma total_on_compare:
-  assumes "well_order_on (invgen A) r"
-  shows "(\<forall>x\<in>\<langle>A\<rangle>. \<forall>y\<in>\<langle>A\<rangle>. (length x = length y) \<longrightarrow> x \<noteq> y \<longrightarrow> (x, y) \<in> compare_set A r \<or> (y, x) \<in> compare_set A r)"
-  apply(rule ballI)+
-  apply(rule impI)+
-proof-
-  fix x y assume x: "x \<in> \<langle>A\<rangle>" and  y: "y \<in> \<langle>A\<rangle>" and lxy: "length x = length y" and xy:"x \<noteq> y"
-  then have 2:"x \<noteq> [] \<and> y  \<noteq> [] \<and> (\<exists>a b c. x = (a @ b) \<and> y = (a @ c) \<and> (hd b \<noteq> hd c))" using noteq_eqlength by auto
-  then obtain a b c where 1:"x = (a @ b) \<and> y = (a @ c) \<and> (hd b \<noteq> hd c)" by auto
-  then show "(x, y) \<in> compare_set A r \<or> (y, x) \<in> compare_set A r"
-  proof(cases "(hd b, hd c) \<in> r")
-    case True
-    then have "compare_alt r x y" using compare_alt.simps 1  by auto
-    then have "compare r x y" using lxy assms compalt_comp x y by blast
-    then show ?thesis unfolding compare_set_def  using x y by blast
-  next
-    case False
-    then have bc: "(hd b, hd c) \<notin> r" by simp
-    then show ?thesis
-    proof(cases "b = []")
-      case True
-      then have "c = []" using 1 lxy by auto
-      then have "x = y" using 1 by (simp add: True)
-      then have "compare_alt r x y" using compare_alt.simps by auto
-      then have "compare r x y" using lxy assms compalt_comp x y by blast
-      then show ?thesis unfolding compare_set_def  using x y by blast
-    next
-      case False
-      then have "c \<noteq> []" using 1 lxy by force
-      moreover have "c \<in> \<langle>A\<rangle>" using y 1 rightappend_span unfolding spanset_def by auto
-      ultimately have c:"hd c \<in> (invgen A)"  by (simp add: gen_spanset spanset_def)
-      have "b \<in> \<langle>A\<rangle>" using x 1 rightappend_span unfolding spanset_def by auto
-      then have "hd b \<in> (invgen A)" using False by (simp add: gen_spanset spanset_def)
-      then have "(hd c, hd b) \<in> r" using assms c bc 1 2 unfolding well_order_on_def linear_order_on_def total_on_def by blast
-      then have "compare_alt r y x" using compare_alt.simps 1 by fastforce
-      then have "compare r y x" using lxy assms compalt_comp x y by metis
-      then show ?thesis unfolding compare_set_def  using x y by blast
-    qed
-  qed
-qed
+  sorry
 
 lemma trans_compare:
   assumes "well_order_on (invgen A) r"
