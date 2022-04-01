@@ -650,84 +650,6 @@ lemma antisym_lex:
   assumes "well_order_on (invgen A) r"
   shows "antisym (lex_set \<langle>A\<rangle> r)"
   using antisymm_lex by (metis antisymI assms)
-
-lemma lex_trans:
-  assumes "well_order_on (invgen A) r"
-  shows "trans (lex_set \<langle>A\<rangle> r)"
-  unfolding trans_def
-  apply(rule allI)+
-  apply(rule impI)+
-proof-
-  fix x y z assume xy:"(x, y) \<in> (lex_set \<langle>A\<rangle> r)" and yz: "(y, z) \<in> (lex_set \<langle>A\<rangle> r)"
-  then show "(x, z) \<in> lex_set \<langle>A\<rangle> r"
-  proof(cases "length x < length y")
-    case True
-    then have lxy: "length x < length y" by simp
-    then show ?thesis
-    proof(cases "length y < length z")
-      case True
-      then have "length x < length z" using lxy less_trans by blast
-      then show ?thesis using lex.simps xy yz unfolding lex_set_def by auto
-    next
-      case False
-      then have "length y = length z" using yz lex.simps unfolding lex_set_def using linorder_neqE_nat by force
-      then have "length x < length z" using lxy by auto
-      then show ?thesis using lex.simps xy yz unfolding lex_set_def by auto
-    qed
-  next
-    case False
-    then have exy: "length x = length y" using xy lex.simps unfolding lex_set_def  by (metis (no_types, lifting) case_prodD linorder_neqE_nat mem_Collect_eq)
-    then show ?thesis
-    proof(cases "length y < length z")
-      case True
-      then have "length x < length z" by (simp add: True exy)
-      then show ?thesis using lex.simps xy yz unfolding lex_set_def by auto
-    next
-      case False
-      then have eyz:"length y = length z" using yz lex.simps unfolding lex_set_def using linorder_neqE_nat by force
-      then have "lex r y z = compare r y z" using lex.simps by auto
-      moreover have "lex r x y = compare r x y" using exy lex.simps by auto
-      moreover have "y \<in> \<langle>A\<rangle> \<and> z \<in> \<langle>A\<rangle> \<and> lex r y z" using yz unfolding lex_set_def by blast
-      moreover have "x \<in> \<langle>A\<rangle> \<and> lex r x y" using xy unfolding lex_set_def by blast
-      ultimately have "(x,y) \<in> compare_set A r \<and> (y, z) \<in> compare_set A r" unfolding compare_set_def by blast 
-      then have "compare r x z" using exy eyz assms trans_compare[of "A" "r"] unfolding compare_set_def using case_prodD mem_Collect_eq by blast
-      moreover have "lex r x  z = compare r x z" using exy eyz lex.simps by auto
-      ultimately show ?thesis using xy yz unfolding lex_set_def by fastforce
-    qed
-  qed
-qed
-
-lemma lex_total_on:
-  assumes "well_order_on (invgen A) r"
-  shows "total_on \<langle>A\<rangle> (lex_set \<langle>A\<rangle> r)"
-  unfolding total_on_def
-  apply(rule ballI)+
-  apply(rule impI)
-proof-
-  fix x y assume x: "x \<in> \<langle>A\<rangle>" and y: "y \<in> \<langle>A\<rangle>" and xy: "x \<noteq> y"
-  then show "(x, y) \<in> lex_set \<langle>A\<rangle> r \<or> (y, x) \<in> lex_set \<langle>A\<rangle> r"
-  proof(cases "length x = length y")
-    case True
-    then have "lex r x y = compare r x y" using lex.simps by simp
-    moreover have "lex r y x = compare r y x"  using True lex.simps by simp
-    moreover have "(x, y) \<in> compare_set A r \<or> (y, x) \<in> compare_set A r" using x y xy True total_on_compare[of "A" "r"] assms by blast
-    ultimately show ?thesis using x y unfolding lex_set_def compare_set_def by fastforce
-  next
-    case False
-    then have lxy: "length x \<noteq> length y" by simp
-    then show ?thesis
-    proof(cases "length x < length y")
-      case True
-      then have "lex r x y" by simp
-      then show ?thesis using x y unfolding lex_set_def by blast
-    next
-      case False
-      then have "length x > length y" using lxy by auto
-      then have "lex r y x" by simp
-      then show ?thesis using x y unfolding lex_set_def by blast
-    qed
-  qed
-qed
  
 fun lex_lift :: "('a,'b) monoidgentype set \<Rightarrow> ((('a,'b) groupgentype \<times> ('a,'b) groupgentype)) set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a,'b) word set \<Rightarrow> bool"
   where
@@ -744,31 +666,14 @@ fun least_hd :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Righ
   where
 "least_hd r A = (THE x. x = least r (hd ` A))"
 
-lemma least_hd_exists: 
-  assumes "well_order_on (invgen A) r"
-  and "S \<subseteq> \<langle>A\<rangle>"
-  shows "\<exists>x. x = least_hd r S"
-  by simp
-
-fun leastcons_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> (('a, 'b) word \<times> ('a, 'b) word set)"
+fun least_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> (('a, 'b) word \<times> ('a, 'b) word set)"
   where
-"leastcons_comp r (xs, A) =  (xs@[(least_hd r A)], {w. (w \<in> tl ` A \<and> (hd w = least_hd r A))})"
+"least_comp r (xs, A) = (if A = {[]} then (xs, A) 
+                              else (xs@[(least_hd r A)], {w. (w \<in> tl ` A \<and>(hd w = least_hd r A))}))"
 
 fun tuple_appendset :: "('a list \<times> 'a list set)  \<Rightarrow> ('a list set)"
   where
-"tuple_appendset (xs, S) = (append xs) ` S"
-
-lemma tuple_append: assumes "a \<in> tuple_appendset (xs, S)"
-  shows "\<exists>ys \<in> S. a = (xs @ ys)"
-proof-
-  have "a \<in> (append xs) ` S" using assms tuple_appendset.simps  by blast
-  then show ?thesis by (simp add: image_iff)
-qed
-
-fun leastn_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> nat \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> ('a, 'b) word"
-  where
-"leastn_comp r 0 (xs, A) = xs"|
-"leastn_comp r n (xs, A) = leastn_comp r (n - 1) (leastcons_comp r (xs, A))"
+"tuple_appendset (xs, S) = (\<Union>x \<in> S. {xs @ x})"
 
 lemma least_is_least :
   assumes "well_order_on (invgen A) r"
