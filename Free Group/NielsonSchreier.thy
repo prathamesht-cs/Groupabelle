@@ -36,7 +36,7 @@ qed
 
 definition equiv_red :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word"
   where "equiv_red S w = (THE x. x \<in> w \<and> reduced x \<and> (w = reln_set \<langle>S\<rangle> `` {x}))"
-
+(*
 lemma equivred_equiv:
   assumes "w \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>))"
   shows "\<forall>x\<in>w. (reln_set \<langle>S\<rangle>) `` {x} = (reln_set \<langle>S\<rangle>) `` {equiv_red S w}"
@@ -49,7 +49,7 @@ proof-
   then have "(reln_set \<langle>S\<rangle>) `` {x} = (reln_set \<langle>S\<rangle>) `` {equiv_red S w}" by (meson equiv_class_eq_iff reln_equiv)
   then show ?thesis using x assms by (smt (verit, best)  equiv_class_eq_iff quotient_eq_iff reln_equiv)
 qed
-
+*)
 definition equivinv :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word set"
   where "equivinv S w = (reln_set \<langle>S\<rangle> `` {wordinverse (equiv_red S w)})"
 
@@ -738,21 +738,36 @@ definition lexlift_set :: "('a,'b) monoidgentype set \<Rightarrow> (('a,'b) word
 
 definition least :: "('a \<times> 'a) set \<Rightarrow> 'a set \<Rightarrow> 'a"
   where
-"least r A = (THE x. \<forall>w \<in> A. (x,w) \<in> r)"
+"least r A = (SOME x. \<forall>w \<in> A. (x,w) \<in> r)"
 
 fun least_hd :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a,'b) groupgentype"
   where
-"least_hd r A = (THE x. x = least r (hd ` A))"
+"least_hd r A = least r (hd ` A)"
 
-lemma least_hd_exists: 
+lemma hd_sub_span:
+  assumes "[] \<notin> S"
+    and "S \<subseteq> \<llangle>A\<rrangle>"
+  shows "hd ` S \<subseteq>  A"
+proof(rule subsetI)
+  fix x assume x: "x \<in> hd ` S"
+  moreover then have "x \<in> hd ` \<llangle>A\<rrangle>" using assms(2) by blast
+  ultimately show "x \<in>  A" by (metis (no_types, lifting) assms(1) assms(2) gen_spanset image_iff in_mono)
+qed
+
+
+lemma least_exists: 
   assumes "well_order_on (invgen A) r"
+  and "[] \<notin> S"
+  and "S \<noteq> {}" 
   and "S \<subseteq> \<langle>A\<rangle>"
-  shows "\<exists>x. x = least_hd r S"
-  by simp
+shows "\<exists>x. \<forall>w \<in> hd ` S. (x,w) \<in> (r - Id)"
+proof-
+  have "hd ` S \<subseteq> (invgen A)" using assms(2) assms(4) unfolding spanset_def by (simp add: hd_sub_span)
+  then show ?thesis using assms(1) assms(3) wfE_min unfolding well_order_on_def sorry
 
 fun leastcons_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> (('a, 'b) word \<times> ('a, 'b) word set)"
   where
-"leastcons_comp r (xs, A) =  (xs@[(least_hd r A)], {w. (w \<in> tl ` A \<and> (hd w = least_hd r A))})"
+"leastcons_comp r (xs, A) =  (xs@[(least_hd r A)], {w \<in> tl ` A. ([least_hd r A]@w \<in> A)})"
 
 fun tuple_appendset :: "('a list \<times> 'a list set)  \<Rightarrow> ('a list set)"
   where
@@ -764,6 +779,49 @@ proof-
   have "a \<in> (append xs) ` S" using assms tuple_appendset.simps  by blast
   then show ?thesis by (simp add: image_iff)
 qed
+
+lemma least_consappend_in: 
+  assumes "leastcons_comp r (xs, S) = (ys, T)"
+  and "zs \<in> T"
+shows "[(least_hd r S)]@zs \<in> S"
+proof-
+  have "T = {w \<in> tl ` S. [least_hd r S] @ w \<in> S}" using assms(1) leastcons_comp.simps[of "r" "xs" "S"] by force
+  then show ?thesis using assms(2) using assms(1) by fastforce
+qed
+
+lemma least_consappend_sub: 
+  assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "leastcons_comp r (xs, S) = (ys, T)"
+shows "tuple_appendset (ys, T) \<subseteq> tuple_appendset (xs, S)"
+proof(rule subsetI)
+  fix x assume x:  "x \<in> tuple_appendset (ys, T)"
+  then obtain zs where zs:"zs \<in> T \<and> x = ys@zs" using tuple_append by blast
+  moreover have "ys = xs@[(least_hd r S)]" using leastcons_comp.simps using assms(3) by force
+  moreover have "[(least_hd r S)]@zs \<in> S" using zs assms(3)  least_consappend_in  by blast
+  ultimately show "x \<in> tuple_appendset (xs, S)" using tuple_appendset.simps by simp
+qed
+
+lemma least_cons_lesshd:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "leastcons_comp r (xs, S) = (ys, T)"
+shows "(x \<in> S \<and>  tl x \<notin> T \<and> x \<noteq> []) \<longrightarrow> (hd x \<noteq> (least_hd r S) \<and> ((least_hd r S), hd x) \<in> r)"
+  apply(rule impI)
+proof-
+  assume x: "x \<in> S \<and> tl x \<notin> T \<and> x \<noteq> []"
+  then have "x \<noteq> [(least_hd r S)] @ tl x" using leastcons_comp.simps[of "r" "xs" "S"] using assms(3) by force
+  then have 1:"hd x \<noteq> (least_hd r S)" by (metis append_self_conv2 assoc_Cons hd_Cons_tl x)
+  have "hd x \<in> hd ` S" using x by simp
+  then have "((least_hd r S), hd x) \<in> r" using least_hd.simps[of "r" "S"]  unfolding least_def sledgehammer 
+
+lemma least_cons_less:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "leastcons_comp r (xs, S) = (ys, T)"
+shows "\<forall>x y. (x \<in> tuple_appendset (xs, S) \<and>  x \<notin> tuple_appendset (ys, T)) \<longrightarrow> y \<in> tuple_appendset (ys, T) \<longrightarrow> (y, x) \<in> compare_set A r"
+  apply(rule allI)+
+  apply(rule impI)+
 
 fun leastn_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> nat \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> ('a, 'b) word"
   where
