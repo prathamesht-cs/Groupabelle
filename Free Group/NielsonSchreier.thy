@@ -738,9 +738,9 @@ definition lexlift_set :: "('a,'b) monoidgentype set \<Rightarrow> (('a,'b) word
 
 definition least :: "('a \<times> 'a) set \<Rightarrow> 'a set \<Rightarrow> 'a"
   where
-"least r A = (SOME x. \<forall>w \<in> A. (x,w) \<in> r)"
+"least r A = (THE x. x \<in> A \<and> (\<forall>w \<in> A. (x,w) \<in> r))"
 
-fun least_hd :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a,'b) groupgentype"
+definition least_hd :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a,'b) groupgentype"
   where
 "least_hd r A = least r (hd ` A)"
 
@@ -760,10 +760,22 @@ lemma least_exists:
   and "[] \<notin> S"
   and "S \<noteq> {}" 
   and "S \<subseteq> \<langle>A\<rangle>"
-shows "\<exists>x. \<forall>w \<in> hd ` S. (x,w) \<in> (r - Id)"
+shows "\<exists>x \<in>  hd ` S.  \<forall>w \<in> hd ` S. (x,w) \<in> r"
 proof-
-  have "hd ` S \<subseteq> (invgen A)" using assms(2) assms(4) unfolding spanset_def by (simp add: hd_sub_span)
-  then show ?thesis using assms(1) assms(3) wfE_min unfolding well_order_on_def sorry
+  have 1:"hd ` S \<subseteq> (invgen A)" using assms(2) assms(4) unfolding spanset_def by (simp add: hd_sub_span)
+  obtain x where "x \<in> S" using assms(3) by auto
+  then obtain hx where "hx \<in>  hd ` S" by blast
+  then show ?thesis using assms(1) assms(3) unfolding well_order_on_def by (metis Linear_order_wf_diff_Id 1 assms(1) image_is_empty well_order_on_Field)
+qed
+
+lemma least_unique: 
+  assumes "well_order_on (invgen A) r"
+  and "[] \<notin> S"
+  and "S \<noteq> {}" 
+  and "S \<subseteq> \<langle>A\<rangle>"
+shows "\<exists>!x \<in>  hd ` S.  \<forall>w \<in> hd ` S. (x,w) \<in> r"
+  sorry
+
 
 fun leastcons_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> (('a, 'b) word \<times> ('a, 'b) word set)"
   where
@@ -776,7 +788,7 @@ fun tuple_appendset :: "('a list \<times> 'a list set)  \<Rightarrow> ('a list s
 lemma tuple_append: assumes "a \<in> tuple_appendset (xs, S)"
   shows "\<exists>ys \<in> S. a = (xs @ ys)"
 proof-
-  have "a \<in> (append xs) ` S" using assms tuple_appendset.simps  by blast
+  have "a \<in> (append xs) ` S" using assms tuple_appendset.simps by blast
   then show ?thesis by (simp add: image_iff)
 qed
 
@@ -803,9 +815,11 @@ proof(rule subsetI)
 qed
 
 lemma least_cons_lesshd:
-assumes "well_order_on (invgen A) r"
+  assumes "well_order_on (invgen A) r"
   and "S \<subseteq> \<langle>A\<rangle>"
   and "leastcons_comp r (xs, S) = (ys, T)"
+  and "[] \<notin> S" 
+  and "S \<noteq> {}"
 shows "(x \<in> S \<and>  tl x \<notin> T \<and> x \<noteq> []) \<longrightarrow> (hd x \<noteq> (least_hd r S) \<and> ((least_hd r S), hd x) \<in> r)"
   apply(rule impI)
 proof-
@@ -813,7 +827,10 @@ proof-
   then have "x \<noteq> [(least_hd r S)] @ tl x" using leastcons_comp.simps[of "r" "xs" "S"] using assms(3) by force
   then have 1:"hd x \<noteq> (least_hd r S)" by (metis append_self_conv2 assoc_Cons hd_Cons_tl x)
   have "hd x \<in> hd ` S" using x by simp
-  then have "((least_hd r S), hd x) \<in> r" using least_hd.simps[of "r" "S"]  unfolding least_def sledgehammer 
+  then obtain hx where "hx \<in>  hd ` S \<and>  (\<forall>w \<in> hd ` S. (hx,w) \<in> r)"  unfolding least_def using assms least_exists[of "A" "r" "S"] by blast
+  then have "(least_hd r S) = hx" unfolding least_hd_def least_def sorry
+  then show "(hd x \<noteq> (least_hd r S) \<and> ((least_hd r S), hd x) \<in> r)" sorry
+qed
 
 lemma least_cons_less:
 assumes "well_order_on (invgen A) r"
@@ -822,6 +839,7 @@ assumes "well_order_on (invgen A) r"
 shows "\<forall>x y. (x \<in> tuple_appendset (xs, S) \<and>  x \<notin> tuple_appendset (ys, T)) \<longrightarrow> y \<in> tuple_appendset (ys, T) \<longrightarrow> (y, x) \<in> compare_set A r"
   apply(rule allI)+
   apply(rule impI)+
+  sorry
 
 fun leastn_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> nat \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> ('a, 'b) word"
   where
