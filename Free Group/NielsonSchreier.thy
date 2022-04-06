@@ -28,7 +28,7 @@ proof(rule classical)
   obtain y where y:"(y \<in> w \<and> reduced y \<and> (reln_set \<langle>S\<rangle>)`` {x} = w) \<and> y \<noteq> x " using 1 x by (smt (verit, best) assms equiv_class_eq_iff equiv_class_self quotientE quotient_eq_iff reln_equiv)
   then have "(x, y) \<in> reln_set \<langle>S\<rangle>" using x y by blast
   then have "x ~ y" using reln_set_def by auto
-  then have "y = x" using x y 1 reduced_cancel_eq reln_imp_cancels by blast
+  then have "y = x" using x y using 1 reduced_cancel_eq reln_imp_cancels by blast
   moreover then have "(reln_set \<langle>S\<rangle>)`` {x} = (reln_set \<langle>S\<rangle>)`` {y}" by simp
   ultimately have False by (simp add: y)
   then show "\<exists>!x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w)" by simp 
@@ -36,7 +36,7 @@ qed
 
 definition equiv_red :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word"
   where "equiv_red S w = (THE x. x \<in> w \<and> reduced x \<and> (w = reln_set \<langle>S\<rangle> `` {x}))"
-
+(*
 lemma equivred_equiv:
   assumes "w \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>))"
   shows "\<forall>x\<in>w. (reln_set \<langle>S\<rangle>) `` {x} = (reln_set \<langle>S\<rangle>) `` {equiv_red S w}"
@@ -49,7 +49,7 @@ proof-
   then have "(reln_set \<langle>S\<rangle>) `` {x} = (reln_set \<langle>S\<rangle>) `` {equiv_red S w}" by (meson equiv_class_eq_iff reln_equiv)
   then show ?thesis using x assms by (smt (verit, best)  equiv_class_eq_iff quotient_eq_iff reln_equiv)
 qed
-
+*)
 definition equivinv :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word set"
   where "equivinv S w = (reln_set \<langle>S\<rangle> `` {wordinverse (equiv_red S w)})"
 
@@ -650,7 +650,7 @@ lemma antisym_lex:
   assumes "well_order_on (invgen A) r"
   shows "antisym (lex_set \<langle>A\<rangle> r)"
   using antisymm_lex by (metis antisymI assms)
- 
+
 lemma lex_trans:
   assumes "well_order_on (invgen A) r"
   shows "trans (lex_set \<langle>A\<rangle> r)"
@@ -728,7 +728,7 @@ proof-
     qed
   qed
 qed
-
+ 
 fun lex_lift :: "('a,'b) monoidgentype set \<Rightarrow> ((('a,'b) groupgentype \<times> ('a,'b) groupgentype)) set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a,'b) word set \<Rightarrow> bool"
   where
 "lex_lift S r a b = (lex r (equiv_red S a) (equiv_red S b))"
@@ -768,7 +768,7 @@ proof-
   then show ?thesis using assms(1) assms(3) unfolding well_order_on_def by (metis Linear_order_wf_diff_Id 1 assms(1) image_is_empty well_order_on_Field)
 qed
 
-lemma least_unique: 
+lemma least_unique': 
   assumes "well_order_on (invgen A) r"
   and "[] \<notin> S"
   and "S \<noteq> {}" 
@@ -783,6 +783,32 @@ proof(rule classical)
   then have "x = y" by (metis assms(1) trans_r well_order_on_domain)
   then have False using y by auto
   then show "\<exists>!x \<in>  hd ` S.  \<forall>w \<in> hd ` S. (x,w) \<in> r" by simp
+qed
+
+lemma least_unique: 
+  assumes "well_order_on (invgen A) r"
+  and "[] \<notin> S"
+  and "S \<noteq> {}" 
+  and "S \<subseteq> \<langle>A\<rangle>"
+shows "\<exists>!x \<in>  hd ` S.  \<forall>w \<in> hd ` S. (x,w) \<in> r"
+proof(rule ex_ex1I)
+  show "\<exists>x. x \<in> hd ` S \<and> (\<forall>w\<in>hd ` S. (x, w) \<in> r)" using least_exists assms  by auto
+next
+    fix x y assume x:"x \<in> hd ` S \<and> (\<forall>w\<in>hd ` S. (x, w) \<in> r)" and y: "y \<in> hd ` S \<and> (\<forall>w\<in>hd ` S. (y, w) \<in> r)"
+    then have "(x, y) \<in> r"  by auto
+    moreover have "(y, x) \<in> r" using x y by auto
+    ultimately show "x = y" using assms(1) unfolding well_order_on_def linear_order_on_def partial_order_on_def antisym_def by blast
+qed
+
+lemma least_hd_the: 
+  assumes "well_order_on (invgen A) r"
+  and "[] \<notin> S"
+  and "S \<noteq> {}" 
+  and "S \<subseteq> \<langle>A\<rangle>"
+shows "(least_hd r S) \<in>  hd ` S \<and> (\<forall>x \<in> hd ` S. ((least_hd r S),x) \<in> r)"
+  unfolding least_hd_def least_def
+proof(rule theI')
+  show "\<exists>!x. x \<in> hd ` S \<and> (\<forall>w\<in>hd ` S. (x, w) \<in> r)" using assms least_unique[of "A" "r" "S"] by auto
 qed
 
 fun leastcons_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> (('a, 'b) word \<times> ('a, 'b) word set)"
@@ -817,37 +843,47 @@ shows "tuple_appendset (ys, T) \<subseteq> tuple_appendset (xs, S)"
 proof(rule subsetI)
   fix x assume x:  "x \<in> tuple_appendset (ys, T)"
   then obtain zs where zs:"zs \<in> T \<and> x = ys@zs" using tuple_append by blast
-  moreover have "ys = xs@[(least_hd r S)]" using leastcons_comp.simps using assms(3) by force
+  moreover have "ys = xs@[(least_hd r S)]" using leastcons_comp.simps  assms(3) by force
   moreover have "[(least_hd r S)]@zs \<in> S" using zs assms(3)  least_consappend_in  by blast
   ultimately show "x \<in> tuple_appendset (xs, S)" using tuple_appendset.simps by simp
 qed
+
 
 lemma least_cons_lesshd:
   assumes "well_order_on (invgen A) r"
   and "S \<subseteq> \<langle>A\<rangle>"
   and "leastcons_comp r (xs, S) = (ys, T)"
-  and "[] \<notin> S" 
-  and "S \<noteq> {}"
-shows "(x \<in> S \<and>  tl x \<notin> T \<and> x \<noteq> []) \<longrightarrow> (hd x \<noteq> (least_hd r S) \<and> ((least_hd r S), hd x) \<in> r)"
-  apply(rule impI)
-proof-
-  assume x: "x \<in> S \<and> tl x \<notin> T \<and> x \<noteq> []"
-  then have "x \<noteq> [(least_hd r S)] @ tl x" using leastcons_comp.simps[of "r" "xs" "S"] using assms(3) by force
-  then have 1:"hd x \<noteq> (least_hd r S)" by (metis append_self_conv2 assoc_Cons hd_Cons_tl x)
-  have "hd x \<in> hd ` S" using x by simp
-  then obtain hx where "hx \<in>  hd ` S \<and>  (\<forall>w \<in> hd ` S. (hx,w) \<in> r)"  unfolding least_def using assms least_exists[of "A" "r" "S"] by blast
-  then have "(least_hd r S) = hx" unfolding least_hd_def least_def sorry
-  then show "(hd x \<noteq> (least_hd r S) \<and> ((least_hd r S), hd x) \<in> r)" sorry
+  and "[] \<notin> S"
+  and "x \<in> tuple_appendset (xs, S) \<and> x = (xs@x1)"
+  and "x \<notin> tuple_appendset (ys, T)"
+shows "hd x1 \<noteq> (least_hd r S)"
+proof(rule ccontr)
+  assume "\<not> (hd x1 \<noteq> (least_hd r S))"
+  then have c:"hd x1 = (least_hd r S)" by simp
+  moreover have 1:"x1 \<in> S" using assms(5) by auto
+  ultimately have "x = xs@([(least_hd r S)]@(tl x1))" using assms(4)  by (metis append_Cons append_self_conv2 assms(5) list.collapse)
+  moreover have "ys = xs @ [(least_hd r S)]" using assms(3) leastcons_comp.simps[of "r" "xs" "S"] by auto
+  ultimately have 2:"x = ys@(tl x1)" by simp
+  have "tl x1 \<in> {w \<in> tl ` S. [least_hd r S] @ w \<in> S}" using c 1 by (metis (no_types, lifting) append_Cons append_Nil assms(4) image_eqI list.collapse mem_Collect_eq)
+  then have "tl x1 \<in> T" using assms(3) leastcons_comp.simps[of "r" "xs" "S"] by auto
+  then have "x \<in> tuple_appendset (ys, T)" using 2 tuple_appendset.simps[of "ys" "T"] by simp
+  then show False using assms(6) by blast
 qed
 
 lemma least_cons_less:
 assumes "well_order_on (invgen A) r"
   and "S \<subseteq> \<langle>A\<rangle>"
+  and "[] \<notin> S" 
   and "leastcons_comp r (xs, S) = (ys, T)"
 shows "\<forall>x y. (x \<in> tuple_appendset (xs, S) \<and>  x \<notin> tuple_appendset (ys, T)) \<longrightarrow> y \<in> tuple_appendset (ys, T) \<longrightarrow> (y, x) \<in> compare_set A r"
   apply(rule allI)+
   apply(rule impI)+
-  sorry
+proof-
+  fix x y assume x:"x \<in> tuple_appendset (xs, S) \<and> x \<notin> tuple_appendset (ys, T)" and y: "y \<in> tuple_appendset (ys, T)"
+  obtain x1 where x1:"x1 \<in> S \<and> x = xs@x1" using tuple_append x by blast
+  have "ys = xs @ [(least_hd r S)]" using assms(4) leastcons_comp.simps by fastforce
+  then show "(y, x) \<in> compare_set A r" sorry
+qed
 
 fun leastn_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> nat \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> ('a, 'b) word"
   where
@@ -866,5 +902,7 @@ lemma well_order_words :
   shows "well_order_on \<llangle>A\<rrangle> (lex_set \<llangle>A\<rrangle> r)"
   unfolding well_order_on_def
   sorry
+
+
 
 
