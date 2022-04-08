@@ -870,32 +870,312 @@ proof(rule ccontr)
   then show False using assms(6) by blast
 qed
 
+lemma length_decrease:
+  assumes "leastcons_comp r (xs, S) = (ys, T)"
+  and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+shows "\<forall>x \<in> T. length x = n - 1"
+proof(rule ballI)
+  fix x assume x:"x \<in> T"
+  then have "x \<in> {w \<in> tl ` S. ([least_hd r S]@w \<in> S)}" using assms(1) leastcons_comp.simps by auto
+  then obtain x1 where "x1 \<in> S \<and> x = tl x1"  by blast
+  moreover then have "length x1 = n" using assms(2) by simp
+  ultimately show "length x = n - 1" using assms(3)  by simp
+qed
+
+lemma length_increase:
+  assumes "leastcons_comp r (xs, S) = (ys, T)"
+  and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+shows "length ys = length xs + 1"
+proof-
+  have "ys = xs @ [least_hd r S]" using assms(1) leastcons_comp.simps by simp
+  then show ?thesis  by simp
+qed
+
+lemma length_invariant:
+assumes "leastcons_comp r (xs, S) = (ys, T)"
+  and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+shows "\<forall>x y. (x \<in> tuple_appendset (xs, S) \<and>  y \<in> tuple_appendset (ys, T)) \<longrightarrow> length x = length y"
+  apply(rule allI)+
+  apply(rule impI)
+proof-
+  fix x y assume xy: "x \<in> tuple_appendset (xs, S) \<and>  y \<in> tuple_appendset (ys, T)"
+  obtain x1 where x:"x1 \<in> S \<and> x = xs @ x1" using xy tuple_append by blast
+  then have x1: "length x1 = n" using assms(2) by auto
+  then have lx:"length x = length xs + n" using x by simp
+  obtain y1 where "y1 \<in> T \<and> y = ys @ y1" using xy tuple_append by blast
+  moreover then have "length y1 = (n - 1)" using assms length_decrease by auto
+  moreover have "length ys = length xs + 1" using assms length_increase by auto
+  ultimately have "length y = length xs + n" by (simp add: assms(3))
+  then show "length x = length y" using lx by simp
+qed
+
 lemma least_cons_less:
 assumes "well_order_on (invgen A) r"
   and "S \<subseteq> \<langle>A\<rangle>"
   and "[] \<notin> S" 
   and "leastcons_comp r (xs, S) = (ys, T)"
+and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+  and "xs \<in> \<langle>A\<rangle>"
 shows "\<forall>x y. (x \<in> tuple_appendset (xs, S) \<and>  x \<notin> tuple_appendset (ys, T)) \<longrightarrow> y \<in> tuple_appendset (ys, T) \<longrightarrow> (y, x) \<in> compare_set A r"
   apply(rule allI)+
   apply(rule impI)+
 proof-
   fix x y assume x:"x \<in> tuple_appendset (xs, S) \<and> x \<notin> tuple_appendset (ys, T)" and y: "y \<in> tuple_appendset (ys, T)"
   obtain x1 where x1:"x1 \<in> S \<and> x = xs@x1" using tuple_append x by blast
+  then have 1:"hd x1 \<noteq> (least_hd r S)" using assms(1) assms(2) assms(3) assms(4) least_cons_lesshd x by blast
+  have "hd x1 \<in> hd ` S" using x1 by simp
+  then have 2:"((least_hd r S),hd x1) \<in> r" using least_hd_the[of "A" "r" "S"] assms by blast
   have "ys = xs @ [(least_hd r S)]" using assms(4) leastcons_comp.simps by fastforce
-  then show "(y, x) \<in> compare_set A r" sorry
+  moreover obtain y1 where y1:"y1 \<in> T \<and> y = ys@y1" using tuple_append y by blast
+  ultimately have ya:"y = xs @ ([(least_hd r S)] @ y1)" by simp
+  moreover have "hd ([(least_hd r S)] @ y1) = (least_hd r S)" by simp
+  ultimately have "x = xs@x1 \<and> y = xs @ ([(least_hd r S)] @ y1) \<and> hd ([(least_hd r S)] @ y1) \<noteq> hd x1 \<and> (hd ([(least_hd r S)] @ y1), hd x1) \<in> r" using x1 1 2 compare_alt.simps by auto
+  then have "compare_alt r y x" using compare_alt.simps[of "r" "x" "y"] by force
+  moreover have "length x = length y" using assms(4) assms(5) assms(6) length_invariant x y by blast
+  moreover have xA: "x \<in> \<langle>A\<rangle>" using assms(2) assms(7) span_append spanset_def x1 by blast
+  moreover have yA: "y \<in> \<langle>A\<rangle>"  using ya assms(2) assms(4) assms(7) least_consappend_in span_append spanset_def y1 by blast
+  ultimately have "compare r y x" using compalt_comp assms(1) by metis
+  then show "(y, x) \<in> compare_set A r" using compare_set_def xA yA by blast
 qed
 
-fun leastn_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> nat \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set)) \<Rightarrow> ('a, 'b) word"
+fun leastn_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> nat \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set))  \<Rightarrow> (('a, 'b) word \<times> (('a, 'b) word set))"
   where
-"leastn_comp r 0 (xs, A) = xs"|
+"leastn_comp r 0 (xs, A) = (xs, A)"|
 "leastn_comp r n (xs, A) = leastn_comp r (n - 1) (leastcons_comp r (xs, A))"
 
-lemma least_is_least :
+definition least_comp :: "(('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> nat \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word"
+  where
+"least_comp r n A = fst (leastn_comp r n ([], A))"
+
+
+lemma leastcons_comp_fstsub:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "leastcons_comp r (xs, S) = (ys, T)"
+shows "T \<subseteq> \<langle>A\<rangle>"
+proof(rule subsetI)
+  fix x assume x:"x \<in> T"
+  then have "x \<in> {w \<in> tl ` S. [least_hd r S] @ w \<in> S}" using assms(3) leastcons_comp.simps by simp
+  then show "x \<in> \<langle>A\<rangle>" using assms(2) span_cons by (metis (no_types, lifting) x append_Cons append_Nil2 append_eq_append_conv2 assms(3) in_mono least_consappend_in same_append_eq spanset_def)
+qed
+
+lemma leastcons_notempty:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+  and "S \<noteq> {}"
+  and "leastcons_comp r (xs, S) = (ys, T)"
+shows "T \<noteq> {}"
+proof-
+  have 1:"[] \<notin> S" using assms(3) assms(4)  by auto
+  then have "(least_hd r S) \<in>  hd ` S"using assms  using least_hd_the by blast
+  moreover then obtain x where "x \<in> S \<and> hd x = (least_hd r S)" by auto
+  then have "tl x \<in> {w \<in> tl ` S. [least_hd r S] @ w \<in> S}" using 1 assms(6) by (metis (no_types, lifting) append_Cons append_self_conv2 hd_Cons_tl image_eqI mem_Collect_eq)
+  then show ?thesis using leastcons_comp.simps[of "r" "xs" "S"] using assms(6) by fastforce
+qed
+
+lemma nil_set:
+  assumes "S \<noteq> {}"
+  and "\<forall>x \<in> S. length x = n"
+  and "n = 0"
+shows "S = {[]}"
+proof-
+  have A:"[] \<in> S"
+  proof-
+  obtain x where 1:"x \<in> S" using subsetI assms(1) by blast
+  then have "length x = 0" using assms(2) assms(3) by simp
+  then have "x = []"  by simp
+  then show ?thesis using 1  by simp
+qed
+  then have "{[]} \<subseteq> S" by simp
+  moreover have "S \<subseteq> {[]}"
+  proof(rule subsetI)
+    fix x assume "x \<in> S"
+    then have "length x = 0" using assms(2) assms(3) by simp
+    then have "x = []"  by simp
+    then show "x \<in> {[]}"  by simp
+  qed 
+  ultimately show ?thesis by auto
+qed
+
+lemma leastn_comp_empty:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+  and "leastn_comp r n (x, S) = (xs, T)"
+  and "S \<noteq> {}"
+shows "T = {[]}"
+  using assms
+proof(induction n arbitrary:x  S)
+  case 0
+  then show ?case by simp
+next
+  case (Suc n)
+  let ?ys = "fst (leastcons_comp r (x, S))"
+  let ?U = "snd (leastcons_comp r (x, S))"
+  have "leastn_comp r (Suc n) (x, S) = leastn_comp r n (leastcons_comp r (x, S))" using leastn_comp.simps(2) by simp
+  then have "leastn_comp r (Suc n) (x, S) = leastn_comp r n (?ys, ?U)" by simp
+  then have 1:"leastn_comp r n (?ys, ?U) = (xs, T)" using Suc.prems by argo
+  have "\<forall>x \<in> ?U. length x = (Suc n) - 1" using Suc.prems length_decrease[of "r" "x" "S" "?ys" "?U" "Suc n"] using surjective_pairing by blast
+  then have U:"\<forall>x \<in> ?U. length x = n" by simp
+  have "leastcons_comp r (x, S) = (fst (leastcons_comp r (x, S)), snd (leastcons_comp r (x, S)))" by simp
+  then have US: "?U \<noteq> {}" using Suc.prems leastcons_notempty[of "A" "r" "S" "n" "x" "?ys" "?U"] using leastcons_notempty by blast
+  show ?case
+  proof(cases "n > 0")
+    case True
+    have "(leastcons_comp r (x, S)) = (?ys, ?U)" by simp
+    then have "?U \<subseteq> \<langle>A\<rangle>" using Suc.prems leastcons_comp_fstsub[of "A" "r" "S" "x" "?ys" "?U"] by auto
+    then show ?thesis using US Suc.prems Suc.IH[of "?U"] 1 U True by blast
+  next
+    case False
+    then have n:"n = 0" by auto
+    then have "leastn_comp r n (?ys, ?U) = (?ys, ?U)" using leastn_comp.simps(1) by fast
+    then have "?U = T" by (metis "1" prod.inject)
+    moreover have "?U = {[]}" using U n US nil_set[of "?U" "n"] by linarith
+    ultimately show ?thesis by simp
+  qed
+qed
+
+lemma leastn_comp_sub:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+  and "leastn_comp r n (xs, S) = (ys, T)"
+  and "S \<noteq> {}"
+shows "tuple_appendset (ys, T) \<subseteq> tuple_appendset (xs, S)"
+  using assms
+proof(induction n arbitrary: ys S xs T)
+  case 0
+  then show ?case by blast
+next
+  case (Suc n)
+  let ?ys = "fst (leastcons_comp r (xs, S))"
+  let ?U = "snd (leastcons_comp r (xs, S))"
+  have "leastn_comp r (Suc n) (xs, S) = leastn_comp r n (leastcons_comp r (xs, S))" using leastn_comp.simps(2) by simp
+  then have "leastn_comp r (Suc n) (xs, S) = leastn_comp r n (?ys, ?U)" by simp
+  then have 1:"leastn_comp r n (?ys, ?U) = (ys, T)" using Suc.prems by argo
+  have A:"tuple_appendset (?ys, ?U) \<subseteq> tuple_appendset (xs, S)" by auto
+  have "\<forall>x \<in> ?U. length x = (Suc n) - 1" using Suc.prems length_decrease[of "r" "xs" "S" "?ys" "?U" "Suc n"] using surjective_pairing by blast
+  then have U:"\<forall>x \<in> ?U. length x = n" by simp
+  have "leastcons_comp r (xs, S) = (fst (leastcons_comp r (xs, S)), snd (leastcons_comp r (xs, S)))" by simp
+  then have US: "?U \<noteq> {}" using Suc.prems leastcons_notempty[of "A" "r" "S" "n" "xs" "?ys" "?U"] using leastcons_notempty by blast
+  have "tuple_appendset (ys, T) \<subseteq> tuple_appendset (?ys, ?U)"
+  proof(cases "n > 0")
+    case True
+    have "(leastcons_comp r (xs, S)) = (?ys, ?U)" by simp
+    then have "?U \<subseteq> \<langle>A\<rangle>" using Suc.prems leastcons_comp_fstsub[of "A" "r" "S" "xs" "?ys" "?U"] by auto
+    then show ?thesis using 1 U US Suc.prems(1) True Suc.IH[of "?U" "?ys" "ys" "T"]  by blast
+next
+  case False
+  then have "(?ys, ?U) = (ys, T)" using 1 leastn_comp.simps  by auto
+  then show ?thesis  by simp
+qed
+  then show ?case using A  by blast
+qed
+
+lemma least_hd_span:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "[] \<notin> S"
+  and "S \<noteq> {}"
+  and "xs \<in> \<langle>A\<rangle>"
+shows  "[(least_hd r S)] \<in> \<langle>A\<rangle>"
+proof-
+  have "least_hd r S \<in> hd ` S" using assms(1) assms(2) assms(3) assms(4) least_hd_the by auto
+  moreover have "hd ` S \<subseteq> invgen A" by (metis assms(2) assms(3) hd_sub_span spanset_def)
+  ultimately show ?thesis unfolding spanset_def using group_spanset.empty group_spanset.gen subsetD by blast
+qed
+
+lemma leastn_comp_less:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+  and "leastn_comp r n (xs, S) = (ys, T)"
+  and "S \<noteq> {}"
+  and "xs \<in> \<langle>A\<rangle>"
+shows  "\<forall>x y. (x \<in> tuple_appendset (xs, S) \<and>  x \<notin> tuple_appendset (ys, T)) \<longrightarrow> y \<in> tuple_appendset (ys, T) \<longrightarrow> (y, x) \<in> compare_set A r"
+  using assms
+proof(induction n arbitrary: xs S ys T)
+  case 0
+  then show ?case by blast
+next
+  case (Suc n)
+  let ?ys = "fst (leastcons_comp r (xs, S))"
+  let ?U = "snd (leastcons_comp r (xs, S))"
+  have "leastn_comp r (Suc n) (xs, S) = leastn_comp r n (leastcons_comp r (xs, S))" using leastn_comp.simps(2) by simp
+  then have "leastn_comp r (Suc n) (xs, S) = leastn_comp r n (?ys, ?U)" by simp
+  then have 1:"leastn_comp r n (?ys, ?U) = (ys, T)" using Suc.prems by argo
+  have A:"tuple_appendset (?ys, ?U) \<subseteq> tuple_appendset (xs, S)" by auto
+  have L:"(leastcons_comp r (xs, S)) = (?ys, ?U)" by simp
+ have eS: "[] \<notin> S" using Suc.prems(3)  by (metis Suc.prems(4) bot_nat_0.not_eq_extremum list.size(3))
+  have C:"\<forall>x y. (x \<in> tuple_appendset (xs, S) \<and>  x \<notin> tuple_appendset (?ys, ?U)) \<longrightarrow> y \<in> tuple_appendset (?ys, ?U) \<longrightarrow> (y, x) \<in> compare_set A r" using L Suc.prems eS least_cons_less[of "A" "r"  "S" "xs"  "?ys" "?U" "Suc n"] by fastforce
+  have "\<forall>x \<in> ?U. length x = (Suc n) - 1" using Suc.prems length_decrease[of "r" "xs" "S" "?ys" "?U" "Suc n"] using surjective_pairing by blast
+  then have U:"\<forall>x \<in> ?U. length x = n" by simp
+  have "leastcons_comp r (xs, S) = (fst (leastcons_comp r (xs, S)), snd (leastcons_comp r (xs, S)))" by simp
+  then have US: "?U \<noteq> {}" using Suc.prems leastcons_notempty[of "A" "r" "S" "n" "xs" "?ys" "?U"] using leastcons_notempty by blast
+  then show ?case
+  proof(cases "n > 0")
+    case True
+    then have n: "n > 0" by simp
+    then have eU:"[] \<notin> ?U" using U by fastforce
+    have "[(least_hd r S)] \<in> \<langle>A\<rangle>" using least_hd_span  by (metis Suc.prems(2) Suc.prems(3) Suc.prems(6) Zero_not_Suc assms(1) assms(7) list.size(3))
+    then have yA: "?ys \<in> \<langle>A\<rangle>" using Suc.prems(7) leastcons_comp.simps spanset_def span_append by fastforce
+    then have UA:"?U \<subseteq> \<langle>A\<rangle>" using Suc.prems leastcons_comp_fstsub[of "A" "r" "S" "xs" "?ys" "?U"] by auto
+    then have A:"\<forall>x y. x \<in> tuple_appendset (?ys, ?U) \<and> x \<notin> tuple_appendset (ys, T) \<longrightarrow> y \<in> tuple_appendset (ys, T) \<longrightarrow> (y, x) \<in> compare_set A r"
+     using yA 1 U US Suc.prems(1) True Suc.IH[of "?U" "?ys" "ys" "T"] by blast
+    then  have B: "\<forall>x y. x \<in> tuple_appendset (?ys, ?U) \<and> y \<in> tuple_appendset (ys, T) \<longrightarrow> (y, x) \<in> compare_set A r \<or> x \<in> tuple_appendset (ys, T)" by blast
+    show ?thesis apply(rule allI)+ apply(rule impI)+
+    proof-
+      fix x y assume x: "x \<in> tuple_appendset (xs, S) \<and> x \<notin> tuple_appendset (ys, T)" and y: "y \<in> tuple_appendset (ys, T) "
+      then have yy:"y \<in> tuple_appendset (?ys, ?U)" using Suc.prems(1) UA U True US 1 leastn_comp_sub[of "A" "r" "?U" "n" "?ys" "ys" "T"] by blast
+      show "(y, x) \<in> compare_set A r"
+      proof(cases "x \<in> tuple_appendset (?ys, ?U)")
+        case True
+        then show ?thesis using x B  y by blast
+      next
+        case False
+        then show ?thesis using C yy  x by blast
+      qed
+    qed
+  next
+    case False
+    then have "n = 0" by simp
+    then have "(ys, T) = (?ys, ?U)" using 1 by auto
+    then show ?thesis using C by blast
+  qed
+qed
+
+lemma leastn_comp_single:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+  and "S \<noteq> {}"
+shows "tuple_appendset (leastn_comp r n ([], S)) = {least_comp r n S}"
+  sorry
+
+lemma leastn_comp_least:
+assumes "well_order_on (invgen A) r"
+  and "S \<subseteq> \<langle>A\<rangle>"
+  and "\<forall>x \<in> S. length x = n"
+  and "n > 0"
+  and "S \<noteq> {}"
+shows "\<forall>x \<in> S. ((least_comp r n S), x) \<in> compare_set A r"
+  sorry
+(*lemma least_is_least :
   assumes "well_order_on (invgen A) r"
       and "S \<subseteq> \<langle>A\<rangle>"
       and "\<forall> x \<in> S. \<forall> y \<in> S. length x = length y"
     shows "\<forall>x \<in> S. \<forall> y \<in> (tuple_appendset (least_comp r ([], S))). (x, y) \<in> compare_set A r"
-  sorry
+  sorry*)
 
 lemma well_order_words :
   assumes "well_order_on A r"
