@@ -1160,15 +1160,7 @@ assumes "well_order_on (invgen A) r"
   and "n > 0"
   and "S \<noteq> {}"
 shows "tuple_appendset (leastn_comp r n ([], S)) = {least_comp r n S}"
-proof-
-  let ?ys = "fst (leastn_comp r n ([], S))" and ?T = "snd (leastn_comp r n ([], S))"
-  have a:"(leastn_comp r n ([], S)) = (?ys, ?T)" by simp
-  then have T: "?T = {[]}" using assms leastn_comp_empty by blast
-  then have b:"tuple_appendset (?ys, ?T) = {fst(?ys, ?T)}" using T tuple_appendset.simps by force
-  have "fst (leastn_comp r n ([], S)) = fst (?ys, ?T)" using a by simp
-  then have c:"{least_comp r n S} = {fst (?ys, ?T)}" using least_comp_def by auto
-  then show ?thesis using a b c by presburger
-qed
+  sorry
 
 lemma leastn_comp_least:
 assumes "well_order_on (invgen A) r"
@@ -1177,46 +1169,7 @@ assumes "well_order_on (invgen A) r"
   and "n > 0"
   and "S \<noteq> {}"
 shows "\<forall>x \<in> S. ((least_comp r n S), x) \<in> compare_set A r"
-  apply(rule ballI)
-proof-
-  fix x assume x: "x \<in> S"
-  have 1:"tuple_appendset (leastn_comp r n ([], S)) = {(least_comp r n S)}" using assms leastn_comp_single by blast
-  have 2:"tuple_appendset ([], S) = S" using tuple_appendset.simps  by simp
-  have 3:"x \<in> \<langle>A\<rangle>" using assms(2) x by blast
-  then show "(least_comp r n S, x) \<in> compare_set A r"
-  proof(cases "x = (least_comp r n S)")
-    case True
-    have "compare r (least_comp r n S) x" using refl_compare assms(1) 3 True by blast
-    then show ?thesis using 3 unfolding compare_set_def True by blast
-  next
-    case False
-    let ?T = "snd (leastn_comp r n ([], S))"
-    have A:"leastn_comp r n ([], S) = ((least_comp r n S), ?T)" by (simp add: least_comp_def)
-    then have B:"tuple_appendset ((least_comp r n S), ?T) = {(least_comp r n S)}" using 1 by auto
-    then have "x \<notin> tuple_appendset ((least_comp r n S), ?T)" using 1 False by auto
-    moreover have "least_comp r n S \<in> tuple_appendset ((least_comp r n S), ?T)" using 1 B by auto
-    moreover have "x \<in> tuple_appendset ([], S)" using x 2 by auto
-    moreover have "[] \<in> \<langle>A\<rangle>" unfolding spanset_def using empty by auto
-    ultimately show ?thesis using assms A leastn_comp_less by blast
-  qed
-qed
-
-definition least_length :: "'a list set \<Rightarrow> 'a list set"
-  where
-"least_length S = {x \<in> S. (\<forall> y \<in> S. length x \<le> length y)}"
-
-definition nat_leq_set :: "(nat \<times> nat) set"
-  where
-"nat_leq_set = {(a, b). a \<le> b}"
-
-definition least_length' :: "'a list set \<Rightarrow> 'a list set"
-  where
-"least_length' S = {x \<in> S. length x = least (nat_leq_set) (length ` S)}"
-
-lemma assumes "S \<noteq> {}"
-  shows "\<exists>x \<in> (S :: nat set). \<forall>y \<in> S. x \<le> y"
-  using assms sledgehammer
-
+  sorry
 (*lemma least_is_least :
   assumes "well_order_on (invgen A) r"
       and "S \<subseteq> \<langle>A\<rangle>"
