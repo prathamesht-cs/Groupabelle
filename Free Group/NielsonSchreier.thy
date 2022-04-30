@@ -1664,7 +1664,7 @@ qed
 qed
 
 (*
-
+Sorry proposition 1.9
 
 *)
 
