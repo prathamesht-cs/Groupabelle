@@ -3,63 +3,63 @@ imports "UniversalProperty" "HOL.Nat"
 begin
 
 lemma equiv_redelem:
-  assumes "w \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>))"
-  shows "\<exists>x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w)"
+  assumes "w \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>))"
+  shows "\<exists>x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w)"
 proof-
-  obtain c where c: "w = (reln_tuple \<langle>S\<rangle>) `` {c}" by (meson assms quotientE)
+  obtain c where c: "w = (reln_set \<langle>S\<rangle>) `` {c}" by (meson assms quotientE)
   then have cs: "c \<in> \<langle>S\<rangle>" using assms by (metis proj_def proj_in_iff reln_equiv)
-  obtain rc where rc: "rc = (iter (length c) reduce c)" by simp
+  obtain rc where rc: "rc = (iter (length c) reduct c)" by simp
   then have "reduced rc" by (simp add: reduced_iter_length)
   then have "c ~ rc" using rc cancels_imp_rel iter_cancels_to by auto
   moreover then have "rc \<in> \<langle>S\<rangle>" using cs rc using cancels_to_preserves iter_cancels_to by blast
-  ultimately have crc: "(c, rc) \<in> reln_tuple \<langle>S\<rangle>" using cs reln_tuple_def by auto
-  then have "((reln_tuple \<langle>S\<rangle>)`` {rc} = w)"using c by (smt (verit, ccfv_SIG) equiv_class_eq_iff reln_equiv)
+  ultimately have crc: "(c, rc) \<in> reln_set \<langle>S\<rangle>" using cs reln_set_def by auto
+  then have "((reln_set \<langle>S\<rangle>)`` {rc} = w)"using c by (smt (verit, ccfv_SIG) equiv_class_eq_iff reln_equiv)
   moreover then have "rc \<in> w" using c crc by simp
   ultimately show ?thesis using \<open>reduced rc\<close> by auto
 qed
 
 lemma redelem_unique :
-  assumes "w \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>))"
-  shows "\<exists>!x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w)"
+  assumes "w \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>))"
+  shows "\<exists>!x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w)"
 proof(rule classical)
-  assume 1:"\<not>(\<exists>!x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w))"
-  have "\<exists>x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w)" using assms equiv_redelem by auto
+  assume 1:"\<not>(\<exists>!x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w))"
+  have "\<exists>x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w)" using assms equiv_redelem by auto
   then obtain x where x:"x \<in> w \<and> reduced x" by auto
-  obtain y where y:"(y \<in> w \<and> reduced y \<and> (reln_tuple \<langle>S\<rangle>)`` {x} = w) \<and> y \<noteq> x " using 1 x by (smt (verit, best) assms equiv_class_eq_iff equiv_class_self quotientE quotient_eq_iff reln_equiv)
-  then have "(x, y) \<in> reln_tuple \<langle>S\<rangle>" using x y by blast
-  then have "x ~ y" using reln_tuple_def by auto
+  obtain y where y:"(y \<in> w \<and> reduced y \<and> (reln_set \<langle>S\<rangle>)`` {x} = w) \<and> y \<noteq> x " using 1 x by (smt (verit, best) assms equiv_class_eq_iff equiv_class_self quotientE quotient_eq_iff reln_equiv)
+  then have "(x, y) \<in> reln_set \<langle>S\<rangle>" using x y by blast
+  then have "x ~ y" using reln_set_def by auto
   then have "y = x" using x y 1 reduced_cancel_eq reln_imp_cancels by blast
-  moreover then have "(reln_tuple \<langle>S\<rangle>)`` {x} = (reln_tuple \<langle>S\<rangle>)`` {y}" by simp
+  moreover then have "(reln_set \<langle>S\<rangle>)`` {x} = (reln_set \<langle>S\<rangle>)`` {y}" by simp
   ultimately have False by (simp add: y)
-  then show "\<exists>!x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w)" by simp 
+  then show "\<exists>!x \<in> w. reduced x \<and> ((reln_set \<langle>S\<rangle>)`` {x} = w)" by simp 
 qed
 
 definition equiv_red :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word"
-  where "equiv_red S w = (THE x. x \<in> w \<and> reduced x \<and> (w = reln_tuple \<langle>S\<rangle> `` {x}))"
+  where "equiv_red S w = (THE x. x \<in> w \<and> reduced x \<and> (w = reln_set \<langle>S\<rangle> `` {x}))"
 
 lemma equiv_red_the:
-  assumes "w \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>))"
-  shows "((equiv_red S w) \<in> w)  \<and> reduced ((equiv_red S w)) \<and> (w = reln_tuple \<langle>S\<rangle> `` {(equiv_red S w)})"
+  assumes "w \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>))"
+  shows "((equiv_red S w) \<in> w)  \<and> reduced ((equiv_red S w)) \<and> (w = reln_set \<langle>S\<rangle> `` {(equiv_red S w)})"
   unfolding equiv_red_def
 proof(rule theI')
-  show "\<exists>!x. x \<in> w \<and> reduced x \<and> w = reln_tuple \<langle>S\<rangle> `` {x}" using redelem_unique[of "w" "S"] assms by metis 
+  show "\<exists>!x. x \<in> w \<and> reduced x \<and> w = reln_set \<langle>S\<rangle> `` {x}" using redelem_unique[of "w" "S"] assms by metis 
 qed
 
 lemma equivred_equiv:
-  assumes "w \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>))"
-  shows "\<forall>x\<in>w. (reln_tuple \<langle>S\<rangle>) `` {x} = (reln_tuple \<langle>S\<rangle>) `` {equiv_red S w}"
+  assumes "w \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>))"
+  shows "\<forall>x\<in>w. (reln_set \<langle>S\<rangle>) `` {x} = (reln_set \<langle>S\<rangle>) `` {equiv_red S w}"
 proof-
   obtain x where x:"x \<in> w" using assms equiv_redelem by auto
-  then have xs: "x \<in> \<langle>S\<rangle>" using append_congruent assms equiv_2f_clos reln_equiv rightappend_span freewords_on_def by fastforce
+  then have xs: "x \<in> \<langle>S\<rangle>" using append_congruent assms equiv_2f_clos reln_equiv rightappend_span spanset_def by fastforce
   have rw: "equiv_red S w \<in> w" using x equiv_red_def redelem_unique equiv_red_the assms by blast
   then have rs: "equiv_red S w \<in> \<langle>S\<rangle>" using assms by (meson quotient_eq_iff refl_onD1 reln_equiv reln_refl)
-  then have "(x,equiv_red S w)\<in>(reln_tuple \<langle>S\<rangle>)" using xs x rs rw by (meson assms quotient_eq_iff reln_equiv)
-  then have "(reln_tuple \<langle>S\<rangle>) `` {x} = (reln_tuple \<langle>S\<rangle>) `` {equiv_red S w}" by (meson equiv_class_eq_iff reln_equiv)
+  then have "(x,equiv_red S w)\<in>(reln_set \<langle>S\<rangle>)" using xs x rs rw by (meson assms quotient_eq_iff reln_equiv)
+  then have "(reln_set \<langle>S\<rangle>) `` {x} = (reln_set \<langle>S\<rangle>) `` {equiv_red S w}" by (meson equiv_class_eq_iff reln_equiv)
   then show ?thesis using x assms by (smt (verit, best)  equiv_class_eq_iff quotient_eq_iff reln_equiv)
 qed
 
 definition equivinv :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word set"
-  where "equivinv S w = (reln_tuple \<langle>S\<rangle> `` {wordinverse (equiv_red S w)})"
+  where "equivinv S w = (reln_set \<langle>S\<rangle> `` {wordinverse (equiv_red S w)})"
 
 (*
 
@@ -73,7 +73,7 @@ fun nielson_reln :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set 
 
 definition nielson_set :: "('a, 'b) monoidgentype set \<Rightarrow>(('a,'b) word  \<times> ('a,'b) word) set"
   where
-"nielson_set S = {(w,z). \<exists>x y . x \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>)) \<and> w = equiv_red S x \<and> y \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>)) \<and> z = equiv_red S y \<and> nielson_reln S x y}"
+"nielson_set S = {(w,z). \<exists>x y . x \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>)) \<and> w = equiv_red S x \<and> y \<in> (\<langle>S\<rangle> // (reln_set \<langle>S\<rangle>)) \<and> z = equiv_red S y \<and> nielson_reln S x y}"
 
 lemma refl_nielson : "\<forall> x. nielson_reln S x x"
   using nielson_reln.simps equal_equiv_def by blast
@@ -109,7 +109,7 @@ proof
     then show ?case by simp
   next
     case (Cons a x)
-    have "x \<in> \<langle>A\<rangle>" using Cons.prems span_cons freewords_on_def by blast
+    have "x \<in> \<langle>A\<rangle>" using Cons.prems span_cons spanset_def by blast
     then have "compare r (tl (a # x)) (tl (a # x))" using compare.simps using Cons.IH \<open>x \<in> \<langle>A\<rangle>\<close> by auto
     then show ?case by simp
   qed
@@ -151,8 +151,8 @@ proof(induct x y rule: compare.induct)
       then have A:"(\<not> (x = [] \<or> hd x \<noteq> hd y \<and> (hd x, hd y) \<in> r))" using False True by simp
       moreover have "\<not> (hd x \<noteq> hd y \<and> (hd y, hd x) \<in> r)" by (simp add: True)
       moreover have "length (tl x) = length (tl y)" using False "1.prems"(1) by auto
-      moreover have "(tl x) \<in> \<langle>S\<rangle>" using False "1.prems"(3) span_cons freewords_on_def by (metis list.exhaust_sel)
-      moreover have "(tl y) \<in> \<langle>S\<rangle>" using y "1.prems"(4) span_cons freewords_on_def by (metis list.exhaust_sel)
+      moreover have "(tl x) \<in> \<langle>S\<rangle>" using False "1.prems"(3) span_cons spanset_def by (metis list.exhaust_sel)
+      moreover have "(tl y) \<in> \<langle>S\<rangle>" using y "1.prems"(4) span_cons spanset_def by (metis list.exhaust_sel)
       moreover have "compare r x y = compare r (tl x) (tl y)" using True False y  by simp
       ultimately have tlc:"compare_alt r (tl x) (tl y)" using "1.hyps" "1.prems"(2) "1.prems"(5) by blast
       then show ?thesis
@@ -177,8 +177,8 @@ proof(induct x y rule: compare.induct)
         then show ?thesis using compare_alt.simps by force
       next
         case False
-        have "hd x \<in> (invgen S)" using  "1.prems"(3) by (metis "1.prems"(1) F2 append_eq_append_conv append_self_conv2 gen_spanset freewords_on_def)
-        moreover have "hd y \<in> (invgen S)" using  "1.prems"(4) by (metis "1.prems"(1) F2 append_eq_append_conv append_self_conv gen_spanset freewords_on_def)
+        have "hd x \<in> (invgen S)" using  "1.prems"(3) by (metis "1.prems"(1) F2 append_eq_append_conv append_self_conv2 gen_spanset spanset_def)
+        moreover have "hd y \<in> (invgen S)" using  "1.prems"(4) by (metis "1.prems"(1) F2 append_eq_append_conv append_self_conv gen_spanset spanset_def)
         ultimately have "(hd y, hd x) \<in> r" using False F2 "1.prems"(2) unfolding well_order_on_def linear_order_on_def total_on_def by blast
         then have "compare r x y = False" using F2 "1.prems"(1) False by force
         then show ?thesis using "1.prems"(5) by blast
@@ -208,7 +208,7 @@ proof(induction "(a@x)" "(a@y)" arbitrary: a rule: compare.induct)
     moreover then have "\<not> (hd (a @ x) \<noteq> hd (a @ y) \<and> (hd (a @ y), hd (a @ x)) \<in> r)" by (simp add: A)
     moreover have B:"tl (a @ x) = (tl a) @ x" by (simp add: False)
     moreover have C:"tl (a @ y) = (tl a) @ y" by (simp add: False)
-    moreover have "tl a \<in> \<langle>S\<rangle>" using "1.prems" span_cons freewords_on_def False  by (metis list.collapse)
+    moreover have "tl a \<in> \<langle>S\<rangle>" using "1.prems" span_cons spanset_def False  by (metis list.collapse)
     ultimately have "compare r ((tl a) @ x) ((tl a) @ y) = compare r x y" using "1.hyps" "1.prems"(2) assms(1) assms(3) assms(4) by presburger
     then have "compare r (tl (a @ x)) (tl (a @ y)) = compare r x y" using B C by presburger
     moreover have "compare r (tl (a @ x)) (tl (a @ y)) = compare r (a @ x) (a @ y)" by (simp add: A)
@@ -231,10 +231,10 @@ next
   case False
   then have "(\<exists>a b c. x = (a @ b) \<and> y = (a @ c) \<and> (hd b) \<noteq> (hd c) \<and> (hd b, hd c) \<in> r)" using assms(5) by auto
   then obtain a b c where "x = (a @ b) \<and> y = (a @ c) \<and> (hd b) \<noteq> (hd c) \<and>(hd b, hd c) \<in> r" by blast
-  moreover have  "b \<in> \<langle>S\<rangle>" using assms(3) freewords_on_def using calculation rightappend_span by blast
-  moreover have  "c \<in> \<langle>S\<rangle>" using assms(4) freewords_on_def using calculation rightappend_span by blast
+  moreover have  "b \<in> \<langle>S\<rangle>" using assms(3) spanset_def using calculation rightappend_span by blast
+  moreover have  "c \<in> \<langle>S\<rangle>" using assms(4) spanset_def using calculation rightappend_span by blast
   moreover have "compare r b c" by (simp add: calculation(1))
-  moreover have "compare r x y = compare r b c" using compare_subword by (metis add_left_imp_eq assms(1) assms(2) assms(4) calculation(1) calculation(2) calculation(3) leftappend_span length_append freewords_on_def)
+  moreover have "compare r x y = compare r b c" using compare_subword by (metis add_left_imp_eq assms(1) assms(2) assms(4) calculation(1) calculation(2) calculation(3) leftappend_span length_append spanset_def)
   ultimately show ?thesis  by blast
 qed
 
@@ -263,9 +263,9 @@ proof-
         have a: "x \<noteq> []" using False by simp
         then have b: "y \<noteq> []" using 1 by auto
         have "x \<in> \<langle>A\<rangle>" using "1.prems"(2) unfolding compare_set_def by simp
-        then have tlx:"tl x \<in> \<langle>A\<rangle>" using a freewords_on_def span_cons by (metis list.collapse)
+        then have tlx:"tl x \<in> \<langle>A\<rangle>" using a spanset_def span_cons by (metis list.collapse)
         have "y \<in> \<langle>A\<rangle>" using "1.prems"(2) unfolding compare_set_def by simp
-        then have tly:"tl y \<in> \<langle>A\<rangle>" using b freewords_on_def span_cons by (metis list.collapse)
+        then have tly:"tl y \<in> \<langle>A\<rangle>" using b spanset_def span_cons by (metis list.collapse)
         have "compare r x y" using "1.prems"(2) unfolding compare_set_def by blast
         then have rxy: "compare r (tl x) (tl y)" using True by (simp add: a)
         have c:"((tl x), (tl y)) \<in> compare_set A r" using tlx tly rxy unfolding compare_set_def by blast
@@ -280,9 +280,9 @@ proof-
         case False
         then have A: "hd x \<noteq> hd y" by simp
         have "x \<in> \<langle>A\<rangle>" using "1.prems"(2) unfolding compare_set_def by simp
-        then have B:"hd x \<in> (invgen A)" by (metis "1.prems"(1) False append.left_neutral append_eq_append_conv gen_spanset freewords_on_def)
+        then have B:"hd x \<in> (invgen A)" by (metis "1.prems"(1) False append.left_neutral append_eq_append_conv gen_spanset spanset_def)
         have "y \<in> \<langle>A\<rangle>" using "1.prems"(2) unfolding compare_set_def by simp
-        then have C:"hd y \<in> (invgen A)" by (metis "1.prems"(1) False append_eq_append_conv append_self_conv2 gen_spanset freewords_on_def)
+        then have C:"hd y \<in> (invgen A)" by (metis "1.prems"(1) False append_eq_append_conv append_self_conv2 gen_spanset spanset_def)
         then show ?thesis
         proof(cases "(hd x, hd y) \<in> r")
           case True
@@ -423,10 +423,10 @@ proof-
     next
       case False
       then have "c \<noteq> []" using 1 lxy by force
-      moreover have "c \<in> \<langle>A\<rangle>" using y 1 rightappend_span unfolding freewords_on_def by auto
-      ultimately have c:"hd c \<in> (invgen A)"  by (simp add: gen_spanset freewords_on_def)
-      have "b \<in> \<langle>A\<rangle>" using x 1 rightappend_span unfolding freewords_on_def by auto
-      then have "hd b \<in> (invgen A)" using False by (simp add: gen_spanset freewords_on_def)
+      moreover have "c \<in> \<langle>A\<rangle>" using y 1 rightappend_span unfolding spanset_def by auto
+      ultimately have c:"hd c \<in> (invgen A)"  by (simp add: gen_spanset spanset_def)
+      have "b \<in> \<langle>A\<rangle>" using x 1 rightappend_span unfolding spanset_def by auto
+      then have "hd b \<in> (invgen A)" using False by (simp add: gen_spanset spanset_def)
       then have "(hd c, hd b) \<in> r" using assms c bc 1 2 unfolding well_order_on_def linear_order_on_def total_on_def by blast
       then have "compare_alt r y x" using compare_alt.simps 1 by fastforce
       then have "compare r y x" using lxy assms compalt_comp x y by metis
@@ -510,7 +510,7 @@ proof
           then have t1: "(hd b \<noteq> hd e) \<and> (hd b, hd e) \<in> r" using x by auto
           have t2: "(hd e \<noteq> hd f) \<and> (hd e, hd f) \<in> r" using y by auto         
           moreover have "(x = (a@b)) \<and> (y = (d@e)) \<and> (z = (d@f))" using abc def by auto
-          ultimately have "b \<in> \<langle>A\<rangle> \<and> e \<in> \<langle>A\<rangle> \<and> f \<in> \<langle>A\<rangle>" using A rightappend_span freewords_on_def by blast
+          ultimately have "b \<in> \<langle>A\<rangle> \<and> e \<in> \<langle>A\<rangle> \<and> f \<in> \<langle>A\<rangle>" using A rightappend_span spanset_def by blast
           then have 3:"((hd b) \<in> (invgen A)) \<and> ((hd e) \<in> (invgen A)) \<and> ((hd f) \<in> (invgen A))" by (meson assms t1 t2 well_order_on_domain)
           then have 4:"(hd b \<noteq> hd f) \<and> (hd b, hd f) \<in> r" using assms 3 t1 t2 trans_r by blast
           moreover have "x = (a@b) \<and> z = (a@f)" using def ad by (simp add: x)
@@ -764,7 +764,7 @@ lemma least_exists:
   and "S \<subseteq> \<langle>A\<rangle>"
 shows "\<exists>x \<in>  hd ` S.  \<forall>w \<in> hd ` S. (x,w) \<in> r"
 proof-
-  have 1:"hd ` S \<subseteq> (invgen A)" using assms(2) assms(4) unfolding freewords_on_def by (simp add: hd_sub_span)
+  have 1:"hd ` S \<subseteq> (invgen A)" using assms(2) assms(4) unfolding spanset_def by (simp add: hd_sub_span)
   obtain x where "x \<in> S" using assms(3) by auto
   then obtain hx where "hx \<in>  hd ` S" by blast
   then show ?thesis using assms(1) assms(3) unfolding well_order_on_def by (metis Linear_order_wf_diff_Id 1 assms(1) image_is_empty well_order_on_Field)
@@ -923,8 +923,8 @@ proof-
   ultimately have "x = xs@x1 \<and> y = xs @ ([(least_hd r S)] @ y1) \<and> hd ([(least_hd r S)] @ y1) \<noteq> hd x1 \<and> (hd ([(least_hd r S)] @ y1), hd x1) \<in> r" using x1 1 2 compare_alt.simps by auto
   then have "compare_alt r y x" using compare_alt.simps[of "r" "x" "y"] by force
   moreover have "length x = length y" using assms(4) assms(5) assms(6) length_invariant x y by auto
-  moreover have xA: "x \<in> \<langle>A\<rangle>" using assms(2) assms(7) span_append freewords_on_def x1 by blast
-  moreover have yA: "y \<in> \<langle>A\<rangle>"  using ya assms(2) assms(4) assms(7) least_consappend_in span_append freewords_on_def y1 by blast
+  moreover have xA: "x \<in> \<langle>A\<rangle>" using assms(2) assms(7) span_append spanset_def x1 by blast
+  moreover have yA: "y \<in> \<langle>A\<rangle>"  using ya assms(2) assms(4) assms(7) least_consappend_in span_append spanset_def y1 by blast
   ultimately have "compare r y x" using compalt_comp assms(1) by metis
   then show "(y, x) \<in> compare_set A r" using compare_set_def xA yA by blast
 qed
@@ -946,7 +946,7 @@ shows "T \<subseteq> \<langle>A\<rangle>"
 proof(rule subsetI)
   fix x assume x:"x \<in> T"
   then have "x \<in> {w \<in> tl ` S. [least_hd r S] @ w \<in> S}" using assms(3) leastcons_comp.simps by simp
-  then show "x \<in> \<langle>A\<rangle>" using assms(2) span_cons by (metis (no_types, lifting) x append_Cons append_Nil2 append_eq_append_conv2 assms(3) in_mono least_consappend_in same_append_eq freewords_on_def)
+  then show "x \<in> \<langle>A\<rangle>" using assms(2) span_cons by (metis (no_types, lifting) x append_Cons append_Nil2 append_eq_append_conv2 assms(3) in_mono least_consappend_in same_append_eq spanset_def)
 qed
 
 lemma leastcons_notempty:
@@ -1089,8 +1089,8 @@ assumes "well_order_on (invgen A) r"
 shows  "[(least_hd r S)] \<in> \<langle>A\<rangle>"
 proof-
   have "least_hd r S \<in> hd ` S" using assms(1) assms(2) assms(3) assms(4) least_hd_the by auto
-  moreover have "hd ` S \<subseteq> invgen A" by (metis assms(2) assms(3) hd_sub_span freewords_on_def)
-  ultimately show ?thesis unfolding freewords_on_def using group_spanset.empty group_spanset.gen subsetD by blast
+  moreover have "hd ` S \<subseteq> invgen A" by (metis assms(2) assms(3) hd_sub_span spanset_def)
+  ultimately show ?thesis unfolding spanset_def using group_spanset.empty group_spanset.gen subsetD by blast
 qed
 
 lemma leastn_comp_less:
@@ -1127,7 +1127,7 @@ next
     then have n: "n > 0" by simp
     then have eU:"[] \<notin> ?U" using U by fastforce
     have "[(least_hd r S)] \<in> \<langle>A\<rangle>" using least_hd_span  by (metis Suc.prems(2) Suc.prems(3) Suc.prems(6) Zero_not_Suc assms(1) assms(7) list.size(3))
-    then have yA: "?ys \<in> \<langle>A\<rangle>" using Suc.prems(7) leastcons_comp.simps freewords_on_def span_append by fastforce
+    then have yA: "?ys \<in> \<langle>A\<rangle>" using Suc.prems(7) leastcons_comp.simps spanset_def span_append by fastforce
     then have UA:"?U \<subseteq> \<langle>A\<rangle>" using Suc.prems leastcons_comp_fstsub[of "A" "r" "S" "xs" "?ys" "?U"] by auto
     then have A:"\<forall>x y. x \<in> tuple_appendset (?ys, ?U) \<and> x \<notin> tuple_appendset (ys, T) \<longrightarrow> y \<in> tuple_appendset (ys, T) \<longrightarrow> (y, x) \<in> compare_set A r"
      using yA 1 U US Suc.prems(1) True Suc.IH[of "?U" "?ys" "ys" "T"] by blast
@@ -1196,7 +1196,7 @@ proof-
     then have "x \<notin> tuple_appendset ((least_comp r n S), ?T)" using 1 False by auto
     moreover have "least_comp r n S \<in> tuple_appendset ((least_comp r n S), ?T)" using 1 B by auto
     moreover have "x \<in> tuple_appendset ([], S)" using x 2 by auto
-    moreover have "[] \<in> \<langle>A\<rangle>" unfolding freewords_on_def using empty by auto
+    moreover have "[] \<in> \<langle>A\<rangle>" unfolding spanset_def using empty by auto
     ultimately show ?thesis using assms A leastn_comp_less by blast
   qed
 qed
@@ -1212,7 +1212,7 @@ proof-
   let ?ys = "fst (leastn_comp r n ([], S))"
   let ?T = "snd (leastn_comp r n ([], S))"
   have "tuple_appendset (?ys, ?T) = {least_comp r n S}" using assms leastn_comp_single by (metis prod.collapse)
-  moreover have "[] \<in> \<langle>A\<rangle>" unfolding freewords_on_def using empty by auto
+  moreover have "[] \<in> \<langle>A\<rangle>" unfolding spanset_def using empty by auto
   ultimately have "{least_comp r n S} \<subseteq> tuple_appendset ([], S)" using leastn_comp_sub[of "A" "r" "S" "n" "[]" "?ys" "?T"] assms by simp
   moreover have "tuple_appendset ([], S) = S" using tuple_appendset.simps by auto
   ultimately show ?thesis by blast
@@ -1558,13 +1558,13 @@ proof
     show "x \<in> L ` \<langle>A\<rangle>"
     proof(cases "x = []")
       case True
-      then have "x \<in> \<langle>A\<rangle>" using empty unfolding freewords_on_def by auto
+      then have "x \<in> \<langle>A\<rangle>" using empty unfolding spanset_def by auto
       moreover have "L x = x" using True unfolding left_subword_def by fastforce
       ultimately show ?thesis by force
     next
       case False
-      then have "tl x \<in>  \<langle>A\<rangle>" using freewords_on_def x by (metis hd_Cons_tl span_cons)
-      then have A:"x @ (tl x) \<in> \<langle>A\<rangle>" using span_append x unfolding freewords_on_def by blast
+      then have "tl x \<in>  \<langle>A\<rangle>" using spanset_def x by (metis hd_Cons_tl span_cons)
+      then have A:"x @ (tl x) \<in> \<langle>A\<rangle>" using span_append x unfolding spanset_def by blast
       have "length (tl x) = length x - 1" by fastforce
       moreover have "length x > 0" using False by simp
       moreover have "length (x @ tl x) = length x + length x - 1" by auto
@@ -1579,7 +1579,7 @@ next
     fix x assume x: "x \<in> L ` \<langle>A\<rangle>"
     then obtain a where a:"a \<in> \<langle>A\<rangle> \<and> L a = x" by blast
     have "a = (L a) @ (drop ((((length a)+1) div 2)) a)" using left_subword_word by blast
-    then show "x\<in> \<langle>A\<rangle>" using leftappend_span a unfolding freewords_on_def by metis
+    then show "x\<in> \<langle>A\<rangle>" using leftappend_span a unfolding spanset_def by metis
   qed
 qed
 
@@ -1668,7 +1668,7 @@ qed
 
 definition L_lex_set' 
   where 
-"L_lex_set' A r = {(x,y). x \<in> \<langle>A\<rangle> // reln_tuple \<langle>A\<rangle> \<and> x \<in> \<langle>A\<rangle> // reln_tuple \<langle>A\<rangle> \<and>(equiv_red A x, equiv_red A y) \<in> L_lex_set A r}"
+"L_lex_set' A r = {(x,y). x \<in> \<langle>A\<rangle> // reln_set \<langle>A\<rangle> \<and> x \<in> \<langle>A\<rangle> // reln_set \<langle>A\<rangle> \<and>(equiv_red A x, equiv_red A y) \<in> L_lex_set A r}"
 
 
 lemma wf_L_lex_set':
@@ -1785,7 +1785,7 @@ lemma wf_lex_max_L2_word:
 
 definition lex_L2_word'
   where
-"lex_L2_word' A = {(x,y). x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and>  ((\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) x , (\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) y) \<in> (lex_word <*lex*> lex_word)}"
+"lex_L2_word' A = {(x,y). x \<in> (\<langle>A\<rangle> // (reln_set \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_set \<langle>A\<rangle>)) \<and>  ((\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) x , (\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) y) \<in> (lex_word <*lex*> lex_word)}"
 
 lemma wf_lex_word_prod:
  "wf (lex_word <*lex*> lex_word)"
@@ -1816,7 +1816,7 @@ lemma wf_lex_L2_word'_prod:
 
 definition lex_L2_word
   where
-"lex_L2_word A = {(x,y). x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and>  ((\<lambda>x. (length (equiv_red A x), x)) x, (\<lambda>x. (length (equiv_red A x), x)) y) \<in> (nat_less <*lex*> lex_L2_word' A)}"
+"lex_L2_word A = {(x,y). x \<in> (\<langle>A\<rangle> // (reln_set \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_set \<langle>A\<rangle>)) \<and>  ((\<lambda>x. (length (equiv_red A x), x)) x, (\<lambda>x. (length (equiv_red A x), x)) y) \<in> (nat_less <*lex*> lex_L2_word' A)}"
 
 lemma wf_lex_L2_word:
 "wf (lex_L2_word A)"
@@ -1827,7 +1827,7 @@ proof-
 qed
 
 lemma lex_L2_word_length:
-  assumes "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))"
+  assumes "x \<in> (\<langle>A\<rangle> // (reln_set \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_set \<langle>A\<rangle>))"
       and "length ((equiv_red A) x) = length ((equiv_red A) y)"
     shows "(x,y) \<in> (lex_L2_word A) \<longleftrightarrow>  (x,y) \<in> (lex_L2_word' A)"
   unfolding lex_L2_word_def by (simp add: assms(1) assms(2) wf_nat_less)
@@ -1847,7 +1847,7 @@ proof-
 qed
 
 lemma lex_L2_word_total:
-  assumes "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))"
+  assumes "x \<in> (\<langle>A\<rangle> // (reln_set \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_set \<langle>A\<rangle>))"
       and "length ((equiv_red A) x) = length ((equiv_red A) y)"
     shows "\<not> (x,y) \<in> (lex_L2_word A) \<Longrightarrow> \<not> (y,x) \<in> (lex_L2_word A) \<Longrightarrow> min lex_word (L2 (equiv_red A x)) = min lex_word (L2 (equiv_red A y)) \<and> max lex_word (L2 (equiv_red A x)) = max lex_word (L2 (equiv_red A y))"
 proof-
@@ -1973,45 +1973,45 @@ lemma append_equivred_span:
 proof-
   have "\<forall>x\<in> set l. \<forall>n\<in>x. n \<in> \<langle>S\<rangle>" using assms in_quotient_imp_subset reln_equiv unfolding freegroup_def by fastforce
   then have 1:"\<forall>x\<in> set l. x \<subseteq> \<langle>S\<rangle>" by auto
-  then have "\<forall>x\<in> set l. x \<in> \<langle>S\<rangle> // reln_tuple \<langle>S\<rangle> " using assms freegroup_def by (metis partial_object.select_convs(1) subset_code(1))
+  then have "\<forall>x\<in> set l. x \<in> \<langle>S\<rangle> // reln_set \<langle>S\<rangle> " using assms freegroup_def by (metis partial_object.select_convs(1) subset_code(1))
   moreover then have "\<forall>x\<in> set l. (equiv_red S x \<in> x)" by (simp add: equiv_red_the)
   ultimately have "\<forall>x\<in> set l. (equiv_red S x \<in> \<langle>S\<rangle>)" using 1 by auto
   then have "set(map (equiv_red S) l) \<subseteq> \<langle>S\<rangle>" by auto
   then show ?thesis unfolding l_concat_def
   proof(induction l)
     case Nil
-    then show ?case using span_append freewords_on_def[of "S"] words_on.empty by auto
+    then show ?case using span_append spanset_def[of "S"] group_spanset.empty by auto
   next
     case (Cons a l)
     then have "set (map (equiv_red S) l) \<subseteq> \<langle>S\<rangle>" by simp
     then have 1:"foldr (@) (map (equiv_red S) l) [] \<in> \<langle>S\<rangle>" using Cons.IH by auto
     then have "(map (equiv_red S) [a,(b:: ('a, 'b) word set)]) = [(equiv_red S a),(equiv_red S b)]" by auto
     have "[(foldr (@) (map (equiv_red S) (a # l)) [])] = [foldr (@) [((foldr (@) (map (equiv_red S) [a]) [])@(foldr (@) (map (equiv_red S) l) []))] []]" by simp    
-    then show ?case using span_append freewords_on_def 1 by (metis (no_types, lifting) Cons.prems concat.simps(2) concat_conv_foldr list.set_intros(1) list.simps(9) subset_code(1))
+    then show ?case using span_append spanset_def 1 by (metis (no_types, lifting) Cons.prems concat.simps(2) concat_conv_foldr list.set_intros(1) list.simps(9) subset_code(1))
   qed
 qed
 
 lemma
   assumes "set l \<subseteq> carrier (freegroup S)"
-  shows "m_concat (freegroup S) l = (reln_tuple \<langle>S\<rangle>) `` {(l_concat (map(equiv_red S) l))}"
+  shows "m_concat (freegroup S) l = (reln_set \<langle>S\<rangle>) `` {(l_concat (map(equiv_red S) l))}"
   using assms
 proof(induction l)
   case Nil
   have "m_concat (freegroup S) [] = \<one>\<^bsub>freegroup S\<^esub>" unfolding m_concat.simps(2) by simp
   moreover have "l_concat (map (equiv_red S) []) = []" unfolding l_concat_def by simp
-  moreover have "reln_tuple \<langle>S\<rangle> `` {[]} = \<one>\<^bsub>freegroup S\<^esub>" using freegroup_def[of "S"] by simp
+  moreover have "reln_set \<langle>S\<rangle> `` {[]} = \<one>\<^bsub>freegroup S\<^esub>" using freegroup_def[of "S"] by simp
   ultimately show ?case by simp
 next
   case (Cons a l)
   then have "set l \<subseteq> carrier (freegroup S)" by simp
-  then have I:"m_concat (freegroup S) l = reln_tuple \<langle>S\<rangle> `` {l_concat (map (equiv_red S) l)}" using Cons.IH by auto
-  have 1:"reln_tuple \<langle>S\<rangle> `` {l_concat (map (equiv_red S) (a # l))} = reln_tuple \<langle>S\<rangle> `` {((equiv_red S) a @ l_concat (map (equiv_red S) l))}" unfolding l_concat_def by simp
+  then have I:"m_concat (freegroup S) l = reln_set \<langle>S\<rangle> `` {l_concat (map (equiv_red S) l)}" using Cons.IH by auto
+  have 1:"reln_set \<langle>S\<rangle> `` {l_concat (map (equiv_red S) (a # l))} = reln_set \<langle>S\<rangle> `` {((equiv_red S) a @ l_concat (map (equiv_red S) l))}" unfolding l_concat_def by simp
   have a1:"a \<in> carrier (freegroup S)" using Cons by simp
   then have a:"(equiv_red S) a \<in> \<langle>S\<rangle>" unfolding freegroup_def using equiv_red_the in_quotient_imp_subset reln_equiv by fastforce
   have "l_concat (map (equiv_red S) l) \<in> \<langle>S\<rangle>" using Cons.prems append_equivred_span unfolding freegroup_def by auto
-  then have "reln_tuple \<langle>S\<rangle> `` {l_concat (map (equiv_red S) (a # l))} = reln_tuple \<langle>S\<rangle> `` {(equiv_red S) a} \<otimes>\<^bsub>freegroup S\<^esub>  reln_tuple \<langle>S\<rangle> `` {(l_concat (map (equiv_red S) l))}" using proj_append_wd[of "(equiv_red S) a" "S" " l_concat (map (equiv_red S) l)"] 1 a unfolding freegroup_def by auto
+  then have "reln_set \<langle>S\<rangle> `` {l_concat (map (equiv_red S) (a # l))} = reln_set \<langle>S\<rangle> `` {(equiv_red S) a} \<otimes>\<^bsub>freegroup S\<^esub>  reln_set \<langle>S\<rangle> `` {(l_concat (map (equiv_red S) l))}" using lift_append_wd[of "(equiv_red S) a" "S" " l_concat (map (equiv_red S) l)"] 1 a unfolding freegroup_def by auto
   moreover have "m_concat (freegroup S) (a # l) = a \<otimes>\<^bsub>freegroup S\<^esub> m_concat (freegroup S) l" unfolding m_concat.simps(2) by blast
-  moreover have "a = reln_tuple \<langle>S\<rangle> `` {(equiv_red S) a}" using equiv_red_the a1 freegroup_def by (metis partial_object.select_convs(1))
+  moreover have "a = reln_set \<langle>S\<rangle> `` {(equiv_red S) a}" using equiv_red_the a1 freegroup_def by (metis partial_object.select_convs(1))
   ultimately show ?case using I by simp
 qed
 
@@ -2019,8 +2019,8 @@ qed
 lemma reducedE:
 "\<exists>w. a ~ w \<and> reduced w"
 proof-
-  have "a ~ (iter (length a) reduce) a" by (simp add: cancels_imp_rel iter_cancels_to)
-  moreover have "reduced ((iter (length a) reduce) a)" by (simp add: reduced_iter_length)
+  have "a ~ (iter (length a) reduct) a" by (simp add: cancels_imp_rel iter_cancels_to)
+  moreover have "reduced ((iter (length a) reduct) a)" by (simp add: reduced_iter_length)
   ultimately show ?thesis by blast
 qed
 
@@ -2205,6 +2205,9 @@ fun q3 where
 definition cancel3 :: "('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> (('a,'b) word \<times> ('a,'b) word \<times> ('a,'b) word \<times> ('a,'b) word \<times> ('a,'b) word)" ("\<oslash>\<^bsub>3\<^esub>")
   where
 "cancel3 x y z = (THE w. x = a3 w @  (p3 w) \<and> y = wordinverse  (p3 w) @ b3 w @ (q3 w) \<and> z = (wordinverse  (q3 w)) @ (c3 w) \<and> reduced (a3 w@b3 w @ q3 w) \<and> reduced (wordinverse  (p3 w) @ b3 w @ c3 w))"
+
+lemma length_wordinverse:"length x = length (wordinverse x)"
+  by (simp add: wordinverse_redef1 length_map length_rev)
 
 lemma tuple3:
 "\<forall>v. v  = (a3 v, p3 v, b3 v, q3 v, c3 v)"
@@ -2726,13 +2729,58 @@ definition N_reduced ("N")
                   (\<forall>x \<in> (equiv_red A) ` (union_inv S A). \<forall>y \<in> (equiv_red A) ` (union_inv S A). \<forall>z \<in> (equiv_red A) ` (union_inv S A). N2 x y z))"
 
 lemma assumes "reduced xs"
+and "\<not> reduced (xs @ [a])"
+shows "last xs = inverse a"
+  using assms
+proof(induction xs)
+  case Nil
+  then show ?case sorry
+next
+  case (Cons x xs)
+  then have "reduced xs" using reduced_tl by blast
+  then show ?case
+  proof(cases "xs = []")
+    case True
+    then have "\<not> reduced (x#[a])" using Cons by simp
+    then show ?thesis sledgehammer
+      by (metis True cons_not_reduced last_ConsL reduced.simps(2))
+  next
+    case False
+    then show ?thesis sorry
+  qed
+qed
+lemma assumes "reduced xs"
   shows "reduced (wordinverse xs)"
-  sorry
+using assms
+proof(induction xs rule: reduced.induct)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons a xs)
+  then have "reduced xs" using reduced_tl by blast
+  then have "reduced (wordinverse xs)" by (simp add: Cons.IH)
+  then show ?case
+  proof(cases "xs = []")
+    case True
+    then show ?thesis by simp
+  next
+    case False
+    then obtain x1 x2 where "xs = x1#x2"
+    then show ?thesis sorry
+  qed
+
+qed
 
 lemma 
   assumes "x \<in> carrier (freegroup S)"
   shows "inv\<^bsub>(freegroup S)\<^esub> x = x \<Longrightarrow> x = \<one>\<^bsub>(freegroup S)\<^esub>"
-  sorry
+proof-
+  assume A:"inv\<^bsub>(freegroup S)\<^esub> x = x"
+  have "x = reln_set  \<langle>S\<rangle> `` {(equiv_red S x)}" using assms unfolding freegroup_def by (simp add: equiv_red_the)
+  moreover then have "inv\<^bsub>(freegroup S)\<^esub> x = reln_set  \<langle>S\<rangle> `` {wordinverse (equiv_red S x)}" using assms wordinverse_inv by blast
+  ultimately have "reln_set  \<langle>S\<rangle> `` {(equiv_red S x)} = reln_set  \<langle>S\<rangle> `` {wordinverse (equiv_red S x)}" using A by simp
+  moreover have "reduced (wordinverse (equiv_red S x))" using equiv_red_the assms unfolding freegroup_def sledgehammer
+  then have "" using A unfolding reln_set_def sledgehammer 
 
 definition minimal_set
   where

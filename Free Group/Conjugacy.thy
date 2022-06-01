@@ -3,12 +3,12 @@ imports "FreeGroupMain" "Iter_Reduction_Results"
 begin
 
 
-(*To prove: conj_rel S xs ys \<Longleftrightarrow> cyclicp (cyclic_reduct xs) (cyclic_reduct ys) [DONE]
+(*To prove: conj_rel S xs ys \<Longleftrightarrow> cyclicp (cyclic_reduce xs) (cyclic_reduce ys) [DONE]
 
 Lemmas required:
-(A. Every word is conjugate to a cyclically reduced word, namely its cyclic reduction.)
-1. "cyclic_reduced S (cyclic_reduct xs)" [DONE]
-2. "conj_rel S xs (cyclic_reduct xs)" [DONE]
+(A. Every word is conjugate to a cyclically reduced word, namely its cyclic reduceion.)
+1. "cyclic_reduced S (cyclic_reduce xs)" [DONE]
+2. "conj_rel S xs (cyclic_reduce xs)" [DONE]
 
 (B. If x and y are two cyclically reduced words that are conjugate, then x is a cyclic presentation of y.)
 3. "cyclic_reduced x" "cyclic_reduced y" "conj_rel S x y" \<Rightarrow> "cyclip x y" [DONE]
@@ -31,9 +31,8 @@ fun uncycle :: "('a,'b) word \<Rightarrow> ('a,'b) word"
 "uncycle (x#xs) = (if (x = inverse (last xs)) then uncycle (take (length xs - 1) xs)
                    else (x#xs))"
 
-definition cyclic_reduct :: "('a,'b) word \<Rightarrow> ('a,'b) word"
-  where "cyclic_reduct xs =  uncycle (iter (length xs) reduct xs)"
-
+definition cyclic_reduce :: "('a,'b) word \<Rightarrow> ('a,'b) word"
+  where "cyclic_reduce xs =  uncycle (iter (length xs) reduce xs)"
 
 lemma take_last:
   assumes "xs \<noteq> []"
@@ -104,26 +103,26 @@ next
 qed
 qed
 
-lemma reduced_cyclic_reduct:"reduced (cyclic_reduct xs)"
+lemma reduced_cyclic_reduce:"reduced (cyclic_reduce xs)"
 proof(induction xs rule: reduced.induct)
   case 1
-  have "(iter (length []) reduct []) = []" by simp
+  have "(iter (length []) reduce []) = []" by simp
   moreover have "uncycle [] = []" by simp
-  ultimately have a: "cyclic_reduct [] = []" by (simp add: cyclic_reduct_def)
+  ultimately have a: "cyclic_reduce [] = []" by (simp add: cyclic_reduce_def)
   have 1: "reduced []" by simp
   show ?case using 1 by (simp add: a cyclic_reduced_def)
 next
   case (2 x)
-  have "(iter (length [x]) reduct [x]) = [x]" by simp
+  have "(iter (length [x]) reduce [x]) = [x]" by simp
   moreover have "uncycle [x] = [x]" by simp
-  ultimately have a: "cyclic_reduct [x] = [x]" by (simp add: cyclic_reduct_def)
+  ultimately have a: "cyclic_reduce [x] = [x]" by (simp add: cyclic_reduce_def)
   have 1: "reduced [x]" by simp
   show ?case using 1 by (simp add: a cyclic_reduced_def)
 next
   case (3 g h wrd)
-  have "cyclic_reduct xs = uncycle (iter (length xs) reduct xs)"  by (simp add: cyclic_reduct_def)
+  have "cyclic_reduce xs = uncycle (iter (length xs) reduce xs)"  by (simp add: cyclic_reduce_def)
   then show ?case using reduced_uncycle 3 
-    by (metis cyclic_reduct_def reduced_iter_length)
+    by (metis cyclic_reduce_def reduced_iter_length)
 qed
 
 lemma uncylic_uncycle: "uncyclic (uncycle xs)"
@@ -149,94 +148,28 @@ next
 qed
 qed
 
-lemma uncyclic_cyclic_reduct : "uncyclic (cyclic_reduct xs)"
-  by (simp add: cyclic_reduct_def uncylic_uncycle)
+lemma uncyclic_cyclic_reduce : "uncyclic (cyclic_reduce xs)"
+  by (simp add: cyclic_reduce_def uncylic_uncycle)
 
-lemma cyclic_reduced_cyclic_reduct: "cyclic_reduced (cyclic_reduct xs)"
+lemma cyclic_reduced_cyclic_reduce: "cyclic_reduced (cyclic_reduce xs)"
 proof-
-  have "reduced (cyclic_reduct xs)" by (simp add: reduced_cyclic_reduct)
-  moreover have "uncyclic (cyclic_reduct xs)" by (simp add: uncyclic_cyclic_reduct)
+  have "reduced (cyclic_reduce xs)" by (simp add: reduced_cyclic_reduce)
+  moreover have "uncyclic (cyclic_reduce xs)" by (simp add: uncyclic_cyclic_reduce)
   ultimately show ?thesis by (simp add: cyclic_reduced_def)
 qed
 
-inductive_set group_spanset::"('a,'b) groupgentype set \<Rightarrow> ('a,'b) word set" ("\<llangle>_\<rrangle>")
-  for S::"('a,'b) groupgentype set"
-  where
-empty:"[] \<in> \<llangle>S\<rrangle>"
-|gen:"x \<in> S \<Longrightarrow> xs \<in> \<llangle>S\<rrangle> \<Longrightarrow> (x#xs) \<in> \<llangle>S\<rrangle>"
-|invgen: "y \<in> inverse ` S \<Longrightarrow> ys \<in> \<llangle>S\<rrangle> \<Longrightarrow> (y#ys) \<in> \<llangle>S\<rrangle>"
 
 (*
-inductive_set group_spanset::"('a,'b) groupgentype set \<Rightarrow> ('a,'b) word set" ("\<llangle>_\<rrangle>")
+inductive_set words_on::"('a,'b) groupgentype set \<Rightarrow> ('a,'b) word set" ("\<llangle>_\<rrangle>")
   for S::"('a,'b) groupgentype set"
   where
-empty:"[] \<in> \<llangle>S\<rrangle>"
-|gen:"x \<in> S \<Longrightarrow>  [x] \<in> \<llangle>S\<rrangle>"
-|invgen: "y \<in> inverse ` S \<Longrightarrow> [y] \<in> \<llangle>S\<rrangle>"
-|app: "xs \<in> \<llangle>S\<rrangle> \<Longrightarrow> ys \<in> \<llangle>S\<rrangle> \<Longrightarrow> (xs@ys) \<in> \<llangle>S\<rrangle>"
+empty:"[] \<in> \<langle>S\<rangle>"
+|gen:"x \<in> S \<Longrightarrow>  [x] \<in> \<langle>S\<rangle>"
+|invgen: "y \<in> inverse ` S \<Longrightarrow> [y] \<in> \<langle>S\<rangle>"
+|app: "xs \<in> \<langle>S\<rangle> \<Longrightarrow> ys \<in> \<langle>S\<rangle> \<Longrightarrow> (xs@ys) \<in> \<langle>S\<rangle>"
 *)
 
-lemma cons_span: assumes "(x#xs) \<in> \<llangle>S\<rrangle>" shows "[x] \<in> \<llangle>S\<rrangle>"
-proof(induction xs)
-  case Nil
-  then show ?case using assms group_spanset.cases group_spanset.empty group_spanset.gen group_spanset.invgen
-    by (metis list.distinct(1) list.sel(1))
-next
-  case (Cons y xs)
-  then show ?case  by auto
-qed
 
-lemma span_append:assumes "a \<in> \<llangle>S\<rrangle>" "b \<in> \<llangle>S\<rrangle>" shows "(a@b) \<in> \<llangle>S\<rrangle>"
-  using assms
-proof(induction a)
-  case empty
-  then show ?case by simp
-next
-  case (gen x)
-  then show ?case using  group_spanset.gen  by (metis Cons_eq_appendI)
-next
-  case (invgen y)
-  then show ?case using  group_spanset.invgen  by (metis Cons_eq_appendI)
-qed
-
-
-lemma span_cons: assumes "(x#xs) \<in> \<llangle>S\<rrangle>" shows "xs \<in> \<llangle>S\<rrangle>"
-  using assms
-proof(induction xs)
-  case Nil
-  then show ?case  by (simp add: group_spanset.empty)
-next
-  case (Cons a xs)
-  then show ?case  using group_spanset.cases  group_spanset.gen group_spanset.invgen by blast
-qed
-
-lemma leftappend_span: assumes "(a@b) \<in>  \<llangle>S\<rrangle>" shows "a \<in>  \<llangle>S\<rrangle>"
-  using assms
-proof(induction a)
-  case Nil
-  then show ?case using group_spanset.empty by simp
-next
-  case (Cons a1 a2)
-  then have 1: "(a1#(a2 @ b)) \<in> \<llangle>S\<rrangle>" by auto
-  then have 2:"[a1] \<in> \<llangle>S\<rrangle>" using cons_span by blast
-  have "(a2 @ b) \<in> \<llangle>S\<rrangle>" using span_cons Cons 1 by blast
-  then have "a2 \<in> \<llangle>S\<rrangle>" using Cons by simp
-  moreover have "(a1#a2)  = [a1] @ a2" by simp
-  ultimately show ?case using 1 2 span_append  by metis 
-qed
-
-lemma rightappend_span: assumes "(a@b) \<in>  \<llangle>S\<rrangle>" shows "b \<in>  \<llangle>S\<rrangle>"
-  using assms
-proof(induction a)
-case Nil
-  then show ?case using empty by simp
-next
-  case (Cons a1 a2)
- then have 1: "(a1#(a2 @ b)) \<in> \<llangle>S\<rrangle>" by auto
-  then have 2:"[a1] \<in> \<llangle>S\<rrangle>" using cons_span by blast
-  have "(a2 @ b) \<in> \<llangle>S\<rrangle>" using span_cons Cons 1 by blast
-  then show ?case using Cons by blast
-qed
 
 lemma wordinverse_inverse: "(xs @ (wordinverse xs)) ~ []"
 proof(induction xs)
@@ -298,37 +231,16 @@ proof-
   ultimately show ?thesis using wordinverse_of_wordinverse by simp
 qed
 
-lemma span_wordinverse: assumes "xs \<in> \<llangle>S\<rrangle>" shows "wordinverse xs \<in> \<llangle>S\<rrangle>"
-  using assms
-proof(induction xs)
-  case empty
-  then show ?case by (simp add: group_spanset.empty)
-next
-  case (gen x xs)
-  then have "inverse x \<in> inverse ` S" by simp
-  then have "[inverse x] \<in> \<llangle>S\<rrangle>" using group_spanset.empty group_spanset.invgen by blast
-  then have "wordinverse xs @ [inverse x] \<in> \<llangle>S\<rrangle>" using gen using span_append by auto
-  moreover have "wordinverse (x#xs) = wordinverse xs @ [inverse x]" by simp
-  ultimately show ?case  by simp
-next
-  case (invgen y ys)
-  then have "inverse y \<in>  S" using inverse_of_inverse by (metis image_iff)
-  then have "[inverse y] \<in> \<llangle>S\<rrangle>" by (simp add: group_spanset.empty group_spanset.gen)
-  then have "wordinverse ys @ [inverse y] \<in> \<llangle>S\<rrangle>" using invgen using span_append by auto
-  moreover have "wordinverse (y#ys) = wordinverse ys @ [inverse y]" by simp
-  ultimately show ?case  by simp
-qed
 
-
-definition conj_rel :: "('a,'b) groupgentype set \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
-  where "conj_rel S x y = ( x \<in> \<llangle>S\<rrangle> \<and> y \<in> \<llangle>S\<rrangle> \<and> (\<exists>a\<in>\<llangle>S\<rrangle> . (a @ x @ (wordinverse a)) ~ y))" 
+definition conj_rel :: "('a,'b) monoidgentype set \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
+  where "conj_rel S x y = ( x \<in> \<langle>S\<rangle> \<and> y \<in> \<langle>S\<rangle> \<and> (\<exists>a\<in>\<langle>S\<rangle> . (a @ x @ (wordinverse a)) ~ y))" 
 
 lemma conj_rel_refl:
-  assumes "x \<in> \<llangle>S\<rrangle>"
+  assumes "x \<in> \<langle>S\<rangle>"
   shows "conj_rel S x x"
   using assms
 proof-
-  have 1: "[] \<in> \<llangle>S\<rrangle>" by (simp add: group_spanset.empty)
+  have 1: "[] \<in> \<langle>S\<rangle>" unfolding freewords_on_def by (simp add: words_on.empty)
   have "[] @ x @ [] = x" by simp
   moreover then have "x ~ x" by auto
   ultimately  have "([] @ x @ []) ~ x" by simp
@@ -340,10 +252,10 @@ lemma conj_rel_symm:
   shows "conj_rel S y x"
   using assms
 proof-
-  obtain a where 1: "a \<in> \<llangle>S\<rrangle> \<and> (a @ x @ (wordinverse a)) ~ y" using assms(1) conj_rel_def by blast
+  obtain a where 1: "a \<in> \<langle>S\<rangle> \<and> (a @ x @ (wordinverse a)) ~ y" using assms(1) conj_rel_def by blast
   let ?b = "wordinverse a"
   have inv: "wordinverse ?b = a" by (simp add: wordinverse_of_wordinverse)
-  have b: "?b \<in> \<llangle>S\<rrangle>" by (simp add: 1 span_wordinverse)
+  have b: "?b \<in> \<langle>S\<rangle>" by (simp add: 1 span_wordinverse)
   have "(?b@a@ x @ (wordinverse a)) ~ (?b@y)" by (simp add: 1 mult reln.refl)
   moreover have "([] @ x @ (wordinverse a)) ~ (?b@a@ x @ (wordinverse a)) " using inverse_wordinverse append_assoc mult reln.refl reln.sym by metis
   ultimately have "([] @ x @ (wordinverse a)) ~ (?b@y)" using  reln.trans by blast
@@ -357,17 +269,17 @@ lemma conj_rel_trans: assumes "conj_rel S x y" "conj_rel S y z"
   shows "conj_rel S x z"
   using assms
 proof-
-  obtain a where 1: "a \<in> \<llangle>S\<rrangle> \<and> (a @ x @ (wordinverse a)) ~ y" using assms(1) conj_rel_def by blast
-  obtain b where 2: "b \<in> \<llangle>S\<rrangle> \<and>(b @ y @ (wordinverse b)) ~ z" using assms(2) conj_rel_def by blast
+  obtain a where 1: "a \<in> \<langle>S\<rangle> \<and> (a @ x @ (wordinverse a)) ~ y" using assms(1) conj_rel_def by blast
+  obtain b where 2: "b \<in> \<langle>S\<rangle> \<and>(b @ y @ (wordinverse b)) ~ z" using assms(2) conj_rel_def by blast
   have "(b @ (a @ x @ (wordinverse a))) ~ (b @ y)"  by (simp add: 1 mult reln.refl)
   then have  "(b @ a @ x @ (wordinverse a) @ wordinverse b)~ (b @ y @ wordinverse b)"  using mult by fastforce
   then have "(b @ a @ x @ (wordinverse a) @ wordinverse b) ~ z" using 2 using reln.trans by blast
   then have "((b @ a) @ x @ (wordinverse (b @ a))) ~ z" by (simp add: wordinverse_append)
-  moreover have "(b@a) \<in>  \<llangle>S\<rrangle>" using "2" "1"  using span_append  by blast
+  moreover have "(b@a) \<in>  \<langle>S\<rangle>" using "2" "1"  using span_append freewords_on_def  by blast
   ultimately show ?thesis using assms unfolding conj_rel_def by blast
 qed
                            
-definition conj_class ::"('a,'b) groupgentype set \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word set"
+definition conj_class ::"('a,'b) monoidgentype set \<Rightarrow> ('a,'b) word \<Rightarrow> ('a,'b) word set"
   where "conj_class S x = {y. conj_rel S x y}"
 
 definition cycle_at_i :: "('a,'b) word \<Rightarrow> nat \<Rightarrow> ('a,'b) word"
@@ -380,110 +292,110 @@ definition cyclicp_at_i :: "('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow
 definition cyclicp :: "('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bool"
   where "cyclicp x y = (\<exists>i. cyclicp_at_i x y i)"
 
-lemma cycle_at_conj: assumes "xs \<in>  \<llangle>S\<rrangle>" shows "conj_rel S xs (cycle_at_i xs i)"
+lemma cycle_at_conj: assumes "xs \<in>  \<langle>S\<rangle>" shows "conj_rel S xs (cycle_at_i xs i)"
 proof-
   have 1: "xs = (take i xs) @ (drop i xs)" by simp
-  have d: "(drop i xs) \<in>  \<llangle>S\<rrangle>" using 1 rightappend_span assms by metis
-  have t: "(take i xs) \<in>  \<llangle>S\<rrangle>" using 1 leftappend_span assms by metis
+  have d: "(drop i xs) \<in>  \<langle>S\<rangle>" using 1 rightappend_span assms unfolding freewords_on_def by metis
+  have t: "(take i xs) \<in>  \<langle>S\<rangle>" using 1 leftappend_span assms unfolding freewords_on_def  by metis
   let ?as = "wordinverse (take i xs)"
-  have a: "?as \<in>  \<llangle>S\<rrangle>" using t by (simp add: span_wordinverse)
+  have a: "?as \<in>  \<langle>S\<rangle>" using t by (simp add: span_wordinverse)
   have "(wordinverse (take i xs) @ (take i xs)) ~ []" using inverse_wordinverse by fast
   then have "(wordinverse (take i xs) @ (take i xs) @ (drop i xs)) ~ (drop i xs)" using mult reln.refl by (metis append.left_neutral append_assoc)
   then have "(wordinverse (take i xs) @ (take i xs) @ (drop i xs) @ (take i xs)) ~ (drop i xs) @ (take i xs)" using mult reln.refl by (metis append.assoc)
   then have "(wordinverse (take i xs) @ xs @ (take i xs)) ~ (drop i xs) @ (take i xs)" using 1 by (metis append.assoc)
   then have "(?as @ xs @ wordinverse ?as) ~ (drop i xs) @ (take i xs)" by (simp add: wordinverse_of_wordinverse)
   then have "(?as @ xs @ wordinverse ?as) ~ (cycle_at_i xs i)"by (simp add: cycle_at_i_def)
-  moreover have "(cycle_at_i xs i) \<in>  \<llangle>S\<rrangle>" unfolding cycle_at_i_def using d t span_append by blast
+  moreover have "(cycle_at_i xs i) \<in>  \<langle>S\<rangle>" unfolding cycle_at_i_def using d t span_append freewords_on_def  by blast
   ultimately show ?thesis unfolding conj_rel_def using assms a by blast
 qed
 
-lemma conj_cyclcip: assumes "xs \<in>  \<llangle>S\<rrangle>" "ys \<in>  \<llangle>S\<rrangle>" "cyclicp xs ys" shows "conj_rel S xs ys"
+lemma conj_cyclcip: assumes "xs \<in>  \<langle>S\<rangle>" "ys \<in>  \<langle>S\<rangle>" "cyclicp xs ys" shows "conj_rel S xs ys"
 proof-
   obtain i where "ys = cycle_at_i xs i" by (metis assms(3) cyclicp_at_i_def cyclicp_def)
   then have "conj_rel S xs ys" by (simp add: assms(1) cycle_at_conj)
   then show ?thesis by simp
 qed
 
-lemma reduct_span: assumes "xs \<in>  \<llangle>S\<rrangle>" shows "reduct xs \<in>  \<llangle>S\<rrangle>"
+lemma reduce_span: assumes "xs \<in>  \<langle>S\<rangle>" shows "reduce xs \<in>  \<langle>S\<rangle>"
   using assms
-proof(induction xs rule:reduct.induct)
+proof(induction xs rule:reduce.induct)
   case 1
-  then have "reduct [] = []" by simp
+  then have "reduce [] = []" by simp
   then show ?case using 1  by simp
 next
   case (2 x)
-  then have "reduct [x] = [x]" by simp
+  then have "reduce [x] = [x]" by simp
   then show ?case using 2  by simp
 next
   case (3 g1 g2 wrd)
   then show ?case
   proof(cases "g1 = inverse g2")
     case True
-    then have "reduct (g1#g2#wrd) = wrd" by simp
-    moreover have "wrd \<in> \<llangle>S\<rrangle>" using 3 span_cons by blast
+    then have "reduce (g1#g2#wrd) = wrd" by simp
+    moreover have "wrd \<in> \<langle>S\<rangle>" using 3 span_cons unfolding freewords_on_def  by blast
     ultimately show ?thesis  by simp
 next
   case False
-  then have 1: "reduct (g1#g2#wrd) = (g1#(reduct (g2#wrd)))" by simp
-  have "g2 # wrd \<in> \<llangle>S\<rrangle>" using 3 span_cons by blast
-  then have "reduct (g2#wrd) \<in> \<llangle>S\<rrangle>" using 3 False by simp
-  moreover have "[g1] \<in> \<llangle>S\<rrangle>" using False using 3 cons_span by blast
-  ultimately show ?thesis using 1 span_append by fastforce
+  then have 1: "reduce (g1#g2#wrd) = (g1#(reduce (g2#wrd)))" by simp
+  have "g2 # wrd \<in> \<langle>S\<rangle>" using 3 span_cons unfolding freewords_on_def by blast
+  then have "reduce (g2#wrd) \<in> \<langle>S\<rangle>" using 3 False by simp
+  moreover have "[g1] \<in> \<langle>S\<rangle>" using False using 3 cons_span unfolding freewords_on_def by blast
+  ultimately show ?thesis using 1 span_append unfolding freewords_on_def by fastforce
 qed
 qed
 
-lemma iter_reduct_span : assumes "xs \<in>  \<llangle>S\<rrangle>" shows "(iter n reduct xs) \<in>  \<llangle>S\<rrangle>"
+lemma iter_reduce_span : assumes "xs \<in>  \<langle>S\<rangle>" shows "(iter n reduce xs) \<in>  \<langle>S\<rangle>"
   using assms
 proof(induction n)
   case 0
-  then have "iter 0 reduct xs = xs" by simp
+  then have "iter 0 reduce xs = xs" by simp
   then show ?case by (simp add: assms)
 next
   case (Suc n)
-  then have "iter n reduct xs \<in> \<llangle>S\<rrangle>" by simp
-  then have "reduct (iter n reduct xs) \<in> \<llangle>S\<rrangle>" using reduct_span by auto
+  then have "iter n reduce xs \<in> \<langle>S\<rangle>" by simp
+  then have "reduce (iter n reduce xs) \<in> \<langle>S\<rangle>" using reduce_span by auto
 then show ?case by simp
 qed
 
-lemma conj_iter :assumes "xs \<in>  \<llangle>S\<rrangle>" shows "conj_rel S (iter (length xs) reduct xs) xs"
+lemma conj_iter :assumes "xs \<in>  \<langle>S\<rangle>" shows "conj_rel S (iter (length xs) reduce xs) xs"
   using assms
 proof-
-  have "cancels_to xs (iter (length xs) reduct xs)" using iter_cancels_to  by auto
-  then have "xs ~  (iter (length xs) reduct xs)" using cancels_imp_rel  by blast
-  then have "([] @ (iter (length xs) reduct xs) @ (wordinverse [])) ~ xs" by (simp add: reln.sym)
-  moreover have "(iter (length xs) reduct xs) \<in>  \<llangle>S\<rrangle>" using assms iter_reduct_span by blast
-  ultimately show ?thesis unfolding conj_rel_def using assms group_spanset.empty by blast
+  have "cancels_to xs (iter (length xs) reduce xs)" using iter_cancels_to  by auto
+  then have "xs ~  (iter (length xs) reduce xs)" using cancels_imp_rel  by blast
+  then have "([] @ (iter (length xs) reduce xs) @ (wordinverse [])) ~ xs" by (simp add: reln.sym)
+  moreover have "(iter (length xs) reduce xs) \<in>  \<langle>S\<rangle>" using assms iter_reduce_span by blast
+  ultimately show ?thesis unfolding conj_rel_def using assms words_on.empty unfolding freewords_on_def by blast
 qed
 
-lemma conj_uncycle: assumes "xs \<in>  \<llangle>S\<rrangle>" shows "conj_rel S (uncycle xs) xs"
+lemma conj_uncycle: assumes "xs \<in>  \<langle>S\<rangle>" shows "conj_rel S (uncycle xs) xs"
   using assms
 proof(induction xs rule: uncycle.induct)
   case 1
   then have "uncycle [] = []" by simp
   moreover have "([] @ [] @ wordinverse [])~[]" by auto
-  ultimately show ?case unfolding conj_rel_def using 1 group_spanset.empty by force
+  ultimately show ?case unfolding conj_rel_def using 1 words_on.empty by force
 next
   case (2 x)
 then have "uncycle [x] = [x]" by simp
   moreover have "([] @ [x] @ wordinverse [])~[x]" by auto
-  ultimately show ?case unfolding conj_rel_def using 2 group_spanset.empty by force
+  ultimately show ?case unfolding conj_rel_def unfolding freewords_on_def using 2 by (metis span_cons freewords_on_def)
 next
 case (3 x v va)
   then show ?case
   proof(cases "x = inverse (last (v#va))")
     case True
-    have b:"(x#v # va)\<in>  \<llangle>S\<rrangle>" using 3 by simp
-    then have "(v # va)\<in>  \<llangle>S\<rrangle>" using span_cons by blast
-    then have "take (length (v # va) - 1) (v # va) \<in> \<llangle>S\<rrangle>" by (metis append_take_drop_id leftappend_span)
+    have b:"(x#v # va)\<in>  \<langle>S\<rangle>" using 3 by simp
+    then have "(v # va)\<in>  \<langle>S\<rangle>" using span_cons unfolding freewords_on_def by blast
+    then have "take (length (v # va) - 1) (v # va) \<in> \<langle>S\<rangle>" unfolding freewords_on_def by (metis append_take_drop_id leftappend_span)
     then have 1: "conj_rel S (uncycle (take (length (v # va) - 1) (v # va))) (take (length (v # va) - 1) (v # va))" using 3 True  by blast
     have a: "uncycle (x # v # va) = uncycle (take (length (v # va) - 1) (v # va))" using True by simp
     then have "([] @ uncycle (x # v # va) @ wordinverse []) ~ uncycle (take (length (v # va) - 1) (v # va))" by (simp add: reln.refl)
-    moreover have "uncycle (take (length (v # va) - 1) (v # va)) \<in>  \<llangle>S\<rrangle>" using 1 unfolding conj_rel_def by simp
-    ultimately have 2: "conj_rel S (uncycle (x # v # va)) (uncycle (take (length (v # va) - 1) (v # va)))" unfolding conj_rel_def using a empty by metis
-    have x: "[x] \<in>  \<llangle>S\<rrangle>" using b cons_span  by blast
+    moreover have "uncycle (take (length (v # va) - 1) (v # va)) \<in>  \<langle>S\<rangle>" using 1 unfolding conj_rel_def by simp
+    ultimately have 2: "conj_rel S (uncycle (x # v # va)) (uncycle (take (length (v # va) - 1) (v # va)))" unfolding conj_rel_def using a empty unfolding freewords_on_def by metis
+    have x: "[x] \<in>  \<langle>S\<rangle>" using b cons_span unfolding freewords_on_def by blast
     have "(last (v#va)) = inverse x" using True inverse_of_inverse by blast
     then have "[x] @ (take (length (v # va) - 1) (v # va)) @ wordinverse [x] = (x # v # va)" using take_last wordinverse.simps by (metis (no_types, lifting) Cons_eq_append_conv list.distinct(1))
-    moreover have "(take (length (v # va) - 1) (v # va)) \<in>  \<llangle>S\<rrangle>" using 1 unfolding conj_rel_def by simp
+    moreover have "(take (length (v # va) - 1) (v # va)) \<in>  \<langle>S\<rangle>" using 1 unfolding conj_rel_def by simp
     ultimately  have "conj_rel S (take (length (v # va) - 1) (v # va)) (x # v # va)" unfolding conj_rel_def using  b x reln.refl by metis
     then have "conj_rel S (uncycle (take (length (v # va) - 1) (v # va))) (x # v # va)" using 1 conj_rel_trans  by blast
 then show ?thesis using 2 conj_rel_trans by fast
@@ -491,17 +403,17 @@ next
   case False
   then have "uncycle (x#v#va) = (x#v#va)" by simp
   moreover then have "([] @ uncycle (x#v#va) @ wordinverse []) ~ (x#v#va)" using reln.refl by auto
-  ultimately show ?thesis unfolding conj_rel_def using 3 empty by force
+  ultimately show ?thesis unfolding conj_rel_def unfolding freewords_on_def using 3 by (metis words_on.empty freewords_on_def)
 qed
 qed
 
 
 
-lemma conj_cyclicreduct:assumes "xs \<in>  \<llangle>S\<rrangle>" shows "conj_rel S (cyclic_reduct xs) xs"
+lemma conj_cyclicreduce:assumes "xs \<in>  \<langle>S\<rangle>" shows "conj_rel S (cyclic_reduce xs) xs"
 proof-
-  have "conj_rel S (iter (length xs) reduct xs) xs" using assms by (simp add: conj_iter)
-  moreover have "conj_rel S (uncycle (iter (length xs) reduct xs)) (iter (length xs) reduct xs)" using assms iter_reduct_span conj_uncycle by fast
-  ultimately show ?thesis  unfolding cyclic_reduct_def  using conj_rel_trans by blast
+  have "conj_rel S (iter (length xs) reduce xs) xs" using assms by (simp add: conj_iter)
+  moreover have "conj_rel S (uncycle (iter (length xs) reduce xs)) (iter (length xs) reduce xs)" using assms iter_reduce_span conj_uncycle by fast
+  ultimately show ?thesis  unfolding cyclic_reduce_def  using conj_rel_trans by blast
 qed
 
 (*----------------------------------------------------------------*)
@@ -531,17 +443,17 @@ next
 qed
 
 (*
-lemma shows "(wordinverse xs) ~ (wordinverse ((iter (length xs) reduct) xs))"
+lemma shows "(wordinverse xs) ~ (wordinverse ((iter (length xs) reduce) xs))"
 proof-
   have "(xs @ (wordinverse xs)) ~ []" by (simp add: wordinverse_inverse)
-  moreover have "(((iter (length xs) reduct) xs) @ (wordinverse ((iter (length xs) reduct) xs))) ~ []" by (simp add: wordinverse_inverse)
-  ultimately have "(xs @ (wordinverse xs)) ~ (((iter (length xs) reduct) xs) @ (wordinverse ((iter (length xs) reduct) xs)))" using reln.sym reln.trans by blast
-  moreover have "xs  ~ ((iter (length xs) reduct) xs)" by (simp add: cancels_imp_rel iter_cancels_to)
+  moreover have "(((iter (length xs) reduce) xs) @ (wordinverse ((iter (length xs) reduce) xs))) ~ []" by (simp add: wordinverse_inverse)
+  ultimately have "(xs @ (wordinverse xs)) ~ (((iter (length xs) reduce) xs) @ (wordinverse ((iter (length xs) reduce) xs)))" using reln.sym reln.trans by blast
+  moreover have "xs  ~ ((iter (length xs) reduce) xs)" by (simp add: cancels_imp_rel iter_cancels_to)
   ultimately show ?thesis sorry
 qed
 *)
 
-lemma reduced_iter_eq: assumes "reduced xs" shows "((iter n reduct) xs) = xs"
+lemma reduced_iter_eq: assumes "reduced xs" shows "((iter n reduce) xs) = xs"
   by (metis assms iter.iter.simps(1) iter_cancels_to le0 not_reduced_iter_suc unique_reduced_cancel)
 
 lemma hd_last_wordinverse: assumes "length xs > 0" shows "hd xs = inverse (last (wordinverse xs))"
@@ -593,13 +505,13 @@ next
   then show ?thesis using Cons by blast
 next
   case False
-  then have "(a # xs) ! 0 \<noteq> FreeGroupMain.inverse ((a # xs) ! (0 + 1))" using 1  by simp
+  then have "(a # xs) ! 0 \<noteq> inverse ((a # xs) ! (0 + 1))" using 1  by simp
   then show ?thesis using 2  by force
 qed
 next
   case False
   then have "1 < length xs" using gnil  nat_neq_iff by auto
-  then have ix:"\<not> (\<exists>i<length xs - 1. xs ! i = FreeGroupMain.inverse (xs ! (i + 1)))" using xs Cons by blast
+  then have ix:"\<not> (\<exists>i<length xs - 1. xs ! i = inverse (xs ! (i + 1)))" using xs Cons by blast
   let ?x = "hd xs"
   show ?thesis
   proof(cases "a = inverse ?x")
@@ -630,7 +542,7 @@ proof(rule ccontr)
   next
     case (3 g h wrd)
     then have 1: "g \<noteq> inverse h"  by force
-    moreover have " \<not> (\<exists>i<length (h # wrd) - 1. (h # wrd) ! i = FreeGroupMain.inverse ((h # wrd) ! (i + 1)))" using 3  using BNF_Greatest_Fixpoint.length_Cons add.commute add_diff_cancel_left' by auto
+    moreover have " \<not> (\<exists>i<length (h # wrd) - 1. (h # wrd) ! i = inverse ((h # wrd) ! (i + 1)))" using 3  using BNF_Greatest_Fixpoint.length_Cons add.commute add_diff_cancel_left' by auto
     ultimately have "reduced (h # wrd)" using 3 by simp
     then show ?case using 1 by simp
   qed
@@ -681,7 +593,7 @@ next
 next
   case (3 g h wrd)
 then have 1: "g \<noteq> inverse h" by auto
-  moreover have  "last (h # wrd) = FreeGroupMain.inverse (hd b)" using 3 by auto
+  moreover have  "last (h # wrd) = inverse (hd b)" using 3 by auto
   ultimately have "\<not> reduced ((h # wrd) @ b)" using 3 assms reduced_rightappend by blast
   then show ?case by auto
 qed
@@ -1021,7 +933,7 @@ proof-
 next
   case False
   then obtain z1 where z1:"y@z1 = a" using A overlapleftexist  by (metis append_eq_append_conv append_eq_append_conv2 nat_neq_iff)
-  moreover obtain z2 where z2: "z2@y = a" using A False overlaprightexist by (metis (no_types, hide_lams) append_eq_append_conv append_eq_append_conv2 nat_neq_iff)
+  moreover obtain z2 where z2: "z2@y = a" using A False overlaprightexist by (metis decreasing_length length_append not_add_less2)
   have z12:"length z1 = length z2" by (metis diff_add_inverse diff_add_inverse2 length_append z1 z2)
   have bc:"length b = length c"  by (metis assms diff_add_inverse diff_add_inverse2 length_append)
     show ?thesis
@@ -1113,9 +1025,9 @@ next
 qed
 qed
 
-lemma wordinverseiterrel: "wordinverse (iter (length a) reduct a) ~ wordinverse a"
+lemma wordinverseiterrel: "wordinverse (iter (length a) reduce a) ~ wordinverse a"
 proof-
-  let ?b = "(iter (length a) reduct a)"
+  let ?b = "(iter (length a) reduce a)"
   have 1:"a ~ ?b" by (simp add: cancels_imp_rel iter_cancels_to)
   have a: "(a @wordinverse a) ~ []" by (simp add: wordinverse_inverse)
   have b:"(?b@wordinverse?b) ~ []" by (simp add: wordinverse_inverse)
@@ -1132,24 +1044,24 @@ proof-
   have rxs: "reduced xs" using assms(2) cyclic_reduced_def by auto
   have uys: "uncyclic ys" using assms(3) cyclic_reduced_def by auto
   have rys: "reduced ys" using assms(3) cyclic_reduced_def by auto
-  obtain a where 1: "a \<in>  \<llangle>S\<rrangle> \<and> (a @ xs @ (wordinverse a)) ~ ys" using assms(1) unfolding conj_rel_def by auto
-  let ?b = "(iter (length a) reduct) a"
+  obtain a where 1: "a \<in>  \<langle>S\<rangle> \<and> (a @ xs @ (wordinverse a)) ~ ys" using assms(1) unfolding conj_rel_def by auto
+  let ?b = "(iter (length a) reduce) a"
   have rb:"reduced ?b" by (simp add: reduced_iter_length)
-  have sb:"?b \<in>  \<llangle>S\<rrangle>" using 1 iter_reduct_span by blast
+  have sb:"?b \<in>  \<langle>S\<rangle>" using 1 iter_reduce_span by blast
   have "?b ~ a" by (simp add: cancels_imp_rel iter_cancels_to reln.sym)
   moreover have "(wordinverse ?b) ~ wordinverse a" using wordinverseiterrel by (simp add: wordinverseiterrel)
   ultimately have brela: "(?b @ xs @ (wordinverse ?b)) ~ (a @ xs @ (wordinverse a))" by (simp add: mult reln.refl)
   then have A: "(?b @ xs @ (wordinverse ?b)) ~ ys" using 1 using reln.trans by auto
   let ?x = "(?b @ xs @ (wordinverse ?b))"
-  have rx:"reduced ((iter (length ?x) reduct) ?x)"  using reduced_iter_length by blast
-  have "((iter (length ?x) reduct) ?x) ~ ys" using A using cancels_imp_rel iter_cancels_to reln.sym reln.trans by blast
-  then have "cancels_eq ((iter (length ?x) reduct) ?x)  ys" by (simp add: reln_imp_cancels)
-  then  have B:"((iter (length ?x) reduct) ?x) = ys" using reduced_cancel_eq rys rx  by auto
+  have rx:"reduced ((iter (length ?x) reduce) ?x)"  using reduced_iter_length by blast
+  have "((iter (length ?x) reduce) ?x) ~ ys" using A using cancels_imp_rel iter_cancels_to reln.sym reln.trans by blast
+  then have "cancels_eq ((iter (length ?x) reduce) ?x)  ys" by (simp add: reln_imp_cancels)
+  then  have B:"((iter (length ?x) reduce) ?x) = ys" using reduced_cancel_eq rys rx  by auto
   then show ?thesis
   proof(cases "reduced ?x")
   (*reduced b@x@-b*)
     case True
-    then have "((iter (length ?x) reduct) ?x) = ?x" by (simp add: reduced_iter_eq)
+    then have "((iter (length ?x) reduce) ?x) = ?x" by (simp add: reduced_iter_eq)
     then have 1:"?x = ys" using B by auto
     then show ?thesis
     proof(cases "?b = []")
@@ -1200,7 +1112,7 @@ next
     case True
     then have "?x = ?b @ wordinverse ?b" by simp
     then have "?x ~ []"  by (simp add: wordinverse_inverse)
-    then have "(iter (length ?x) reduct) ?x = []" using 1 B True  reduced.simps(1) reduced_cancel_eq reln.sym reln.trans reln_imp_cancels rys wordinverse_inverse by (metis append.left_neutral)
+    then have "(iter (length ?x) reduce) ?x = []" using 1 B True  reduced.simps(1) reduced_cancel_eq reln.sym reln.trans reln_imp_cancels rys wordinverse_inverse by (metis append.left_neutral)
     then have "ys = xs" using B True by auto
     then have "cycle_at_i xs 0 = ys" using cycle_at_i_def by (simp add: cycle_at_i_def)
     then show ?thesis  unfolding cyclicp_def cyclicp_at_i_def by blast
@@ -1251,7 +1163,7 @@ next
           then have "hd ?b = hd x" using bnnil ob by (metis hd_append)
           then have "(hd x) = inverse (last (wordinverse ?b))" using hd_last_wordinverse[of "?b"] bnnil by simp
           then have "(hd ys) = inverse (last ys)" using nys by (simp add: True ibnnil)
-          moreover have "length ys > 1" using True ibnnil nys by (metis (no_types, hide_lams) Nil_is_append_conv append_self_conv diff_add_0 hd_append length_0_conv length_append length_tl less_one linorder_neqE_nat list.exhaust_sel)
+          moreover have "length ys > 1" using True ibnnil nys using reduction_fixpt_conv rxs by auto
           ultimately have "\<not> uncyclic ys" using not_uncyclic  by blast
             then show ?thesis using uys by auto
         next
@@ -1454,22 +1366,22 @@ Lemmas to be done:
    b. wordinverse xs ~ wordinverse ("iter" xs)
 *)
 
-lemma CP_OnlyIf_Ex: assumes  "conj_rel S xs ys" shows "cyclicp (cyclic_reduct xs) (cyclic_reduct ys)"
+lemma CP_OnlyIf_Ex: assumes  "conj_rel S xs ys" shows "cyclicp (cyclic_reduce xs) (cyclic_reduce ys)"
 proof-
-   have xs: "xs\<in>\<llangle>S\<rrangle>" using assms conj_rel_def by blast
-   then have cxs:"conj_rel S xs (cyclic_reduct xs)" by (simp add: conj_cyclicreduct conj_rel_symm)
-   have ys: "ys\<in>\<llangle>S\<rrangle>" using assms conj_rel_def by blast
-   then have cys:"conj_rel S ys (cyclic_reduct ys)" by (simp add: conj_cyclicreduct conj_rel_symm)
-   have "conj_rel S (cyclic_reduct xs) (cyclic_reduct ys)" using assms conj_cyclicreduct conj_rel_trans cys xs by blast
-   moreover have "cyclic_reduced (cyclic_reduct xs) \<and> cyclic_reduced (cyclic_reduct ys)" by (simp add: cyclic_reduced_cyclic_reduct)
+   have xs: "xs\<in>\<langle>S\<rangle>" using assms conj_rel_def by blast
+   then have cxs:"conj_rel S xs (cyclic_reduce xs)" by (simp add: conj_cyclicreduce conj_rel_symm)
+   have ys: "ys\<in>\<langle>S\<rangle>" using assms conj_rel_def by blast
+   then have cys:"conj_rel S ys (cyclic_reduce ys)" by (simp add: conj_cyclicreduce conj_rel_symm)
+   have "conj_rel S (cyclic_reduce xs) (cyclic_reduce ys)" using assms conj_cyclicreduce conj_rel_trans cys xs by blast
+   moreover have "cyclic_reduced (cyclic_reduce xs) \<and> cyclic_reduced (cyclic_reduce ys)" by (simp add: cyclic_reduced_cyclic_reduce)
    ultimately show ?thesis using conj_red by blast
  qed
 
-lemma CP_If_Ex: assumes "xs\<in>\<llangle>S\<rrangle>" "ys\<in>\<llangle>S\<rrangle>"  "cyclicp (cyclic_reduct xs) (cyclic_reduct ys)" shows "conj_rel S xs ys"
+lemma CP_If_Ex: assumes "xs\<in>\<langle>S\<rangle>" "ys\<in>\<langle>S\<rangle>"  "cyclicp (cyclic_reduce xs) (cyclic_reduce ys)" shows "conj_rel S xs ys"
 proof-
-  have cxs:"conj_rel S xs (cyclic_reduct xs)" using assms(1) by (simp add: conj_cyclicreduct conj_rel_symm)
-  have cys:"conj_rel S ys (cyclic_reduct ys)" using assms(2) by (simp add: conj_cyclicreduct conj_rel_symm)
-  have "conj_rel S (cyclic_reduct xs) (cyclic_reduct ys)" using assms(3) conj_cyclcip conj_rel_def cxs cys by blast
+  have cxs:"conj_rel S xs (cyclic_reduce xs)" using assms(1) by (simp add: conj_cyclicreduce conj_rel_symm)
+  have cys:"conj_rel S ys (cyclic_reduce ys)" using assms(2) by (simp add: conj_cyclicreduce conj_rel_symm)
+  have "conj_rel S (cyclic_reduce xs) (cyclic_reduce ys)" using assms(3) conj_cyclcip conj_rel_def cxs cys by blast
   then show ?thesis using conj_rel_symm conj_rel_trans cxs cys by blast
 qed
 
@@ -1532,18 +1444,18 @@ next
   then show ?case unfolding cyclicp_def cyclicp_at_i_def by auto
 qed
 
-lemma assumes  "conj_rel S xs ys" shows "ccyclicp (cyclic_reduct xs) (cyclic_reduct ys)"
+lemma assumes  "conj_rel S xs ys" shows "ccyclicp (cyclic_reduce xs) (cyclic_reduce ys)"
 proof-
   show ?thesis using assms Ex_Con CP_OnlyIf_Ex by blast
 qed
 
-lemma assumes "xs\<in>\<llangle>S\<rrangle>" "ys\<in>\<llangle>S\<rrangle>"  "ccyclicp (cyclic_reduct xs) (cyclic_reduct ys)" shows "conj_rel S xs ys"
+lemma assumes "xs\<in>\<langle>S\<rangle>" "ys\<in>\<langle>S\<rangle>"  "ccyclicp (cyclic_reduce xs) (cyclic_reduce ys)" shows "conj_rel S xs ys"
 proof-
   show ?thesis using assms Con_Ex CP_If_Ex by blast
 qed
 
 definition check_conj :: "('a, 'b) word \<Rightarrow> ('a, 'b) word \<Rightarrow> bool"
-  where "check_conj a b = ( ccyclicp (cyclic_reduct a) (cyclic_reduct b))"
+  where "check_conj a b = ( ccyclicp (cyclic_reduce a) (cyclic_reduce b))"
 
 export_code check_conj in Haskell
 module_name CP file_prefix cp
