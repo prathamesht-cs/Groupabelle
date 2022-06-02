@@ -2,7 +2,7 @@ theory NielsonSchreier
 imports "UniversalProperty" "HOL.Nat"
 begin
 
-lemma equiv_redelem:
+lemma red_repelem:
   assumes "w \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>))"
   shows "\<exists>x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w)"
 proof-
@@ -23,7 +23,7 @@ lemma redelem_unique :
   shows "\<exists>!x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w)"
 proof(rule classical)
   assume 1:"\<not>(\<exists>!x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w))"
-  have "\<exists>x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w)" using assms equiv_redelem by auto
+  have "\<exists>x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w)" using assms red_repelem by auto
   then obtain x where x:"x \<in> w \<and> reduced x" by auto
   obtain y where y:"(y \<in> w \<and> reduced y \<and> (reln_tuple \<langle>S\<rangle>)`` {x} = w) \<and> y \<noteq> x " using 1 x by (smt (verit, best) assms equiv_class_eq_iff equiv_class_self quotientE quotient_eq_iff reln_equiv)
   then have "(x, y) \<in> reln_tuple \<langle>S\<rangle>" using x y by blast
@@ -34,36 +34,36 @@ proof(rule classical)
   then show "\<exists>!x \<in> w. reduced x \<and> ((reln_tuple \<langle>S\<rangle>)`` {x} = w)" by simp 
 qed
 
-definition equiv_red :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word"
-  where "equiv_red S w = (THE x. x \<in> w \<and> reduced x \<and> (w = reln_tuple \<langle>S\<rangle> `` {x}))"
+definition red_rep :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word"
+  where "red_rep S w = (THE x. x \<in> w \<and> reduced x \<and> (w = reln_tuple \<langle>S\<rangle> `` {x}))"
 
-lemma equiv_red_the:
+lemma red_rep_the:
   assumes "w \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>))"
-  shows "((equiv_red S w) \<in> w)  \<and> reduced ((equiv_red S w)) \<and> (w = reln_tuple \<langle>S\<rangle> `` {(equiv_red S w)})"
-  unfolding equiv_red_def
+  shows "((red_rep S w) \<in> w)  \<and> reduced ((red_rep S w)) \<and> (w = reln_tuple \<langle>S\<rangle> `` {(red_rep S w)})"
+  unfolding red_rep_def
 proof(rule theI')
   show "\<exists>!x. x \<in> w \<and> reduced x \<and> w = reln_tuple \<langle>S\<rangle> `` {x}" using redelem_unique[of "w" "S"] assms by metis 
 qed
 
 lemma equivred_equiv:
   assumes "w \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>))"
-  shows "\<forall>x\<in>w. (reln_tuple \<langle>S\<rangle>) `` {x} = (reln_tuple \<langle>S\<rangle>) `` {equiv_red S w}"
+  shows "\<forall>x\<in>w. (reln_tuple \<langle>S\<rangle>) `` {x} = (reln_tuple \<langle>S\<rangle>) `` {red_rep S w}"
 proof-
-  obtain x where x:"x \<in> w" using assms equiv_redelem by auto
+  obtain x where x:"x \<in> w" using assms red_repelem by auto
   then have xs: "x \<in> \<langle>S\<rangle>" using append_congruent assms equiv_2f_clos reln_equiv rightappend_span freewords_on_def by fastforce
-  have rw: "equiv_red S w \<in> w" using x equiv_red_def redelem_unique equiv_red_the assms by blast
-  then have rs: "equiv_red S w \<in> \<langle>S\<rangle>" using assms by (meson quotient_eq_iff refl_onD1 reln_equiv reln_refl)
-  then have "(x,equiv_red S w)\<in>(reln_tuple \<langle>S\<rangle>)" using xs x rs rw by (meson assms quotient_eq_iff reln_equiv)
-  then have "(reln_tuple \<langle>S\<rangle>) `` {x} = (reln_tuple \<langle>S\<rangle>) `` {equiv_red S w}" by (meson equiv_class_eq_iff reln_equiv)
+  have rw: "red_rep S w \<in> w" using x red_rep_def redelem_unique red_rep_the assms by blast
+  then have rs: "red_rep S w \<in> \<langle>S\<rangle>" using assms by (meson quotient_eq_iff refl_onD1 reln_equiv reln_refl)
+  then have "(x,red_rep S w)\<in>(reln_tuple \<langle>S\<rangle>)" using xs x rs rw by (meson assms quotient_eq_iff reln_equiv)
+  then have "(reln_tuple \<langle>S\<rangle>) `` {x} = (reln_tuple \<langle>S\<rangle>) `` {red_rep S w}" by (meson equiv_class_eq_iff reln_equiv)
   then show ?thesis using x assms by (smt (verit, best)  equiv_class_eq_iff quotient_eq_iff reln_equiv)
 qed
 
 definition equivinv :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a, 'b) word set"
-  where "equivinv S w = (reln_tuple \<langle>S\<rangle> `` {wordinverse (equiv_red S w)})"
+  where "equivinv S w = (reln_tuple \<langle>S\<rangle> `` {wordinverse (red_rep S w)})"
 
 (*
 
-definition equal_equiv where "equal_equiv S x y = (equiv_red S x = equiv_red S y)"
+definition equal_equiv where "equal_equiv S x y = (red_rep S x = red_rep S y)"
 
 definition inv_equiv where "inv_equiv S x y = (x = equivinv S y)"
 
@@ -73,7 +73,7 @@ fun nielson_reln :: "('a, 'b) monoidgentype set \<Rightarrow> ('a, 'b) word set 
 
 definition nielson_set :: "('a, 'b) monoidgentype set \<Rightarrow>(('a,'b) word  \<times> ('a,'b) word) set"
   where
-"nielson_set S = {(w,z). \<exists>x y . x \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>)) \<and> w = equiv_red S x \<and> y \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>)) \<and> z = equiv_red S y \<and> nielson_reln S x y}"
+"nielson_set S = {(w,z). \<exists>x y . x \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>)) \<and> w = red_rep S x \<and> y \<in> (\<langle>S\<rangle> // (reln_tuple \<langle>S\<rangle>)) \<and> z = red_rep S y \<and> nielson_reln S x y}"
 
 lemma refl_nielson : "\<forall> x. nielson_reln S x x"
   using nielson_reln.simps equal_equiv_def by blast
@@ -732,7 +732,7 @@ qed
 
 fun lex_lift :: "('a,'b) monoidgentype set \<Rightarrow> ((('a,'b) groupgentype \<times> ('a,'b) groupgentype)) set \<Rightarrow> ('a, 'b) word set \<Rightarrow> ('a,'b) word set \<Rightarrow> bool"
   where
-"lex_lift S r a b = (lex r (equiv_red S a) (equiv_red S b))"
+"lex_lift S r a b = (lex r (red_rep S a) (red_rep S b))"
 
 definition lexlift_set :: "('a,'b) monoidgentype set \<Rightarrow> (('a,'b) word set) set \<Rightarrow> (('a,'b) groupgentype \<times> ('a,'b) groupgentype) set \<Rightarrow> ((('a,'b) word set \<times> ('a,'b) word set)) set"
   where "lexlift_set S A r = {(a,b). a \<in> A \<and> b \<in> A \<and> lex_lift S r a b}"
@@ -1668,7 +1668,7 @@ qed
 
 definition L_lex_set' 
   where 
-"L_lex_set' A r = {(x,y). x \<in> \<langle>A\<rangle> // reln_tuple \<langle>A\<rangle> \<and> x \<in> \<langle>A\<rangle> // reln_tuple \<langle>A\<rangle> \<and>(equiv_red A x, equiv_red A y) \<in> L_lex_set A r}"
+"L_lex_set' A r = {(x,y). x \<in> \<langle>A\<rangle> // reln_tuple \<langle>A\<rangle> \<and> x \<in> \<langle>A\<rangle> // reln_tuple \<langle>A\<rangle> \<and>(red_rep A x, red_rep A y) \<in> L_lex_set A r}"
 
 
 lemma wf_L_lex_set':
@@ -1677,45 +1677,45 @@ lemma wf_L_lex_set':
 proof(rule wfI_min)
   fix x Q assume x: "x \<in> (Q :: (('a \<times> 'b) \<times> bool) list set set)"
   show "\<exists>z\<in>Q. \<forall>y. (y, z) \<in> L_lex_set' A r \<longrightarrow> y \<notin> Q"
-  proof(cases "tuple_set (L_lex_set A r) (equiv_red A ` Q) = {}")
+  proof(cases "tuple_set (L_lex_set A r) (red_rep A ` Q) = {}")
     case True
     have "\<forall>y. (y, x) \<in> L_lex_set' A r \<longrightarrow> y \<notin> Q" 
       apply (rule allI) apply (rule impI)
     proof-
       fix y assume y: "(y, x) \<in> L_lex_set' A r"
-      then have "(equiv_red A y, equiv_red A x) \<in> L_lex_set A r" unfolding L_lex_set'_def by fast
+      then have "(red_rep A y, red_rep A x) \<in> L_lex_set A r" unfolding L_lex_set'_def by fast
       then show "y \<notin> Q" using True x unfolding tuple_set_def by blast
     qed
     then show ?thesis using x by blast
   next
     case False
-    then obtain x where "x \<in> tuple_set (L_lex_set A r) (equiv_red A ` Q)" by auto
-    then obtain z where z: "z \<in> tuple_set (L_lex_set A r) (equiv_red A ` Q) \<and> (\<forall>y. (y, z) \<in> (L_lex_set A r) \<longrightarrow> y \<notin> tuple_set (L_lex_set A r) (equiv_red A ` Q))" using wfE_min wf_L_lex_set assms by metis 
-    then have z1: "z \<in> (equiv_red A ` Q)" using tuple_set_subset[of "(L_lex_set A r)" "(equiv_red A ` Q)"] by auto
-    then obtain w where w: "w \<in> Q \<and> (equiv_red A  w) = z" by auto
+    then obtain x where "x \<in> tuple_set (L_lex_set A r) (red_rep A ` Q)" by auto
+    then obtain z where z: "z \<in> tuple_set (L_lex_set A r) (red_rep A ` Q) \<and> (\<forall>y. (y, z) \<in> (L_lex_set A r) \<longrightarrow> y \<notin> tuple_set (L_lex_set A r) (red_rep A ` Q))" using wfE_min wf_L_lex_set assms by metis 
+    then have z1: "z \<in> (red_rep A ` Q)" using tuple_set_subset[of "(L_lex_set A r)" "(red_rep A ` Q)"] by auto
+    then obtain w where w: "w \<in> Q \<and> (red_rep A  w) = z" by auto
     moreover have "\<forall>y. (y, w) \<in> L_lex_set' A r \<longrightarrow> y \<notin> Q"
       apply(rule allI) apply (rule impI)
     proof-
       fix y assume a: "(y, w) \<in> L_lex_set' A r"
-      then have contr: "(equiv_red A y, equiv_red A w) \<in> L_lex_set A r" unfolding L_lex_set'_def by auto
+      then have contr: "(red_rep A y, red_rep A w) \<in> L_lex_set A r" unfolding L_lex_set'_def by auto
       show "y \<notin> Q"
       proof(rule ccontr)
         assume "\<not> y \<notin> Q"
         then have y:"y \<in> Q" by blast
         then show False
-        proof(cases "equiv_red A y \<notin> tuple_set (L_lex_set A r) (equiv_red A ` Q)")
+        proof(cases "red_rep A y \<notin> tuple_set (L_lex_set A r) (red_rep A ` Q)")
         case True
-        have "(equiv_red A y, equiv_red A w) \<notin> L_lex_set A r"
+        have "(red_rep A y, red_rep A w) \<notin> L_lex_set A r"
           proof(rule ccontr)
-            assume assm: "\<not> (equiv_red A y, equiv_red A w) \<notin> L_lex_set A r"
-            then have "(equiv_red A y, equiv_red A w) \<in> L_lex_set A r" by blast
-            then have "equiv_red A y \<in> tuple_set (L_lex_set A r) (equiv_red A ` Q)" unfolding tuple_set_def using w y by auto
+            assume assm: "\<not> (red_rep A y, red_rep A w) \<notin> L_lex_set A r"
+            then have "(red_rep A y, red_rep A w) \<in> L_lex_set A r" by blast
+            then have "red_rep A y \<in> tuple_set (L_lex_set A r) (red_rep A ` Q)" unfolding tuple_set_def using w y by auto
             then show False using True by blast
           qed
         then show ?thesis using contr by blast
       next
         case False
-        have "equiv_red A y \<notin> tuple_set (L_lex_set A r) (equiv_red A ` Q)" using z contr w by blast
+        have "red_rep A y \<notin> tuple_set (L_lex_set A r) (red_rep A ` Q)" using z contr w by blast
         then show ?thesis using False by blast
       qed
     qed
@@ -1785,7 +1785,7 @@ lemma wf_lex_max_L2_word:
 
 definition lex_L2_word'
   where
-"lex_L2_word' A = {(x,y). x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and>  ((\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) x , (\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) y) \<in> (lex_word <*lex*> lex_word)}"
+"lex_L2_word' A = {(x,y). x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and>  ((\<lambda>x. (min lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A x)))) x , (\<lambda>x. (min lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A x)))) y) \<in> (lex_word <*lex*> lex_word)}"
 
 lemma wf_lex_word_prod:
  "wf (lex_word <*lex*> lex_word)"
@@ -1794,8 +1794,8 @@ lemma wf_lex_word_prod:
 lemma wf_lex_L2_word':
 "wf (lex_L2_word' A)"
 proof-
-  have "wf {(x,y) . ((\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) x , (\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) y) \<in> (lex_word <*lex*> lex_word)}" using wf_inv1 wf_lex_word_prod by fast
-  moreover have "lex_L2_word' A \<subseteq> {(x,y) . ((\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) x , (\<lambda>x. (min lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A x)))) y) \<in> (lex_word <*lex*> lex_word)}" unfolding lex_L2_word'_def by auto
+  have "wf {(x,y) . ((\<lambda>x. (min lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A x)))) x , (\<lambda>x. (min lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A x)))) y) \<in> (lex_word <*lex*> lex_word)}" using wf_inv1 wf_lex_word_prod by fast
+  moreover have "lex_L2_word' A \<subseteq> {(x,y) . ((\<lambda>x. (min lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A x)))) x , (\<lambda>x. (min lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A x)))) y) \<in> (lex_word <*lex*> lex_word)}" unfolding lex_L2_word'_def by auto
   ultimately show ?thesis using wf_subset by blast
 qed
 
@@ -1816,19 +1816,19 @@ lemma wf_lex_L2_word'_prod:
 
 definition lex_L2_word
   where
-"lex_L2_word A = {(x,y). x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and>  ((\<lambda>x. (length (equiv_red A x), x)) x, (\<lambda>x. (length (equiv_red A x), x)) y) \<in> (nat_less <*lex*> lex_L2_word' A)}"
+"lex_L2_word A = {(x,y). x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and>  ((\<lambda>x. (length (red_rep A x), x)) x, (\<lambda>x. (length (red_rep A x), x)) y) \<in> (nat_less <*lex*> lex_L2_word' A)}"
 
 lemma wf_lex_L2_word:
 "wf (lex_L2_word A)"
 proof-
-  have "wf {(x,y). ((\<lambda>x. (length (equiv_red A x), x)) x, (\<lambda>x. (length (equiv_red A x), x)) y) \<in> (nat_less <*lex*> lex_L2_word' A)}" using wf_inv1 wf_lex_L2_word'_prod by fast
-  moreover have "lex_L2_word A \<subseteq>{(x,y). ((\<lambda>x. (length (equiv_red A x), x)) x, (\<lambda>x. (length (equiv_red A x), x)) y) \<in> (nat_less <*lex*> lex_L2_word' A)}" unfolding lex_L2_word_def by auto
+  have "wf {(x,y). ((\<lambda>x. (length (red_rep A x), x)) x, (\<lambda>x. (length (red_rep A x), x)) y) \<in> (nat_less <*lex*> lex_L2_word' A)}" using wf_inv1 wf_lex_L2_word'_prod by fast
+  moreover have "lex_L2_word A \<subseteq>{(x,y). ((\<lambda>x. (length (red_rep A x), x)) x, (\<lambda>x. (length (red_rep A x), x)) y) \<in> (nat_less <*lex*> lex_L2_word' A)}" unfolding lex_L2_word_def by auto
   ultimately show ?thesis  using wf_subset by blast
 qed
 
 lemma lex_L2_word_length:
   assumes "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))"
-      and "length ((equiv_red A) x) = length ((equiv_red A) y)"
+      and "length ((red_rep A) x) = length ((red_rep A) y)"
     shows "(x,y) \<in> (lex_L2_word A) \<longleftrightarrow>  (x,y) \<in> (lex_L2_word' A)"
   unfolding lex_L2_word_def by (simp add: assms(1) assms(2) wf_nat_less)
 
@@ -1848,41 +1848,41 @@ qed
 
 lemma lex_L2_word_total:
   assumes "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))"
-      and "length ((equiv_red A) x) = length ((equiv_red A) y)"
-    shows "\<not> (x,y) \<in> (lex_L2_word A) \<Longrightarrow> \<not> (y,x) \<in> (lex_L2_word A) \<Longrightarrow> min lex_word (L2 (equiv_red A x)) = min lex_word (L2 (equiv_red A y)) \<and> max lex_word (L2 (equiv_red A x)) = max lex_word (L2 (equiv_red A y))"
+      and "length ((red_rep A) x) = length ((red_rep A) y)"
+    shows "\<not> (x,y) \<in> (lex_L2_word A) \<Longrightarrow> \<not> (y,x) \<in> (lex_L2_word A) \<Longrightarrow> min lex_word (L2 (red_rep A x)) = min lex_word (L2 (red_rep A y)) \<and> max lex_word (L2 (red_rep A x)) = max lex_word (L2 (red_rep A y))"
 proof-
   assume "\<not> (x,y) \<in> (lex_L2_word A)" and "\<not> (y,x) \<in> (lex_L2_word A)"
   then have 1: "\<not> (x,y) \<in> (lex_L2_word' A) \<and> \<not> (y,x) \<in> (lex_L2_word' A)" using assms lex_L2_word_length by auto
-  have "\<not> (min lex_word (L2 (equiv_red A x)), min lex_word (L2 (equiv_red A y))) \<in> lex_word"
+  have "\<not> (min lex_word (L2 (red_rep A x)), min lex_word (L2 (red_rep A y))) \<in> lex_word"
   proof(rule ccontr)
-    assume "\<not> (min lex_word (L2 (equiv_red A x)), min lex_word (L2 (equiv_red A y))) \<notin> lex_word"
-    then have "(min lex_word (L2 (equiv_red A x)), min lex_word (L2 (equiv_red A y))) \<in> lex_word" by blast
+    assume "\<not> (min lex_word (L2 (red_rep A x)), min lex_word (L2 (red_rep A y))) \<notin> lex_word"
+    then have "(min lex_word (L2 (red_rep A x)), min lex_word (L2 (red_rep A y))) \<in> lex_word" by blast
     then have "(x,y) \<in> (lex_L2_word' A)" unfolding lex_L2_word'_def lex_prod_def using assms(1)  by simp
     then show False using 1 by blast
   qed
-  moreover have "\<not> (min lex_word (L2 (equiv_red A y)), min lex_word (L2 (equiv_red A x))) \<in> lex_word"
+  moreover have "\<not> (min lex_word (L2 (red_rep A y)), min lex_word (L2 (red_rep A x))) \<in> lex_word"
   proof(rule ccontr)
-    assume "\<not> (min lex_word (L2 (equiv_red A y)), min lex_word (L2 (equiv_red A x))) \<notin> lex_word"
-    then have "(min lex_word (L2 (equiv_red A y)), min lex_word (L2 (equiv_red A x))) \<in> lex_word" by blast
+    assume "\<not> (min lex_word (L2 (red_rep A y)), min lex_word (L2 (red_rep A x))) \<notin> lex_word"
+    then have "(min lex_word (L2 (red_rep A y)), min lex_word (L2 (red_rep A x))) \<in> lex_word" by blast
     then have "(y,x) \<in> (lex_L2_word' A)" unfolding lex_L2_word'_def lex_prod_def using assms(1)  by simp
     then show False using 1 by blast
   qed
-  ultimately have min: "min lex_word (L2 (equiv_red A x)) = min lex_word (L2 (equiv_red A y))" using lex_word_total by blast 
-  have "\<not> (max lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A y))) \<in> lex_word"
+  ultimately have min: "min lex_word (L2 (red_rep A x)) = min lex_word (L2 (red_rep A y))" using lex_word_total by blast 
+  have "\<not> (max lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A y))) \<in> lex_word"
   proof(rule ccontr)
-    assume "\<not> (max lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A y))) \<notin> lex_word"
-    then have "(max lex_word (L2 (equiv_red A x)), max lex_word (L2 (equiv_red A y))) \<in> lex_word" by blast
+    assume "\<not> (max lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A y))) \<notin> lex_word"
+    then have "(max lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A y))) \<in> lex_word" by blast
     then have "(x,y) \<in> (lex_L2_word' A)" unfolding lex_L2_word'_def lex_prod_def using assms(1) min  by simp
     then show False using 1 by blast
   qed
-  moreover have "\<not> (max lex_word (L2 (equiv_red A y)), max lex_word (L2 (equiv_red A x))) \<in> lex_word"
+  moreover have "\<not> (max lex_word (L2 (red_rep A y)), max lex_word (L2 (red_rep A x))) \<in> lex_word"
   proof(rule ccontr)
-    assume "\<not> (max lex_word (L2 (equiv_red A y)), max lex_word (L2 (equiv_red A x))) \<notin> lex_word"
-    then have "(max lex_word (L2 (equiv_red A y)), max lex_word (L2 (equiv_red A x))) \<in> lex_word" by blast
+    assume "\<not> (max lex_word (L2 (red_rep A y)), max lex_word (L2 (red_rep A x))) \<notin> lex_word"
+    then have "(max lex_word (L2 (red_rep A y)), max lex_word (L2 (red_rep A x))) \<in> lex_word" by blast
     then have "(y,x) \<in> (lex_L2_word' A)" unfolding lex_L2_word'_def lex_prod_def using assms(1) min  by simp
     then show False using 1 by blast
   qed
-  ultimately show "min lex_word (L2 (equiv_red A x)) = min lex_word (L2 (equiv_red A y)) \<and> max lex_word (L2 (equiv_red A x)) = max lex_word (L2 (equiv_red A y))" using min lex_word_total by blast
+  ultimately show "min lex_word (L2 (red_rep A x)) = min lex_word (L2 (red_rep A y)) \<and> max lex_word (L2 (red_rep A x)) = max lex_word (L2 (red_rep A y))" using min lex_word_total by blast
 qed
 
 fun rev_tuple ("\<down>")
@@ -1998,48 +1998,48 @@ fun m_concat
 
 lemma append_equivred_span:
   assumes "set l \<subseteq> carrier (freegroup S)"
-  shows "l_concat (map (equiv_red S) l) \<in> \<langle>S\<rangle>"
+  shows "l_concat (map (red_rep S) l) \<in> \<langle>S\<rangle>"
 proof-
   have "\<forall>x\<in> set l. \<forall>n\<in>x. n \<in> \<langle>S\<rangle>" using assms in_quotient_imp_subset reln_equiv unfolding freegroup_def by fastforce
   then have 1:"\<forall>x\<in> set l. x \<subseteq> \<langle>S\<rangle>" by auto
   then have "\<forall>x\<in> set l. x \<in> \<langle>S\<rangle> // reln_tuple \<langle>S\<rangle> " using assms freegroup_def by (metis partial_object.select_convs(1) subset_code(1))
-  moreover then have "\<forall>x\<in> set l. (equiv_red S x \<in> x)" by (simp add: equiv_red_the)
-  ultimately have "\<forall>x\<in> set l. (equiv_red S x \<in> \<langle>S\<rangle>)" using 1 by auto
-  then have "set(map (equiv_red S) l) \<subseteq> \<langle>S\<rangle>" by auto
+  moreover then have "\<forall>x\<in> set l. (red_rep S x \<in> x)" by (simp add: red_rep_the)
+  ultimately have "\<forall>x\<in> set l. (red_rep S x \<in> \<langle>S\<rangle>)" using 1 by auto
+  then have "set(map (red_rep S) l) \<subseteq> \<langle>S\<rangle>" by auto
   then show ?thesis unfolding l_concat_def
   proof(induction l)
     case Nil
     then show ?case using span_append freewords_on_def[of "S"] words_on.empty by auto
   next
     case (Cons a l)
-    then have "set (map (equiv_red S) l) \<subseteq> \<langle>S\<rangle>" by simp
-    then have 1:"foldr (@) (map (equiv_red S) l) [] \<in> \<langle>S\<rangle>" using Cons.IH by auto
-    have "[(foldr (@) (map (equiv_red S) (a # l)) [])] = [foldr (@) [((foldr (@) (map (equiv_red S) [a]) [])@(foldr (@) (map (equiv_red S) l) []))] []]" by simp    
+    then have "set (map (red_rep S) l) \<subseteq> \<langle>S\<rangle>" by simp
+    then have 1:"foldr (@) (map (red_rep S) l) [] \<in> \<langle>S\<rangle>" using Cons.IH by auto
+    have "[(foldr (@) (map (red_rep S) (a # l)) [])] = [foldr (@) [((foldr (@) (map (red_rep S) [a]) [])@(foldr (@) (map (red_rep S) l) []))] []]" by simp    
     then show ?case using span_append freewords_on_def 1 by (metis (no_types, lifting) Cons.prems concat.simps(2) concat_conv_foldr list.set_intros(1) list.simps(9) subset_code(1))
   qed
 qed
 
 lemma
   assumes "set l \<subseteq> carrier (freegroup S)"
-  shows "m_concat (freegroup S) l = (reln_tuple \<langle>S\<rangle>) `` {(l_concat (map(equiv_red S) l))}"
+  shows "m_concat (freegroup S) l = (reln_tuple \<langle>S\<rangle>) `` {(l_concat (map(red_rep S) l))}"
   using assms
 proof(induction l)
   case Nil
   have "m_concat (freegroup S) [] = \<one>\<^bsub>freegroup S\<^esub>" unfolding m_concat.simps(2) by simp
-  moreover have "l_concat (map (equiv_red S) []) = []" unfolding l_concat_def by simp
+  moreover have "l_concat (map (red_rep S) []) = []" unfolding l_concat_def by simp
   moreover have "reln_tuple \<langle>S\<rangle> `` {[]} = \<one>\<^bsub>freegroup S\<^esub>" using freegroup_def[of "S"] by simp
   ultimately show ?case by simp
 next
   case (Cons a l)
   then have "set l \<subseteq> carrier (freegroup S)" by simp
-  then have I:"m_concat (freegroup S) l = reln_tuple \<langle>S\<rangle> `` {l_concat (map (equiv_red S) l)}" using Cons.IH by auto
-  have 1:"reln_tuple \<langle>S\<rangle> `` {l_concat (map (equiv_red S) (a # l))} = reln_tuple \<langle>S\<rangle> `` {((equiv_red S) a @ l_concat (map (equiv_red S) l))}" unfolding l_concat_def by simp
+  then have I:"m_concat (freegroup S) l = reln_tuple \<langle>S\<rangle> `` {l_concat (map (red_rep S) l)}" using Cons.IH by auto
+  have 1:"reln_tuple \<langle>S\<rangle> `` {l_concat (map (red_rep S) (a # l))} = reln_tuple \<langle>S\<rangle> `` {((red_rep S) a @ l_concat (map (red_rep S) l))}" unfolding l_concat_def by simp
   have a1:"a \<in> carrier (freegroup S)" using Cons by simp
-  then have a:"(equiv_red S) a \<in> \<langle>S\<rangle>" unfolding freegroup_def using equiv_red_the in_quotient_imp_subset reln_equiv by fastforce
-  have "l_concat (map (equiv_red S) l) \<in> \<langle>S\<rangle>" using Cons.prems append_equivred_span unfolding freegroup_def by auto
-  then have "reln_tuple \<langle>S\<rangle> `` {l_concat (map (equiv_red S) (a # l))} = reln_tuple \<langle>S\<rangle> `` {(equiv_red S) a} \<otimes>\<^bsub>freegroup S\<^esub>  reln_tuple \<langle>S\<rangle> `` {(l_concat (map (equiv_red S) l))}" using proj_append_wd[of "(equiv_red S) a" "S" " l_concat (map (equiv_red S) l)"] 1 a unfolding freegroup_def by auto
+  then have a:"(red_rep S) a \<in> \<langle>S\<rangle>" unfolding freegroup_def using red_rep_the in_quotient_imp_subset reln_equiv by fastforce
+  have "l_concat (map (red_rep S) l) \<in> \<langle>S\<rangle>" using Cons.prems append_equivred_span unfolding freegroup_def by auto
+  then have "reln_tuple \<langle>S\<rangle> `` {l_concat (map (red_rep S) (a # l))} = reln_tuple \<langle>S\<rangle> `` {(red_rep S) a} \<otimes>\<^bsub>freegroup S\<^esub>  reln_tuple \<langle>S\<rangle> `` {(l_concat (map (red_rep S) l))}" using proj_append_wd[of "(red_rep S) a" "S" " l_concat (map (red_rep S) l)"] 1 a unfolding freegroup_def by auto
   moreover have "m_concat (freegroup S) (a # l) = a \<otimes>\<^bsub>freegroup S\<^esub> m_concat (freegroup S) l" unfolding m_concat.simps(2) by blast
-  moreover have "a = reln_tuple \<langle>S\<rangle> `` {(equiv_red S) a}" using equiv_red_the a1 freegroup_def by (metis partial_object.select_convs(1))
+  moreover have "a = reln_tuple \<langle>S\<rangle> `` {(red_rep S) a}" using red_rep_the a1 freegroup_def by (metis partial_object.select_convs(1))
   ultimately show ?case using I by simp
 qed
 
@@ -2610,7 +2610,7 @@ proof-
 qed
 
 lemma hd_notempty:
-  assumes "B \<subseteq> (equiv_red A ` carrier (freegroup A))"
+  assumes "B \<subseteq> (red_rep A ` carrier (freegroup A))"
       and "\<forall>x \<in> B. N0 x"
       and "\<forall>x \<in> B. \<forall>y \<in> B. N1 x y"
       and "\<forall>x \<in> B. \<forall>y \<in> B. \<forall>z \<in> B. N2 x y z"
@@ -2621,8 +2621,8 @@ lemma hd_notempty:
 proof(induction "(x#xs)" arbitrary: x xs)
   case (Cons y z)
     have y: "y \<in> B" using Cons.prems(5) by auto
-    moreover then obtain Y where "Y \<in> carrier (freegroup A) \<and> y = equiv_red A Y" using Cons.prems(1) by blast
-    ultimately have ry:"reduced y" using Cons.prems(1) unfolding freegroup_def by (simp add: equiv_red_the)
+    moreover then obtain Y where "Y \<in> carrier (freegroup A) \<and> y = red_rep A Y" using Cons.prems(1) by blast
+    ultimately have ry:"reduced y" using Cons.prems(1) unfolding freegroup_def by (simp add: red_rep_the)
     have y0:"y \<noteq> []" using N0_def y assms(2) by auto
   then show ?case
   proof(cases "z = []")
@@ -2636,8 +2636,8 @@ proof(induction "(x#xs)" arbitrary: x xs)
     then obtain z1 z2 where z:"z = (z1#z2)" using list.exhaust by blast
     have z1:"z1 \<in> B" using Cons.prems(5) z by auto
     then have z10:"z1 \<noteq> []" using N0_def assms(2) by auto
-    obtain Z1 where "Z1 \<in> carrier (freegroup A) \<and> z1 = equiv_red A Z1" using Cons.prems(1) z1 by blast
-    then have rz1: "reduced z1" using z1 using Cons.prems(1) unfolding freegroup_def by (simp add: equiv_red_the)
+    obtain Z1 where "Z1 \<in> carrier (freegroup A) \<and> z1 = red_rep A Z1" using Cons.prems(1) z1 by blast
+    then have rz1: "reduced z1" using z1 using Cons.prems(1) unfolding freegroup_def by (simp add: red_rep_the)
     then show ?thesis
     proof(cases "z2 = []")
       case True
@@ -2668,8 +2668,8 @@ proof(induction "(x#xs)" arbitrary: x xs)
       have N2:"N2 y z1 z3" using Cons.prems(1,4,5) z z2 by auto
       have 11:"N1 y z1" using Cons.prems(1,3,5) z z2  by fastforce
       have 12:"N1 z1 z3" using Cons.prems(1,3,5) z z2  by fastforce
-      obtain Z3 where "Z3 \<in> carrier (freegroup A) \<and> z3 = equiv_red A Z3" using Cons.prems(1,5) z z2 by auto
-      then have rz3: "reduced z3" using z1 using Cons.prems(1) unfolding freegroup_def by (simp add: equiv_red_the)
+      obtain Z3 where "Z3 \<in> carrier (freegroup A) \<and> z3 = red_rep A Z3" using Cons.prems(1,5) z z2 by auto
+      then have rz3: "reduced z3" using z1 using Cons.prems(1) unfolding freegroup_def by (simp add: red_rep_the)
       define w where w:"w = cancel3 y z1 z3"
       have "(y#z) = (y#z1#z3#z4)"using z z2 by auto
       then have inv:"y \<noteq> wordinverse z1 \<and> z1 \<noteq> wordinverse z3" using Cons.prems(6) Ex_list_of_length by auto
@@ -2718,7 +2718,7 @@ lemma reduced_reln_eq:
  
 
 lemma n_reduced_cancel:
-  assumes "B \<subseteq> (equiv_red A ` carrier (freegroup A))"
+  assumes "B \<subseteq> (red_rep A ` carrier (freegroup A))"
       and "\<forall>x \<in> B. N0 x"
       and "\<forall>x \<in> B. \<forall>y \<in> B. N1 x y"
       and "\<forall>x \<in> B. \<forall>y \<in> B. \<forall>z \<in> B. N2 x y z"
@@ -2749,9 +2749,9 @@ definition union_inv
 
 definition N_reduced ("N")
   where
-"N_reduced S A = ((\<forall>x \<in> (equiv_red A) ` (union_inv S A). N0 x) \<and> 
-                  (\<forall>x \<in> (equiv_red A) ` (union_inv S A). \<forall>y \<in> (equiv_red A) ` (union_inv S A). N1 x y) \<and> 
-                  (\<forall>x \<in> (equiv_red A) ` (union_inv S A). \<forall>y \<in> (equiv_red A) ` (union_inv S A). \<forall>z \<in> (equiv_red A) ` (union_inv S A). N2 x y z))"
+"N_reduced S A = ((\<forall>x \<in> (red_rep A) ` (union_inv S A). N0 x) \<and> 
+                  (\<forall>x \<in> (red_rep A) ` (union_inv S A). \<forall>y \<in> (red_rep A) ` (union_inv S A). N1 x y) \<and> 
+                  (\<forall>x \<in> (red_rep A) ` (union_inv S A). \<forall>y \<in> (red_rep A) ` (union_inv S A). \<forall>z \<in> (red_rep A) ` (union_inv S A). N2 x y z))"
 
 lemma 
   assumes "x \<in> carrier (freegroup S)"
@@ -2765,9 +2765,9 @@ definition minimal_set
 lemma "\<exists>X. X \<subseteq> S \<and> X \<inter> (m_inv (freegroup A) ` X) \<noteq> {} \<and> union_inv S A = union_inv X A"
   sorry
 
-lemma "(\<forall>x \<in> (equiv_red A) ` (union_inv (X H A) A). N0 x)"
+lemma "(\<forall>x \<in> (red_rep A) ` (union_inv (X H A) A). N0 x)"
   sorry
 
-lemma "(\<forall>x \<in> (equiv_red A) ` (union_inv S A). \<forall>y \<in> (equiv_red A) ` (union_inv S A). N1 x y)"
+lemma "(\<forall>x \<in> (red_rep A) ` (union_inv S A). \<forall>y \<in> (red_rep A) ` (union_inv S A). N1 x y)"
   sorry
 
