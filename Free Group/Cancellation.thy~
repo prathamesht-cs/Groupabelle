@@ -20,6 +20,5 @@ definition cancels_eq::"('a,'b) word \<Rightarrow> ('a,'b) word \<Rightarrow> bo
   where
 "cancels_eq = (\<lambda> wrd1 wrd2. cancels_to wrd1 wrd2 \<or> cancels_to wrd2 wrd1)^**"
 
-
 end
 

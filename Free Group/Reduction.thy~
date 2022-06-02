@@ -1,9 +1,9 @@
 theory Reduction
-imports "FreeGroupMain"  "HOL-Library.FuncSet" "HOL-Algebra.Group"
+imports "FreeGroupMain" "HOL-Library.FuncSet" "HOL-Algebra.Group"
 begin
 
 (*Lemmas on reduction and reduced functions, and the reduction relation.*)
-(*
+
 lemma length_reduction:
  "length (reduction wrd) \<le> length wrd"
 proof(induction wrd rule: reduction.induct)
@@ -128,12 +128,12 @@ next
       then show ?thesis using False 3 by force
     qed
   qed
-*)
+
 lemma reduced_rightappend:
   assumes "reduced (xs@ys)"
   shows "reduced xs"
   using assms
-proof (induction xs rule : reduced.induct)
+proof (induction xs rule : reduction.induct)
 case 1
 then show ?case try
   by simp
@@ -152,7 +152,8 @@ next
   case False
   have "reduced ((g2 # wrd) @ ys)" 
     by (metis "3.prems" append_Cons reduced.simps(3))
-  then have "reduced (g2#wrd)"  by (simp add: "3.IH" False)
+  then have "reduced (g2#wrd)" 
+    using "3.IH"(2) False by auto
   then show ?thesis by (simp add: False)
 qed
 qed
@@ -211,9 +212,9 @@ proof-
   then show ?thesis using mult[of "xs@[g, inverse g]" "xs" "ys" "ys"] reln.refl reln.sym
     by auto
 qed
-(*
+
 lemma rel_to_reduction:"xs ~ reduction xs"
-proof(induction xs rule:reduce.induct )
+proof(induction xs rule:reduction.induct )
   case 1
   then show ?case 
     using reln.refl by auto
@@ -240,6 +241,6 @@ next
   then show ?thesis by simp
 qed
 qed
-*)
+
 
 end

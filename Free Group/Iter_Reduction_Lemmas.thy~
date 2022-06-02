@@ -2,7 +2,6 @@ theory Iter_Reduction_Lemmas
   imports Main iter Cancellation
 begin
 
-
 fun reduce :: "('a,'b) word \<Rightarrow> ('a,'b) word"
   where
 "reduce [] = []"|

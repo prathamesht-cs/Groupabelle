@@ -4,7 +4,7 @@ begin
 
 (*
  group_spanset \<rightarrow> words_on_S
- spanset \<rightarrow> freewords_on
+ spanset \<rightarrow> freewords_on_S
  reduct \<rightarrow> reduce
  lift_append \<rightarrow> proj_append
  reln_set \<rightarrow> reln_tuple

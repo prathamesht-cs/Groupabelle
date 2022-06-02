@@ -1968,12 +1968,6 @@ proof-
   moreover then have "... = rev (drop (length (drop ((length xs + 1) div 2 - 1) ((map inverse) xs)) -  ((length xs + 1) div 2 - 1))  (drop ((length xs + 1) div 2 - 1) ((map inverse) xs)))" using take_rev by blast
   moreover then have "... = rev (drop (((length xs + 1) div 2) -  ((length xs + 1) div 2 - 1))  (drop ((length xs + 1) div 2 - 1) ((map inverse) xs)))" using drop_odd_length length_map odd by metis
   moreover then have "... = rev (drop 1  (drop ((length xs + 1) div 2 - 1) ((map inverse) xs)))" by (simp add: odd)
-  then show "take ((length xs + 1) div 2 - 1)
-     (take ((length (wordinverse xs) + 1) div 2) (wordinverse xs)) =
-    wordinverse (drop ((length xs + 1) div 2) xs)" sorry
-qed
-
-
 
 lemma "length x = length y \<Longrightarrow> (L2 x = L2 y) \<Longrightarrow> x = y"
   sorry
