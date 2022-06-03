@@ -2762,7 +2762,7 @@ definition minimal_set
   where
 "minimal_set S A = (SOME X. X \<subseteq> S \<and>  X \<inter> (m_inv (freegroup A) ` X) = {} \<and> union_inv S A = union_inv X A)"
 
-lemma "\<exists>X. X \<subseteq> S \<and> X \<inter> (m_inv (freegroup A) ` X) \<noteq> {} \<and> union_inv S A = union_inv X A"
+lemma "\<exists>X. X \<subseteq> S \<and> X \<inter> (m_inv (freegroup A) ` X) = {} \<and> union_inv S A = union_inv X A"
   sorry
 
 lemma "(\<forall>x \<in> (red_rep A) ` (union_inv (X H A) A). N0 x)"
@@ -2771,3 +2771,8 @@ lemma "(\<forall>x \<in> (red_rep A) ` (union_inv (X H A) A). N0 x)"
 lemma "(\<forall>x \<in> (red_rep A) ` (union_inv S A). \<forall>y \<in> (red_rep A) ` (union_inv S A). N1 x y)"
   sorry
 
+definition (in group) free :: "('a, 'b) monoid_scheme \<Rightarrow> bool"
+  where "free H \<equiv> (\<exists>X. H \<cong> (freegroup X))"
+
+lemma LS: assumes "subgroup S H" "S \<inter> (m_inv H ` S) = {}"
+  shows "(free (SG H \<langle>S\<rangle>\<^bsub>H\<^esub>)) \<longleftrightarrow> set l \<subseteq> S \<union> (m_inv H ` S) \<Longrightarrow> l \<noteq> [] \<Longrightarrow> (\<forall>n < (length l - 1). (l!n) \<otimes>\<^bsub>H\<^esub> (l!(n+1)) \<noteq> \<one>\<^bsub>H\<^esub>) \<Longrightarrow>  m_concat H l \<noteq> \<one>\<^bsub>H\<^esub>" 
