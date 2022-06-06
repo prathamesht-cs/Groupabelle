@@ -2806,6 +2806,7 @@ proof-
   next
     case False
     then show ?thesis sorry
+    proof
   qed
 qed
 

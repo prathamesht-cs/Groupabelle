@@ -75,13 +75,13 @@ qed
 
 definition invgen ::  "('a,'b) monoidgentype set \<Rightarrow> ('a,'b) groupgentype set" ("_\<^sup>\<plusminus>")
   where
-"invgen S = S \<times> {True,False}"
+"S \<^sup>\<plusminus> = S \<times> {True,False}"
 
 inductive_set words_on::"('a,'b) groupgentype set \<Rightarrow> ('a,'b) word set" ("_\<^sup>\<star>")
   for S::"('a,'b) groupgentype set"
   where
-empty:"[] \<in> (words_on S)"
-|gen:"x \<in> S \<Longrightarrow> xs \<in> (words_on S) \<Longrightarrow> (x#xs) \<in> (words_on S)"
+empty:"[] \<in> (S\<^sup>\<star>)"
+|gen:"x \<in> S \<Longrightarrow> xs \<in> (S\<^sup>\<star>) \<Longrightarrow> (x#xs) \<in> (S\<^sup>\<star>)"
 
 
 lemma cons_span: assumes "(x#xs) \<in> (words_on S)" shows "[x] \<in> (words_on S)"
@@ -145,7 +145,7 @@ qed
 
 definition freewords_on::"('a,'b) monoidgentype set \<Rightarrow> ('a,'b) word set" ("\<langle>_\<rangle>")
   where
-"freewords_on S = words_on (invgen S)"
+"\<langle>S\<rangle>  = words_on (invgen S)"
 
 lemma span_inverse: assumes "x \<in> invgen  S" shows "inverse x \<in> invgen  S"
 proof-
