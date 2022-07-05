@@ -1852,7 +1852,7 @@ proof-
   then show "x = y" using total_r_gen_Id unfolding lex_word_def by (metis UNIV_I total_lenlex total_on_def)
 qed
 
-lemma lex_L2_word_total:
+lemma lex_L2_word_total1:
   assumes "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))"
       and "length ((red_rep A) x) = length ((red_rep A) y)"
     shows "\<not> (x,y) \<in> (lex_L2_word A) \<Longrightarrow> \<not> (y,x) \<in> (lex_L2_word A) \<Longrightarrow> min lex_word (L2 (red_rep A x)) = min lex_word (L2 (red_rep A y)) \<and> max lex_word (L2 (red_rep A x)) = max lex_word (L2 (red_rep A y))"
@@ -1895,7 +1895,8 @@ fun rev_tuple ("\<down>")
   where
 "\<down> (x,y) = (y,x)"
 
-lemma "min lex_word (L2 x) = min lex_word (L2 y) \<and> max lex_word (L2 x) = max lex_word (L2 y) \<Longrightarrow> (L2 x = L2 y) \<or> (\<down> (L2 x) = L2 y)" 
+lemma lex_L2_word_total2:
+"min lex_word (L2 x) = min lex_word (L2 y) \<and> max lex_word (L2 x) = max lex_word (L2 y) \<Longrightarrow> (L2 x = L2 y) \<or> (\<down> (L2 x) = L2 y)" 
   by (metis left_tuple_def max.simps min.simps rev_tuple.simps)
 
 lemma "(L2 x = L2 y) \<or> (\<down> (L2 x) = L2 y) \<Longrightarrow> min lex_word (L2 x) = min lex_word (L2 y) \<and> max lex_word (L2 x) = max lex_word (L2 y)"
@@ -1933,7 +1934,8 @@ lemma odd_div2:
 "odd (x :: nat) \<Longrightarrow> x - ((x + 1) div 2) = ((x + 1) div 2) - 1"
   by (metis (no_types, lifting) add_diff_cancel_right add_diff_cancel_right' even_div2 odd_even_add odd_one odd_succ_div_two odd_two_times_div_two_succ)
 
-lemma even_length :"even (length xs) ⟹ L (wordinverse xs) = wordinverse (R xs)"
+lemma even_R:
+"even (length xs) \<Longrightarrow> L (wordinverse xs) = wordinverse (R xs)"
   unfolding right_subword_def left_subword_def
 proof-
   assume "even (length xs)"
@@ -1946,21 +1948,22 @@ proof-
 qed
 
 lemma take_length:
- "n ≤ length xs ⟹ length (take n xs) = n"
+ "n \<le> length xs \<Longrightarrow>length (take n xs) = n"
   by simp
 
-lemma drop_odd_length: "odd (length xs) ⟹ (length (drop ((length xs + 1) div 2 - 1) xs) = ((length xs + 1) div 2))"
+lemma drop_odd_length: "odd (length xs) \<Longrightarrow> (length (drop ((length xs + 1) div 2 - 1) xs) = ((length xs + 1) div 2))"
 proof-
   assume odd:"odd (length xs)"
   then have "length xs > 0" using odd by force
-  then have 1:"((length xs + 1) div 2) ≤ length xs" by simp
+  then have 1:"((length xs + 1) div 2) \<le> length xs" by simp
   have "drop ((length xs + 1) div 2 - 1) (rev xs) = rev (take ((length xs + 1) div 2) xs)" using odd rev_take odd_div2 by metis
   moreover have "length (rev (take ((length xs + 1) div 2) xs)) = ((length xs + 1) div 2)" using 1 take_length length_rev by metis
   moreover have "length (drop ((length xs + 1) div 2 - 1) (rev xs)) = length (drop ((length xs + 1) div 2 - 1) xs)"  by simp
   ultimately show "(length (drop ((length xs + 1) div 2 - 1) xs) = ((length xs + 1) div 2))" by presburger
 qed
 
-lemma odd_length : "odd (length xs) ⟹  take (((length xs+1) div 2) - 1) (L (wordinverse xs)) = wordinverse (R xs)"
+lemma odd_R:
+"odd (length xs) \<Longrightarrow>  take (((length xs+1) div 2) - 1) (L (wordinverse xs)) = wordinverse (R xs)"
   unfolding right_subword_def left_subword_def
 proof-
   assume odd:"odd (length xs)"
@@ -1980,78 +1983,84 @@ proof-
     wordinverse (drop ((length xs + 1) div 2) xs)" by presburger
 qed
 
-lemma LR_append:
- "((L x)@(R x)) = x"
-  unfolding left_subword_def right_subword_def 
-  using append_take_drop_id by blast
-
-lemma "length x = length y ⟹ (L2 x = L2 y) ⟹ x = y"
+lemma LR_eq:
+  assumes "L x = L y"
+          and "R x = R y"
+        shows "x = y"
 proof-
-  assume l: "length x = length y" and L: "(L2 x = L2 y)"
-  then have "(L x, L (wordinverse x)) = (L y, L (wordinverse y))" unfolding left_tuple_def by auto
-  then have 1:"L x = L y ∧ L (wordinverse x) = L (wordinverse y)" by simp
-  show "x = y"
-proof(cases "even (length x)")
+  have "L x @ R x = x" unfolding left_subword_def right_subword_def by simp
+  moreover have  "L y @ R y = y" unfolding left_subword_def right_subword_def by simp
+  ultimately show ?thesis using assms(1,2) by argo
+qed
+
+lemma L2_eq:
+  assumes "length x = length y"
+          and "(L2 x = L2 y)"  
+        shows "L x = L y \<and> R x = R y" 
+proof(cases "odd (length x)")
   case True
-  then have "even (length y)" using l by auto
-  then have "L (wordinverse x) = wordinverse (R x)" using True even_length by auto
-  then have "wordinverse (R x) = wordinverse (R y)" using True l 1 even_length by metis
+  have 1: "L x = L y" using assms(2) left_tuple_def by (metis prod.inject)
+  have "L (wordinverse x) = L (wordinverse y)" using assms(2) left_tuple_def by (metis prod.inject)
+  then have "take (((length x+1) div 2) - 1) (L (wordinverse x)) =  take (((length y+1) div 2) - 1) (L (wordinverse y))" using assms(1) by presburger
+  then have "wordinverse (R x) = wordinverse (R y)" using True assms(1) odd_R by metis
   then have "R x = R y" using wordinverse_of_wordinverse by metis
-  moreover have " L x = L y" using 1 by auto
-  ultimately show ?thesis using LR_append by metis
+  then show ?thesis using 1 by blast
 next
   case False
-  then have "odd (length x)" by auto
-  then have "(take (((length x+1) div 2) - 1) (L (wordinverse x))) = take (((length x+1) div 2) - 1) (L (wordinverse y))" using l 1 by simp
-  then have "wordinverse (R x) = wordinverse (R y)" using odd_length by (metis False l)
+  have 1: "L x = L y" using assms(2) left_tuple_def by (metis prod.inject)
+  have "L (wordinverse x) = L (wordinverse y)" using assms(2) left_tuple_def by (metis prod.inject)
+  then have "wordinverse (R x) = wordinverse (R y)" using False assms(1) even_R by metis
   then have "R x = R y" using wordinverse_of_wordinverse by metis
-  moreover have " L x = L y" using 1 by auto
-  ultimately show ?thesis using LR_append by metis
-qed
+  then show ?thesis using 1 by blast
 qed
 
-lemma even_append_wordinverse :
-  assumes "even (length x)"
-  shows "((L (wordinverse x))@(wordinverse (L x))) = (wordinverse x)"
-  unfolding left_subword_def using assms
-  by (metis wordinverse_append append_take_drop_id even_length left_subword_def right_subword_def)
+lemma eq_L2_eq:
+  assumes "length x = length y"
+          and "(L2 x = L2 y)"  
+        shows "x = y"
+  using L2_eq LR_eq assms(1) assms(2) by auto
 
-lemma odd_append_wordinverse :
-  assumes "odd (length x)"
-  shows "((wordinverse (R x)) @ wordinverse (L x)) = (wordinverse x)"
-  unfolding left_subword_def right_subword_def using assms
-  by (simp add: wordinverse_append)
-
-lemma even_wordinverse:
-  assumes "even (length x)" "even (length y)" "(L x) = L (wordinverse y)"
-  shows "wordinverse (L x) = (R y)" 
-proof-
-  have "R y = wordinverse (L (wordinverse y))" using assms by (simp add: wordinverse_symm even_length)
-  moreover then have "wordinverse (wordinverse (L x)) = wordinverse (R y)" using assms by simp
-  ultimately show ?thesis by (simp add: assms(3))
+lemma rev_L2_inv:
+  assumes "length x = length y"
+          and "((\<down> (L2 x)) = L2 y)"
+        shows "x = wordinverse y"
+proof(cases "odd (length x)")
+  case True
+  have 1: "L x = L (wordinverse y)" using assms(2) left_tuple_def old.prod.inject rev_tuple.simps by metis
+  have "L (wordinverse x) = L y" using assms(2) left_tuple_def old.prod.inject rev_tuple.simps by metis
+  then have "take (((length x+1) div 2) - 1) (L (wordinverse x)) =  take (((length y+1) div 2) - 1) (L y)" using assms(1) by presburger
+  then have "take (((length x+1) div 2) - 1) (L (wordinverse x)) =  take (((length y+1) div 2) - 1) (L (wordinverse (wordinverse y)))" using wordinverse_of_wordinverse by metis
+  then have "take (((length x+1) div 2) - 1) (L (wordinverse x)) =  take (((length (wordinverse (wordinverse y))+1) div 2) - 1) (L (wordinverse (wordinverse y)))" using length_wordinverse by metis
+  then have "wordinverse (R x) = wordinverse  (R (wordinverse y))" using True assms(1) odd_R length_wordinverse by metis
+  then have "R x = R (wordinverse y)" using wordinverse_of_wordinverse  by metis
+  then show ?thesis using 1 LR_eq by blast
+next
+  case False
+  then have even: "even (length x)" by auto
+  have 1:"L x = L (wordinverse y)" using assms(2) left_tuple_def old.prod.inject rev_tuple.simps by metis
+  have "L (wordinverse x) = L y" using assms(2) left_tuple_def old.prod.inject rev_tuple.simps by metis
+  then have "L (wordinverse x) = L (wordinverse (wordinverse y))" by (simp add: wordinverse_of_wordinverse)
+  then have "wordinverse (R x) = wordinverse  (R (wordinverse y))" using even_R assms(1) even by (metis length_wordinverse)
+  then have "R x = (R (wordinverse y))" using wordinverse_of_wordinverse by metis
+  then show ?thesis using 1 LR_eq by blast
 qed
 
-lemma "length x = length y ⟹ ((↓ (L2 x)) = L2 y) ⟹ wordinverse x = y"
-proof-
-  assume l: "length x = length y" and L2 : "((↓ (L2 x)) = L2 y)"
-  then have "(L (wordinverse x), L x) = (L y, L (wordinverse y))" unfolding left_tuple_def by simp
-  then have 1:"(L (wordinverse x) = L y) ∧ (L x = L (wordinverse y))" by simp
-  show "wordinverse x = y" 
-  proof(cases "even (length x)")
-    case True
-    then have "L (wordinverse x) = L y" using 1 by auto
-    moreover have "wordinverse (L x) = R y" using True l 1 even_wordinverse by metis
-    ultimately show ?thesis using True even_append_wordinverse LR_append by metis
-  next
-    case False
-    then have "odd (length x)" by auto
-    then have "wordinverse (R x) = ((take (((length x+1) div 2) - 1) (L y))" using  
-    ultimately show ?thesis using True odd_append_wordinverse LR_append by metis
-  qed
-qed
+lemma assumes "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))"
+      and "length ((red_rep A) x) = length ((red_rep A) y)"
+    shows "\<not> (x,y) \<in> (lex_L2_word A) \<Longrightarrow> \<not> (y,x) \<in> (lex_L2_word A) \<Longrightarrow> (red_rep A x) = (red_rep A y) \<or> (red_rep A x) = wordinverse (red_rep A y)"
+  using assms lex_L2_word_total1 lex_L2_word_total2 eq_L2_eq rev_L2_inv by blast
 
-lemma "(x,y) \<in> lex_L2_word A \<Longrightarrow> (inv\<^bsub>freegroup A\<^esub> x,y) \<in> lex_L2_word A"
+lemma assumes "(x,y) \<in> lex_L2_word A"
+  shows "(inv\<^bsub>freegroup A\<^esub> x,y) \<in> lex_L2_word A"
   sorry
+(*
+proof-
+  have "red_rep A (inv\<^bsub>freegroup A\<^esub> x) = wordinverse (red_rep A x)" sledgehammer
+  have 1: "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))" using assms(1) unfolding lex_L2_word_def by blast
+  have "(length (red_rep A x) < length (red_rep A y)) \<or> (length (red_rep A x) = length (red_rep A y) \<and> (x,y) \<in> lex_L2_word' A)" using assms(1) unfolding lex_L2_word_def lex_prod_def using nat_less_def assms by fastforce
+*)
+
+
 
 lemma reduced_tl:"reduced (x#xs) \<Longrightarrow> reduced xs"
   by (metis append_Nil assoc_Cons reduced_leftappend)
