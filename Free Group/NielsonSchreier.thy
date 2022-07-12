@@ -2048,10 +2048,10 @@ qed
 lemma assumes "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))"
       and "length ((red_rep A) x) = length ((red_rep A) y)"
     shows "\<not> (x,y) \<in> (lex_L2_word A) \<Longrightarrow> \<not> (y,x) \<in> (lex_L2_word A) \<Longrightarrow> (red_rep A x) = (red_rep A y) \<or> (red_rep A x) = wordinverse (red_rep A y)"
-  using assms lex_L2_word_total1 lex_L2_word_total2 eq_L2_eq rev_L2_inv by blast
+  using assms lex_L2_word_total1 lex_L2_word_total2 eq_L2_eq rev_L2_inv by blast+
 
-lemma assumes "(x,y) \<in> lex_L2_word A"
-  shows "(inv\<^bsub>freegroup A\<^esub> x,y) \<in> lex_L2_word A"
+lemma assumes "(y, x) \<in> lex_L2_word A"
+  shows "(y, inv\<^bsub>freegroup A\<^esub> x) \<in> lex_L2_word A"
   sorry
 (*
 proof-
@@ -2603,10 +2603,14 @@ qed
 definition G
   where
 "G H A g = \<langle>{h \<in> carrier H. (h,g) \<in> (lex_L2_word A)}\<rangle>\<^bsub>H\<^esub>"
+(* G g := {<g'>. g' < g} *)
 
 definition X
   where
 "X H A = {g \<in> carrier H. g \<notin> (G H A g)}"
+
+(*y <lex x and  xy <lex x = = > x not in X and x-1 not in X = = > x not in X U X-1*)
+
 
 lemma subset_span:
   assumes "A \<subseteq> \<langle>S\<rangle>\<^bsub>H\<^esub>"
@@ -2825,6 +2829,90 @@ definition union_inv
   where
 "union_inv S A \<equiv> S \<union> (m_inv (freegroup A) ` S)"
 
+lemma span_subset:
+  assumes "A ⊆ B"
+  shows "⟨A⟩⇘H⇙ ⊆ ⟨B⟩⇘H⇙"
+  using assms gen_span.gen_gens subset_iff subset_span by metis
+
+lemma one_SG:  "𝟭⇘H⇙ = 𝟭⇘SG H K⇙"
+  unfolding SG_def by simp
+
+lemma mult_SG: "x ⊗⇘H⇙ y = x ⊗⇘SG H K⇙ y"
+  by (simp add: SG_def)
+
+lemma inv_SG: "group H ⟹ y ∈ K ⟹ subgroup K H ⟹ inv⇘H⇙ y = inv⇘SG H K⇙ y"
+  unfolding SG_def by (simp add: group.m_inv_consistent)
+
+lemma
+  assumes "(y,x) ∈ lex_L2_word A"
+      and "(x ⊗⇘SG F⇘A⇙ H⇙ y, x) ∈ lex_L2_word A"
+      and "x ∈ H"
+      and "y ∈ H"
+      and "H ≤ F⇘A⇙"
+    shows "x ∉ X (SG (F⇘A⇙) H) A"
+proof-
+  have "group F⇘A⇙"  by (simp add: freegroup_is_group)
+  then have 1: "group (SG (F⇘A⇙) H)"  unfolding SG_def  by (simp add: subgroup_is_group assms(5))
+  have xH:"x ⊗⇘SG F⇘A⇙ H⇙ y ∈ H" by (metis assms(3) assms(4) assms(5) mult_SG subgroup_def)
+  then have "{y, x ⊗⇘SG F⇘A⇙ H⇙ y} ⊆ {h ∈ H. (h,x) ∈ (lex_L2_word A)}" using assms(1) assms(2) assms(4) by auto
+  moreover have H:"H = carrier (SG F⇘A⇙ H)" unfolding SG_def by simp
+  ultimately have 2:"⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙ ⊆ G (SG (F⇘A⇙) H) A x" unfolding G_def using span_subset by (metis (no_types, lifting) Collect_cong)
+  have "inv ⇘SG F⇘A⇙ H⇙ y ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens gen_span.gen_inv)
+  moreover have 3: "x ⊗⇘SG F⇘A⇙ H⇙ y ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens)
+  ultimately have "x ⊗⇘SG F⇘A⇙ H⇙ y ⊗⇘SG F⇘A⇙ H⇙ inv ⇘SG F⇘A⇙ H⇙ y ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_mult)
+  then have "x  ⊗⇘SG F⇘A⇙ H⇙ 𝟭⇘SG F⇘A⇙ H⇙ ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 3 xH H  assms(3) assms(4) gen_span.gen_mult gen_span.gen_one by (metis group.inv_solve_right')
+  then have "x ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 H assms(3) group.is_monoid by force
+  then have "x ∈  G (SG (F⇘A⇙) H) A x" using 2 by auto
+  then show ?thesis by (simp add: X_def)
+qed
+
+lemma
+  assumes "(y,x) ∈ lex_L2_word A"
+      and "(x ⊗⇘SG F⇘A⇙ H⇙ y, x) ∈ lex_L2_word A"
+      and "x ∈ H"
+      and "y ∈ H"
+      and "H ≤ F⇘A⇙"
+    shows "x ∉ X (SG (F⇘A⇙) H) A"
+proof-
+  have "group F⇘A⇙"  by (simp add: freegroup_is_group)
+  then have 1: "group (SG (F⇘A⇙) H)"  unfolding SG_def  by (simp add: subgroup_is_group assms(5))
+  have xH:"x ⊗⇘SG F⇘A⇙ H⇙ y ∈ H" by (metis assms(3) assms(4) assms(5) mult_SG subgroup_def)
+  then have "{y, x ⊗⇘SG F⇘A⇙ H⇙ y} ⊆ {h ∈ H. (h,x) ∈ (lex_L2_word A)}" using assms(1) assms(2) assms(4) by auto
+  moreover have H:"H = carrier (SG F⇘A⇙ H)" unfolding SG_def by simp
+  ultimately have 2:"⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙ ⊆ G (SG (F⇘A⇙) H) A x" unfolding G_def using span_subset by (metis (no_types, lifting) Collect_cong)
+  have "inv ⇘SG F⇘A⇙ H⇙ y ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens gen_span.gen_inv)
+  moreover have 3: "x ⊗⇘SG F⇘A⇙ H⇙ y ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens)
+  ultimately have "x ⊗⇘SG F⇘A⇙ H⇙ y ⊗⇘SG F⇘A⇙ H⇙ inv ⇘SG F⇘A⇙ H⇙ y ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_mult)
+  then have "x  ⊗⇘SG F⇘A⇙ H⇙ 𝟭⇘SG F⇘A⇙ H⇙ ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 3 xH H  assms(3) assms(4) gen_span.gen_mult gen_span.gen_one by (metis group.inv_solve_right')
+  then have "x ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 H assms(3) group.is_monoid by force
+  then have "x ∈  G (SG (F⇘A⇙) H) A x" using 2 by auto
+  then show ?thesis by (simp add: X_def)
+qed
+
+lemma
+  assumes "(x,y) ∈ lex_L2_word A"
+      and "(x ⊗⇘SG F⇘A⇙ H⇙ y, y) ∈ lex_L2_word A"
+      and "x ∈ H"
+      and "y ∈ H"
+      and "H ≤ F⇘A⇙"
+    shows "y ∉ X (SG (F⇘A⇙) H) A"
+proof-
+  have "group F⇘A⇙"  by (simp add: freegroup_is_group)
+  then have 1: "group (SG (F⇘A⇙) H)"  unfolding SG_def  by (simp add: subgroup_is_group assms(5))
+  have xH:"x ⊗⇘SG F⇘A⇙ H⇙ y ∈ H" by (metis assms(3) assms(4) assms(5) mult_SG subgroup_def)
+  then have "{x, x ⊗⇘SG F⇘A⇙ H⇙ y} ⊆ {h ∈ H. (h,y) ∈ (lex_L2_word A)}" using assms(1) assms(2) assms(3) by auto
+  moreover have H:"H = carrier (SG F⇘A⇙ H)" unfolding SG_def by simp
+  ultimately have 2:"⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙ ⊆ G (SG (F⇘A⇙) H) A y" unfolding G_def using span_subset by (metis (no_types, lifting) Collect_cong)
+  have "inv ⇘SG F⇘A⇙ H⇙ x ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens gen_span.gen_inv)
+  moreover have 3: "x ⊗⇘SG F⇘A⇙ H⇙ y ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens)
+  ultimately have "inv ⇘SG F⇘A⇙ H⇙ x ⊗⇘SG F⇘A⇙ H⇙ x ⊗⇘SG F⇘A⇙ H⇙ y  ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 H assms(3) assms(4) gen_span.gen_mult group.inv_closed group.is_monoid monoid.m_assoc by fastforce
+  then have "𝟭⇘SG F⇘A⇙ H⇙  ⊗⇘SG F⇘A⇙ H⇙ y ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 3 xH H  assms(3) assms(4) group.l_inv by fastforce
+  then have "y ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 H assms(4) group.is_monoid by force
+  then have "y ∈  G (SG (F⇘A⇙) H) A y" using 2 by auto
+  then show ?thesis by (simp add: X_def)
+qed
+end
+
 definition N_reduced ("N")
   where
 "N_reduced S A = ((\<forall>x \<in> (red_rep A) ` (union_inv S A). N0 x) \<and> 
@@ -2883,3 +2971,5 @@ lemma
   assumes "x \<in> carrier (freegroup S)"
   shows "inv\<^bsub>(freegroup S)\<^esub> x = x \<Longrightarrow> x = \<one>\<^bsub>(freegroup S)\<^esub>"
   sorry
+
+end
