@@ -2050,17 +2050,70 @@ lemma assumes "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))
     shows "\<not> (x,y) \<in> (lex_L2_word A) \<Longrightarrow> \<not> (y,x) \<in> (lex_L2_word A) \<Longrightarrow> (red_rep A x) = (red_rep A y) \<or> (red_rep A x) = wordinverse (red_rep A y)"
   using assms lex_L2_word_total1 lex_L2_word_total2 eq_L2_eq rev_L2_inv by blast+
 
-lemma assumes "(y, x) \<in> lex_L2_word A"
-  shows "(y, inv\<^bsub>freegroup A\<^esub> x) \<in> lex_L2_word A"
-  sorry
-(*
+lemma red_rep_wordinv:
+  assumes "x ∈ (⟨A⟩ // (reln_tuple ⟨A⟩))" 
+  shows "red_rep A ((reln_tuple ⟨A⟩) `` {wordinverse (red_rep A x)}) = wordinverse (red_rep A x)" 
 proof-
-  have "red_rep A (inv\<^bsub>freegroup A\<^esub> x) = wordinverse (red_rep A x)" sledgehammer
-  have 1: "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))" using assms(1) unfolding lex_L2_word_def by blast
-  have "(length (red_rep A x) < length (red_rep A y)) \<or> (length (red_rep A x) = length (red_rep A y) \<and> (x,y) \<in> lex_L2_word' A)" using assms(1) unfolding lex_L2_word_def lex_prod_def using nat_less_def assms by fastforce
-*)
+  have "reduced (wordinverse (red_rep A x))" using red_rep_def[of "A" "x"] reduced_wordinverse[of "red_rep A x"] red_rep_the assms by blast
+  moreover have "wordinverse (red_rep A x) ∈ ((reln_tuple ⟨A⟩) `` {wordinverse (red_rep A x)})" using assms eq_equiv_class_iff2 in_quotient_imp_subset red_rep_the reln_equiv span_wordinverse by fastforce
+  ultimately show ?thesis using red_rep_def[of "A" "((reln_tuple ⟨A⟩) `` {wordinverse (red_rep A x)})"] assms group.wordinverse_inv by (smt (verit, best) Image_singleton_iff quotientI red_rep_the redelem_unique refl_onD2 reln_refl)
+qed
 
+lemma red_rep_inv:
+  assumes "x ∈ (⟨A⟩ // (reln_tuple ⟨A⟩))" 
+  shows "(red_rep A (inv⇘freegroup A⇙ x)) = wordinverse (red_rep A x)"
+proof-
+  have grpA:"group (freegroup A)" by (simp add: freegroup_is_group)
+  then have "x∈ carrier (freegroup A)" using assms freegroup_def by (metis partial_object.select_convs(1))
+  moreover have "x = (reln_tuple ⟨A⟩) `` {red_rep A x}" using assms by (simp add: red_rep_the)
+  ultimately have "inv⇘(freegroup A)⇙ x = (reln_tuple ⟨A⟩) `` {wordinverse (red_rep A x)}" using group.wordinverse_inv grpA by blast
+  then have "(red_rep A (inv⇘freegroup A⇙ x)) = red_rep A ((reln_tuple ⟨A⟩) `` {wordinverse (red_rep A x)})" by auto
+  then show ?thesis  unfolding red_rep_def red_rep_wordinv using 1 assms by (metis equivinv_def red_rep_def red_rep_wordinv)
+qed
+  
+lemma L2_wordinv:
+  "L2 (wordinverse x) = (snd (L2 x), fst (L2 x))" 
+  by (simp add: FreeGroupMain.wordinverse_of_wordinverse left_tuple_def)
 
+lemma lex_L2_inv:
+  assumes "(y,x) ∈ lex_L2_word A"
+  shows "(y,inv⇘freegroup A⇙ x) ∈ lex_L2_word A" 
+proof-
+  have 1:"x ∈ (⟨A⟩ // (reln_tuple ⟨A⟩))" using assms(1) unfolding lex_L2_word_def by blast
+  then obtain invx where "invx = (inv⇘freegroup A⇙ x)" using freegroup_is_group by simp
+  then have x:"(inv⇘freegroup A⇙ x) ∈ (⟨A⟩ // (reln_tuple ⟨A⟩))" using m_inv_def[of "freegroup A" "x"] freegroup_def
+    by (metis (no_types, lifting) freegroup_is_group group.inv_closed partial_object.select_convs(1) 1)
+  have y: "y ∈ (⟨A⟩ // (reln_tuple ⟨A⟩))" using assms(1) unfolding lex_L2_word_def by blast
+  have 2:"(length (red_rep A y) < length (red_rep A x)) ∨ ((length (red_rep A y) = length (red_rep A x) ∧ (y,x) ∈ lex_L2_word' A))" 
+    using nat_less_def assms unfolding lex_L2_word_def lex_prod_def by fastforce
+  then show ?thesis 
+  proof(cases "(length (red_rep A y) < length (red_rep A x))")
+    case True
+    then have "length (red_rep A y) < length (wordinverse (red_rep A x))" using length_wordinverse by metis
+    then have "length (red_rep A y) < length (red_rep A (inv⇘freegroup A⇙ x))" using 1 red_rep_inv by metis
+    then show ?thesis using x y by (simp add: lex_L2_word_def nat_less_def)
+  next
+    case False
+    then have 3:"((length (red_rep A y) = length (red_rep A x) ∧ (y,x) ∈ lex_L2_word' A))" using 2 by blast
+    then have 4:"length (red_rep A y) = length (red_rep A (inv⇘freegroup A⇙ x))" using 1 red_rep_inv by (metis length_wordinverse)
+    then have "((λx. (min lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A x)))) y 
+                , (λx. (min lex_word (L2 (red_rep A x)), max lex_word (L2 (red_rep A x)))) x) ∈ (lex_word <*lex*> lex_word)" using 3 unfolding lex_L2_word'_def by fastforce
+    then have 5:"((min lex_word (L2 (red_rep A y))), (min lex_word (L2 (red_rep A x)))) ∈ lex_word ∨ 
+               (min lex_word (L2 (red_rep A y))) = (min lex_word (L2 (red_rep A x))) ∧ 
+               (max lex_word (L2 (red_rep A y)), max lex_word (L2 (red_rep A x))) ∈ lex_word" using lex_prod_def[of "lex_word" "lex_word"] by simp
+    have "L2 (wordinverse (red_rep A x)) = (snd (L2 (red_rep A x)), fst (L2 (red_rep A x)))" using L2_wordinv by blast
+    then have L2_winv:"min lex_word (L2 (red_rep A x)) = min lex_word (L2 (wordinverse (red_rep A x))) ∧
+                       max lex_word (L2 (red_rep A x)) = max lex_word (L2 (wordinverse (red_rep A x)))" using  wf_lex_word min.simps  by (metis (no_types, lifting) lex_word_total max.simps prod.exhaust_sel wf_asym)
+    then have "((min lex_word (L2 (red_rep A y))), (min lex_word (L2 (wordinverse(red_rep A x))))) ∈ lex_word ∨ 
+               (min lex_word (L2 (red_rep A y))) = (min lex_word (L2 (wordinverse(red_rep A x)))) ∧ 
+               (max lex_word (L2 (red_rep A y)), max lex_word (L2 (wordinverse(red_rep A x)))) ∈ lex_word" using 5 by auto   
+    then have "((min lex_word (L2 (red_rep A y))), (min lex_word (L2 (red_rep A (inv⇘freegroup A⇙ x))))) ∈ lex_word ∨
+               (min lex_word (L2 (red_rep A y))) = (min lex_word (L2 (red_rep A (inv⇘freegroup A⇙ x)))) ∧ 
+               (max lex_word (L2 (red_rep A y)), max lex_word (L2 (red_rep A (inv⇘freegroup A⇙ x)))) ∈ lex_word" using red_rep_inv 1 by force    
+    then have "(y,(inv⇘freegroup A⇙ x)) ∈ lex_L2_word' A" unfolding lex_L2_word'_def using x y by auto
+    then show ?thesis using x y 2 4 lex_L2_word_length by blast
+  qed
+qed
 
 lemma reduced_tl:"reduced (x#xs) \<Longrightarrow> reduced xs"
   by (metis append_Nil assoc_Cons reduced_leftappend)
