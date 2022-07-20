@@ -2337,7 +2337,63 @@ definition N1 :: "('a,'b) word \<Rightarrow> ('a, 'b) word \<Rightarrow> bool"
   where
 "N1 x y = ((x \<noteq> wordinverse y) \<longrightarrow> (less_eq (length (p2 (x\<oslash>\<^bsub>2\<^esub>y))) (length (a2 (x\<oslash>\<^bsub>2\<^esub>y))) \<and> less_eq (length (p2 (x\<oslash>\<^bsub>2\<^esub>y))) (length (b2 (x\<oslash>\<^bsub>2\<^esub>y)))))"
 
+lemma red_rep_proj_app:
+  assumes "k ∈ (⟨A⟩ // reln_tuple ⟨A⟩) ∧ m ∈ (⟨A⟩ // reln_tuple ⟨A⟩)"           
+  shows "((red_rep A (proj_append ⟨A⟩ k m))) = iter (length ((red_rep A k) @ (red_rep A m))) reduce ((red_rep A k) @ (red_rep A m))"
+proof-
+  let ?rk = "red_rep A k" 
+  let ?rm = "red_rep A m"
+  let ?rkm = "((iter (length (?rk@?rm)) reduce (?rk@?rm)))"
+  have appA:"(?rk@?rm) ∈ ⟨A⟩" using red_rep_def assms(1) by (smt (verit) append_congruent equiv_2f_clos red_rep_the reln_equiv)
+  have 1:"equiv ⟨A⟩ (reln_tuple ⟨A⟩)" by (simp add: reln_equiv)
+  moreover have "(red_rep A k) ∈ ⟨A⟩ ∧ (red_rep A m) ∈ ⟨A⟩" using red_rep_def assms calculation in_quotient_imp_subset red_rep_the by blast
+  moreover have "proj_append ⟨A⟩ (reln_tuple ⟨A⟩ `` {red_rep A k}) (reln_tuple ⟨A⟩ `` {red_rep A m}) = reln_tuple ⟨A⟩ `` {red_rep A k @ red_rep A m}" unfolding proj_append_def using assms append_congruent[of "A"] proj_append_wd[of "red_rep A k" "A" "red_rep A m"] calculation(2) proj_append_def by blast   
+  ultimately have 2:"proj_append ⟨A⟩ k m  = reln_tuple ⟨A⟩ `` {red_rep A k @ red_rep A m}" using assms by (metis (no_types, opaque_lifting) red_rep_the)
+  then have "(iter (length (?rk@?rm)) reduce (?rk@?rm)) ~ (?rk@?rm)" using cancels_imp_rel iter_cancels_to reln.sym by blast
+  moreover then have "(iter (length (?rk@?rm)) reduce (?rk@?rm)) ∈ ⟨A⟩" using appA cancels_to_preserves iter_cancels_to by blast
+  ultimately have crc: "((?rk@?rm), (iter (length (?rk@?rm)) reduce (?rk@?rm))) ∈ reln_tuple ⟨A⟩" using appA reln_tuple_def by (smt (z3) case_prodI mem_Collect_eq reln.sym)
+  then have "(reln_tuple ⟨A⟩`` {?rkm}) = (reln_tuple ⟨A⟩ `` {?rk@?rm})" using "1" equiv_class_eq_iff by fastforce
+  moreover then have a:"?rkm ∈ (reln_tuple ⟨A⟩ `` {?rk@?rm})" using  crc by simp
+  moreover have "reduced ?rkm" using reduced_iter_length by blast
+  ultimately have "red_rep A (reln_tuple ⟨A⟩ `` {?rk@?rm}) = ?rkm" using red_rep_def assms(1) 2 by (metis (no_types, lifting) proj_append_clos red_rep_the redelem_unique)
+  then show ?thesis unfolding proj_append_def using 1 2 assms append_congruent[of "A"] proj_append_wd[of "red_rep A k" "A" "red_rep A m"] red_rep_def equiv_2f_wd[of "(freewords_on A)" "(reln_tuple (freewords_on A))" "append" "red_rep A k" "red_rep A m"] by (simp add: proj_append_def)
+qed
 
+lemma iter_wordinv:
+  assumes "(k @ m) = (a@b@(wordinverse b)@c)"
+          "reduced (a@c)"
+    shows "(iter (length (k@m)) reduce (k@m)) = (a@c)"
+proof-
+  have "(iter (length (b@(wordinverse b))) reduce (b@(wordinverse b))) = []" using FreeGroupMain.wordinverse_inverse cancels_imp_iter reln_imp_cancels by fastforce
+  then show ?thesis using assms by (metis (no_types, opaque_lifting) append.assoc append.left_neutral cancels_eq_leftappend cancels_eq_rightappend cancels_imp_iter iter_imp_cancels reduced_iter_eq reduced_iter_length)
+qed
+
+lemma N1_length:
+  assumes "k ∈ (⟨A⟩ // reln_tuple ⟨A⟩) ∧ m ∈ (⟨A⟩ // reln_tuple ⟨A⟩)" 
+          "N1 (red_rep A k) (red_rep A m)"
+          "((red_rep A k) ≠ wordinverse (red_rep A m))"
+          "(length ((red_rep A (proj_append ⟨A⟩ k m)))) = b"
+          "length (red_rep A k) = a"
+          "length (red_rep A m) = c"
+    shows "(greater_eq b a) ∧ (greater_eq b c)"
+proof-
+  let ?rk = "red_rep A k" 
+  let  ?rm = "red_rep A m"
+  have N1:"(less_eq (length (p2 (?rk⊘⇘2⇙?rm))) (length (a2 (?rk⊘⇘2⇙?rm)))) 
+         ∧ less_eq (length (p2 (?rk⊘⇘2⇙?rm))) (length (b2 (?rk⊘⇘2⇙?rm)))" using assms(2,3) N1_def by blast
+  then have x:"?rk = ((a2 (?rk⊘⇘2⇙?rm)) @ (p2 (?rk⊘⇘2⇙?rm)))" using cancel2_def[of "?rk" "?rm"] cancel2_the red_rep_def assms(1) red_rep_the by blast
+  have y:"?rm = ((wordinverse(p2 (?rk⊘⇘2⇙?rm))) @ (b2 (?rk⊘⇘2⇙?rm)))" using cancel2_def[of "?rk" "?rm"] cancel2_the red_rep_def assms(1) red_rep_the by blast
+  have rac:"reduced ((a2 (?rk⊘⇘2⇙?rm))@(b2 (?rk⊘⇘2⇙?rm)))" using cancel2_def[of "?rk" "?rm"] cancel2_the red_rep_def assms(1) red_rep_the by blast
+  have a:"length(p2 (?rk⊘⇘2⇙?rm)) ≤ length (a2 (?rk⊘⇘2⇙?rm))" using x y rac N1_def assms(2) using N1 by blast
+  have b:"length(p2 (?rk⊘⇘2⇙?rm)) ≤ length (b2 (?rk⊘⇘2⇙?rm))" using x y rac N1_def assms(2) using N1 by blast  
+  have 1:"((red_rep A (proj_append ⟨A⟩ k m))) = (iter (length (?rk @ ?rm)) reduce (?rk @ ?rm))" using assms(1) red_rep_proj_app by blast
+  then have "(?rk @ ?rm) = ((a2 (?rk⊘⇘2⇙?rm)) @ (p2 (?rk⊘⇘2⇙?rm))@(wordinverse(p2 (?rk⊘⇘2⇙?rm))) @ (b2 (?rk⊘⇘2⇙?rm)))" using x y by auto
+  then have 2:"(iter (length (?rk @ ?rm)) reduce (?rk @ ?rm)) = ((a2 (?rk⊘⇘2⇙?rm)) @ (b2 (?rk⊘⇘2⇙?rm)))" using rac iter_wordinv by blast
+  have "(length (iter (length (?rk @ ?rm)) reduce (?rk @ ?rm))) ≤ length (?rk @ ?rm)" using length_reduce_iter by blast
+  have "(b ≥ (length ?rk)) ∧ (b ≥ (length ?rm))" using a b 1 2 by (metis (no_types, lifting) add_le_mono1 assms(4) length_append length_wordinverse nat_add_left_cancel_le x y)
+  then show ?thesis using assms(3,4,5,6) a b by auto
+qed
+     
 lemma cancel2_reln:
   assumes "x = a @ p \<and> y = (wordinverse p) @ b"
   shows "(x@y) ~ (a@b)"
