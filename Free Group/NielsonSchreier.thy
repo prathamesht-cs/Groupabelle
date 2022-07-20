@@ -2349,9 +2349,9 @@ proof-
   moreover have "(red_rep A k) ∈ ⟨A⟩ ∧ (red_rep A m) ∈ ⟨A⟩" using red_rep_def assms calculation in_quotient_imp_subset red_rep_the by blast
   moreover have "proj_append ⟨A⟩ (reln_tuple ⟨A⟩ `` {red_rep A k}) (reln_tuple ⟨A⟩ `` {red_rep A m}) = reln_tuple ⟨A⟩ `` {red_rep A k @ red_rep A m}" unfolding proj_append_def using assms append_congruent[of "A"] proj_append_wd[of "red_rep A k" "A" "red_rep A m"] calculation(2) proj_append_def by blast   
   ultimately have 2:"proj_append ⟨A⟩ k m  = reln_tuple ⟨A⟩ `` {red_rep A k @ red_rep A m}" using assms by (metis (no_types, opaque_lifting) red_rep_the)
-  then have "(iter (length (?rk@?rm)) reduce (?rk@?rm)) ~ (?rk@?rm)" using cancels_imp_rel iter_cancels_to reln.sym by blast
-  moreover then have "(iter (length (?rk@?rm)) reduce (?rk@?rm)) ∈ ⟨A⟩" using appA cancels_to_preserves iter_cancels_to by blast
-  ultimately have crc: "((?rk@?rm), (iter (length (?rk@?rm)) reduce (?rk@?rm))) ∈ reln_tuple ⟨A⟩" using appA reln_tuple_def by (smt (z3) case_prodI mem_Collect_eq reln.sym)
+  then have "(?rkm) ~ (?rk@?rm)" using cancels_imp_rel iter_cancels_to reln.sym by blast
+  moreover then have "(?rkm) ∈ ⟨A⟩" using appA cancels_to_preserves iter_cancels_to by blast
+  ultimately have crc: "((?rk@?rm), ?rkm) ∈ reln_tuple ⟨A⟩" using appA reln_tuple_def by (smt (z3) case_prodI mem_Collect_eq reln.sym)
   then have "(reln_tuple ⟨A⟩`` {?rkm}) = (reln_tuple ⟨A⟩ `` {?rk@?rm})" using "1" equiv_class_eq_iff by fastforce
   moreover then have a:"?rkm ∈ (reln_tuple ⟨A⟩ `` {?rk@?rm})" using  crc by simp
   moreover have "reduced ?rkm" using reduced_iter_length by blast
