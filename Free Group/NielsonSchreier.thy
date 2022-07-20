@@ -1,5 +1,5 @@
 theory NielsonSchreier
-imports "UniversalProperty" "HOL.Nat"
+imports "UniversalProperty" "HOL.Nat" "Conjugacy"
 begin
 
 lemma one_list:"length xs = 1 \<Longrightarrow> \<exists>x. xs = [x]"
@@ -2068,7 +2068,7 @@ proof-
   moreover have "x = (reln_tuple ⟨A⟩) `` {red_rep A x}" using assms by (simp add: red_rep_the)
   ultimately have "inv⇘(freegroup A)⇙ x = (reln_tuple ⟨A⟩) `` {wordinverse (red_rep A x)}" using group.wordinverse_inv grpA by blast
   then have "(red_rep A (inv⇘freegroup A⇙ x)) = red_rep A ((reln_tuple ⟨A⟩) `` {wordinverse (red_rep A x)})" by auto
-  then show ?thesis  unfolding red_rep_def red_rep_wordinv using 1 assms by (metis equivinv_def red_rep_def red_rep_wordinv)
+  then show ?thesis  unfolding red_rep_def red_rep_wordinv using assms by (metis equivinv_def red_rep_def red_rep_wordinv)
 qed
   
 lemma L2_wordinv:
@@ -2393,6 +2393,10 @@ proof-
   have "(b ≥ (length ?rk)) ∧ (b ≥ (length ?rm))" using a b 1 2 by (metis (no_types, lifting) add_le_mono1 assms(4) length_append length_wordinverse nat_add_left_cancel_le x y)
   then show ?thesis using assms(3,4,5,6) a b by auto
 qed
+
+lemma reduced_reln_eq:
+"a ~ b \<Longrightarrow> reduced a \<Longrightarrow> reduced b \<Longrightarrow> a = b"
+  by (simp add: reduced_cancel_eq reln_imp_cancels)
      
 lemma cancel2_reln:
   assumes "x = a @ p \<and> y = (wordinverse p) @ b"
@@ -2400,6 +2404,54 @@ lemma cancel2_reln:
 proof-
   have "(p @ wordinverse p) ~ []" by (simp add: wordinverse_inverse)
   then show ?thesis using assms  mult reln.refl  by (metis append_Nil2 append.assoc)
+qed
+
+lemma reln_eq: assumes "reln_tuple ⟨A⟩ `` {a} = reln_tuple ⟨A⟩ `` {b}" "a ∈ ⟨A⟩" "b ∈ ⟨A⟩"
+  shows "a ~ b"
+  using assms unfolding reln_tuple_def by blast
+
+lemma redrep_in:  assumes "x ∈ carrier (freegroup A)"
+  shows "red_rep A x ∈ ⟨A⟩"
+  using assms red_rep_def red_rep_the unfolding freegroup_def
+  using Union_quotient reln_equiv by fastforce
+
+lemma mult_reln:
+  assumes "x ∈ carrier (freegroup A)" "y ∈ carrier (freegroup A)"
+  shows "(red_rep A (x ⊗⇘F⇘A⇙⇙ y)) ~ ((red_rep A x) @ (red_rep A y))"
+proof-
+  have "x = reln_tuple ⟨A⟩ `` {red_rep A x}" using red_rep_def red_rep_the assms(1) unfolding freegroup_def by fastforce
+  moreover have 1:"red_rep A x ∈ ⟨A⟩" using assms(1) redrep_in by blast
+  moreover have "y = reln_tuple ⟨A⟩ `` {red_rep A y}" using red_rep_def red_rep_the assms(2) unfolding freegroup_def by fastforce
+  moreover have 2: "red_rep A y ∈ ⟨A⟩" using assms(2) redrep_in by blast
+  ultimately have "reln_tuple ⟨A⟩ `` {(red_rep A (x ⊗⇘F⇘A⇙⇙ y))} = reln_tuple ⟨A⟩ `` {((red_rep A x) @ (red_rep A y))}" using proj_append_wd unfolding freegroup_def
+    by (metis assms(1) assms(2) freegroup_def monoid.select_convs(1) partial_object.select_convs(1) proj_append_clos red_rep_the)
+  moreover have "((red_rep A x) @ (red_rep A y)) ∈ ⟨A⟩" using 1 2 unfolding freewords_on_def by (simp add: span_append)
+  moreover have "(red_rep A (x ⊗⇘F⇘A⇙⇙ y)) ∈ ⟨A⟩" by (simp add: assms(1) assms(2) freegroup_is_group group.subgroup_self redrep_in subgroup.m_closed)
+  ultimately show ?thesis using reln_eq by auto
+qed
+
+lemma assumes "x ∈ carrier (freegroup A)" "y ∈ carrier (freegroup A)"  "length (red_rep A (x ⊗⇘F⇘A⇙⇙ y)) ≥ length (red_rep A x) ∧ length (red_rep A (x ⊗⇘F⇘A⇙⇙ y)) ≥  length (red_rep A y)"
+  shows "N1 (red_rep A x) (red_rep A y)"
+proof-
+  let ?x = "(red_rep A x)"
+  let ?y = "(red_rep A y)"
+  let ?xy = "(cancel2 ?x ?y)"
+  have xy: "(x ⊗⇘F⇘A⇙⇙ y) ∈ carrier (freegroup A)" by (simp add: assms(1) assms(2) freegroup_is_group group.subgroupE(4) group.subgroup_self)
+  have 1:"reduced ?x" using assms(1) red_rep_def red_rep_the unfolding freegroup_def by fastforce
+  moreover have 2:"reduced ?y" using assms(2) red_rep_def red_rep_the  unfolding freegroup_def by fastforce
+  ultimately have "((red_rep A x) @ (red_rep A y)) ~ ((a2 ?xy) @ (b2 ?xy))" by (metis cancel2_reln cancel2_the)
+  then have "(red_rep A (x ⊗⇘F⇘A⇙⇙ y)) ~ ((a2 ?xy) @ (b2 ?xy))" using assms mult_reln using reln.trans by blast
+  moreover have "reduced ((a2 ?xy) @ (b2 ?xy))" by (simp add: "1" "2" cancel2_the)
+  moreover have "reduced (red_rep A (x ⊗⇘F⇘A⇙⇙ y))" using xy red_rep_def red_rep_the unfolding freegroup_def by fastforce
+  ultimately have 3: "(red_rep A (x ⊗⇘F⇘A⇙⇙ y)) = ((a2 ?xy) @ (b2 ?xy))" by (simp add: reduced_reln_eq)
+  have "?x = (a2 ?xy) @ (p2 ?xy)" using 1 2 by (simp add: cancel2_the)
+  then have "length ((a2 ?xy) @ (b2 ?xy)) ≥ length ((a2 ?xy) @ (p2 ?xy))" using assms(3) 3 by auto
+  then have A:"length (b2 ?xy) ≥ length (p2 ?xy)" by auto
+  have "?y =  wordinverse (p2 ?xy) @ (b2 ?xy)" using 1 2 by (simp add: cancel2_the)
+  then have "length ((a2 ?xy) @ (b2 ?xy)) ≥ length (wordinverse (p2 ?xy) @ (b2 ?xy))" using 3 assms(3) by auto
+  then have "length (a2 ?xy) ≥ length (wordinverse (p2 ?xy))" by auto
+  then have "length (a2 ?xy) ≥ length (p2 ?xy)" by (metis length_wordinverse)
+  then show ?thesis unfolding N1_def using A by blast
 qed
 
 fun a3 where
@@ -2903,11 +2955,6 @@ proof(induction "(x#xs)" arbitrary: x xs)
   qed
 qed
 
-lemma reduced_reln_eq:
-"a ~ b \<Longrightarrow> reduced a \<Longrightarrow> reduced b \<Longrightarrow> a = b"
-  by (simp add: reduced_cancel_eq reln_imp_cancels)
- 
-
 lemma n_reduced_cancel:
   assumes "B \<subseteq> (red_rep A ` carrier (freegroup A))"
       and "\<forall>x \<in> B. N0 x"
@@ -3020,7 +3067,6 @@ proof-
   then have "y ∈  G (SG (F⇘A⇙) H) A y" using 2 by auto
   then show ?thesis by (simp add: X_def)
 qed
-end
 
 definition N_reduced ("N")
   where
