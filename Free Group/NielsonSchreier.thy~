@@ -2430,8 +2430,7 @@ proof-
   ultimately show ?thesis using reln_eq by auto
 qed
 
-lemma length_N1:
-  assumes "x ∈ carrier (freegroup A)" "y ∈ carrier (freegroup A)"  "length (red_rep A (x ⊗⇘F⇘A⇙⇙ y)) ≥ length (red_rep A x) ∧ length (red_rep A (x ⊗⇘F⇘A⇙⇙ y)) ≥  length (red_rep A y)"
+lemma assumes "x ∈ carrier (freegroup A)" "y ∈ carrier (freegroup A)"  "length (red_rep A (x ⊗⇘F⇘A⇙⇙ y)) ≥ length (red_rep A x) ∧ length (red_rep A (x ⊗⇘F⇘A⇙⇙ y)) ≥  length (red_rep A y)"
   shows "N1 (red_rep A x) (red_rep A y)"
 proof-
   let ?x = "(red_rep A x)"
