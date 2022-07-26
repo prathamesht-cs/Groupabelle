@@ -3029,20 +3029,49 @@ lemma
       and "x ∈ H"
       and "y ∈ H"
       and "H ≤ F⇘A⇙"
-    shows "x ∉ X (SG (F⇘A⇙) H) A"
+    shows "inv⇘SG F⇘A⇙ H⇙ x ∉ X (SG (F⇘A⇙) H) A"
 proof-
   have "group F⇘A⇙"  by (simp add: freegroup_is_group)
   then have 1: "group (SG (F⇘A⇙) H)"  unfolding SG_def  by (simp add: subgroup_is_group assms(5))
+  have y:"(y,inv⇘SG F⇘A⇙ H⇙ x) ∈ lex_L2_word A" using freegroup_is_group assms(1) assms(3) assms(5) inv_SG lex_L2_inv by metis
+  have xy: "(x ⊗⇘SG F⇘A⇙ H⇙ y, inv⇘SG F⇘A⇙ H⇙ x) ∈ lex_L2_word A"  using freegroup_is_group assms(2) assms(3) assms(5) inv_SG lex_L2_inv by metis
   have xH:"x ⊗⇘SG F⇘A⇙ H⇙ y ∈ H" by (metis assms(3) assms(4) assms(5) mult_SG subgroup_def)
-  then have "{y, x ⊗⇘SG F⇘A⇙ H⇙ y} ⊆ {h ∈ H. (h,x) ∈ (lex_L2_word A)}" using assms(1) assms(2) assms(4) by auto
+  then have "{y, x ⊗⇘SG F⇘A⇙ H⇙ y} ⊆ {h ∈ H. (h,inv⇘SG F⇘A⇙ H⇙ x) ∈ (lex_L2_word A)}" using y xy assms(4) by auto
   moreover have H:"H = carrier (SG F⇘A⇙ H)" unfolding SG_def by simp
-  ultimately have 2:"⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙ ⊆ G (SG (F⇘A⇙) H) A x" unfolding G_def using span_subset by (metis (no_types, lifting) Collect_cong)
+  ultimately have 2:"⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙ ⊆ G (SG (F⇘A⇙) H) A (inv⇘SG F⇘A⇙ H⇙ x)" unfolding G_def using span_subset by (metis (no_types, lifting) Collect_cong)
   have "inv ⇘SG F⇘A⇙ H⇙ y ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens gen_span.gen_inv)
   moreover have 3: "x ⊗⇘SG F⇘A⇙ H⇙ y ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens)
   ultimately have "x ⊗⇘SG F⇘A⇙ H⇙ y ⊗⇘SG F⇘A⇙ H⇙ inv ⇘SG F⇘A⇙ H⇙ y ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_mult)
   then have "x  ⊗⇘SG F⇘A⇙ H⇙ 𝟭⇘SG F⇘A⇙ H⇙ ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 3 xH H  assms(3) assms(4) gen_span.gen_mult gen_span.gen_one by (metis group.inv_solve_right')
   then have "x ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 H assms(3) group.is_monoid by force
-  then have "x ∈  G (SG (F⇘A⇙) H) A x" using 2 by auto
+  then have "(inv⇘SG F⇘A⇙ H⇙ x) ∈ ⟨{y, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙"  by (simp add: gen_span.gen_inv)
+  then have "(inv⇘SG F⇘A⇙ H⇙ x) ∈  G (SG (F⇘A⇙) H) A (inv⇘SG F⇘A⇙ H⇙ x)" using 2 by blast
+  then show ?thesis by (simp add: X_def)
+qed
+
+lemma
+  assumes "(x,y) ∈ lex_L2_word A"
+      and "(x ⊗⇘SG F⇘A⇙ H⇙ y, y) ∈ lex_L2_word A"
+      and "x ∈ H"
+      and "y ∈ H"
+      and "H ≤ F⇘A⇙"
+    shows "inv⇘SG F⇘A⇙ H⇙ y ∉ X (SG (F⇘A⇙) H) A"
+proof-
+  have "group F⇘A⇙"  by (simp add: freegroup_is_group)
+  then have 1: "group (SG (F⇘A⇙) H)"  unfolding SG_def  by (simp add: subgroup_is_group assms(5))
+  have x:"(x,inv⇘SG F⇘A⇙ H⇙ y) ∈ lex_L2_word A" using freegroup_is_group assms(1) assms(4) assms(5) inv_SG lex_L2_inv by metis
+  have xy: "(x ⊗⇘SG F⇘A⇙ H⇙ y, inv⇘SG F⇘A⇙ H⇙ y) ∈ lex_L2_word A" using freegroup_is_group assms(2) assms(4) assms(5) inv_SG lex_L2_inv by metis
+  have xH:"x ⊗⇘SG F⇘A⇙ H⇙ y ∈ H" by (metis assms(3) assms(4) assms(5) mult_SG subgroup_def)
+  then have "{x, x ⊗⇘SG F⇘A⇙ H⇙ y} ⊆ {h ∈ H. (h,inv⇘SG F⇘A⇙ H⇙ y) ∈ (lex_L2_word A)}" using x xy assms(3) by auto
+  moreover have H:"H = carrier (SG F⇘A⇙ H)" unfolding SG_def by simp
+  ultimately have 2:"⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙ ⊆ G (SG (F⇘A⇙) H) A (inv⇘SG F⇘A⇙ H⇙ y)" unfolding G_def using span_subset by (metis (no_types, lifting) Collect_cong)
+  have "inv ⇘SG F⇘A⇙ H⇙ x ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens gen_span.gen_inv)
+  moreover have 3: "x ⊗⇘SG F⇘A⇙ H⇙ y ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_gens)
+  ultimately have "inv ⇘SG F⇘A⇙ H⇙ x ⊗⇘SG F⇘A⇙ H⇙ x ⊗⇘SG F⇘A⇙ H⇙ y  ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 H assms(3) assms(4) gen_span.gen_mult group.inv_closed group.is_monoid monoid.m_assoc by fastforce
+  then have "𝟭⇘SG F⇘A⇙ H⇙  ⊗⇘SG F⇘A⇙ H⇙ y ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 3 xH H  assms(3) assms(4) group.l_inv by fastforce
+  then have "y ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" using 1 H assms(4) group.is_monoid by force
+  then have "inv⇘SG F⇘A⇙ H⇙ y ∈ ⟨{x, x ⊗⇘SG F⇘A⇙ H⇙ y}⟩⇘SG F⇘A⇙ H⇙" by (simp add: gen_span.gen_inv)
+  then have "inv⇘SG F⇘A⇙ H⇙ y ∈  G (SG (F⇘A⇙) H) A (inv⇘SG F⇘A⇙ H⇙ y)" using 2 by auto
   then show ?thesis by (simp add: X_def)
 qed
 
