@@ -49,8 +49,8 @@ next
 qed
 
 lemma union_inv_sub_H:
-  assumes "H ≤ freegroup A" "x1 ∈ (union_inv (X (SG (freegroup A) H) A) A)" "y1 ∈ (union_inv (X (SG (freegroup A) H) A) A)"
-  shows "x1 ∈ H ∧ y1 ∈ H"
+  assumes "H ≤ freegroup A" "x1 ∈ (union_inv (X (SG (freegroup A) H) A) A)" 
+  shows "x1 ∈ H"
   sorry
 
 lemma N1:
