@@ -80,15 +80,15 @@ proof-
     proof (cases "(x1,y1) ∈ lex_L2_word A")
       case True
       then have xy_y:"((x1 ⊗⇘F⇘A⇙⇙ y1), y1) ∈ lex_L2_word A" using xy_x sorry (*transitivity*)
-      then have "y1 ∉ X (SG (F⇘A⇙) H) A" using True assms H x_y_y_noty by (metis mult_SG)
-      moreover have "m_inv ((SG (F⇘A⇙) H)) y1 ∉ (X (SG (F⇘A⇙) H) A)" using True xy_y H assms x_y_y_ninvy by (metis mult_SG)
+      then have "y1 ∉ X (SG (F⇘A⇙) H) A" using True assms H lex_cont2 by (metis mult_SG)
+      moreover have "m_inv ((SG (F⇘A⇙) H)) y1 ∉ (X (SG (F⇘A⇙) H) A)" using True xy_y H assms lex_cont2_inv by (metis mult_SG)
       ultimately have "y1 ∉ (union_inv (X (SG (F⇘A⇙) H) A) A)" sorry
       then show ?thesis by meson
     next
       case False
       then have yx:"(y1, x1) ∈ lex_L2_word A" using subcases by auto
-      then have "x1 ∉ X (SG (F⇘A⇙) H) A" using xy_x H assms y_x_x_notx  by (metis mult_SG)
-      moreover have "m_inv ((SG (F⇘A⇙) H)) x1 ∉ (X (SG (F⇘A⇙) H) A)" using yx xy_x H assms y_x_x_ninvx by (metis mult_SG)
+      then have "x1 ∉ X (SG (F⇘A⇙) H) A" using xy_x H assms lex_cont1 by (metis mult_SG)
+      moreover have "m_inv ((SG (F⇘A⇙) H)) x1 ∉ (X (SG (F⇘A⇙) H) A)" using yx xy_x H assms lex_cont1_inv by (metis mult_SG)
       ultimately have "x1 ∉ (union_inv (X (SG (F⇘A⇙) H) A) A)" sorry
       then show ?thesis by blast
     qed
@@ -99,17 +99,20 @@ proof-
     then show ?thesis
     proof (cases "(x1,y1) ∈ lex_L2_word A")
       case True
-      have "y1 ∉ X (SG (F⇘A⇙) H) A" using True xyy H assms x_y_y_noty by (metis mult_SG)
-      moreover have "m_inv ((SG (F⇘A⇙) H)) y1 ∉ (X (SG (F⇘A⇙) H) A)" using True xyy H assms x_y_y_ninvy by (metis mult_SG)
+      have "y1 ∉ X (SG (F⇘A⇙) H) A" using True xyy H assms lex_cont2 by (metis mult_SG)
+      moreover have "m_inv ((SG (F⇘A⇙) H)) y1 ∉ (X (SG (F⇘A⇙) H) A)" using True xyy H assms lex_cont2_inv by (metis mult_SG)
       ultimately have "y1 ∉ (union_inv (X (SG (F⇘A⇙) H) A) A)" sorry
       then show ?thesis by meson
     next
       case False
       then have yx:"(y1, x1) ∈ lex_L2_word A" using subcases by simp
       then have xy_x:"((x1 ⊗⇘F⇘A⇙⇙ y1), x1) ∈ lex_L2_word A" using xyy sorry (*transitivity*)
-      then have "x1 ∉ X (SG (F⇘A⇙) H) A" using yx H assms y_x_x_notx by (metis mult_SG)
-      moreover have "m_inv ((SG (F⇘A⇙) H)) x1 ∉ (X (SG (F⇘A⇙) H) A)" using yx xy_x H assms y_x_x_ninvx by (metis mult_SG)
+      then have "x1 ∉ X (SG (F⇘A⇙) H) A" using yx H assms lex_cont1 by (metis mult_SG)
+      moreover have "m_inv ((SG (F⇘A⇙) H)) x1 ∉ (X (SG (F⇘A⇙) H) A)" using yx xy_x H assms lex_cont1_inv by (metis mult_SG)
       ultimately have "x1 ∉ (union_inv (X (SG (F⇘A⇙) H) A) A)" sorry
       then show ?thesis by blast
      qed
    qed
+    
+  
+
