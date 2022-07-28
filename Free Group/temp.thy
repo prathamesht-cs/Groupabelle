@@ -51,7 +51,22 @@ qed
 lemma union_inv_sub_H:
   assumes "H ≤ freegroup A" "x1 ∈ (union_inv (X (SG (freegroup A) H) A) A)" 
   shows "x1 ∈ H"
-  sorry
+proof-
+  have 1:"x1 ∈ (X (SG (freegroup A) H) A) ∪ (m_inv (freegroup A) ` (X (SG (freegroup A) H) A))" using union_inv_def using assms(2) by auto
+  then show ?thesis 
+  proof(cases "x1 ∈ (X (SG (freegroup A) H) A)")
+    case True
+    then have "x1 ∈ {g ∈ carrier (SG (freegroup A) H). g ∉ (G (SG (freegroup A) H) A g)}" using X_def by auto
+    then have "x1 ∈ carrier (SG (freegroup A) H)" by simp
+    then have "x1 ∈ carrier ((freegroup A)⦇carrier := H⦈)" using SG_def by metis
+    then show ?thesis using assms(1) by auto
+  next
+    case False
+    then have "x1 ∈ (m_inv (freegroup A) ` (X (SG (freegroup A) H) A))" using 1 by auto
+    moreover then have "x1 ∈ carrier ((freegroup A)⦇carrier := H⦈)" using m_inv_def assms(1) SG_def X_def union_inv_clos by (smt (verit)  image_iff mem_Collect_eq partial_object.select_convs(1) partial_object.surjective partial_object.update_convs(1) subgroup.m_inv_closed) 
+    ultimately show ?thesis using assms(1) by auto
+  qed
+qed
 
 lemma N1:
   assumes "H ≤ freegroup A" 
