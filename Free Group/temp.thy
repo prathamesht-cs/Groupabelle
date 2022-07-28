@@ -37,24 +37,79 @@ proof-
     \<subseteq> carrier F\<^bsub>A\<^esub>" by blast
 qed
 
-lemma assumes "H \<le> freegroup A" 
-  shows "\<forall>x \<in> (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). \<forall>y \<in> (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). N1 x y"
+lemma lex_total:
+  assumes "((x1 ⊗⇘F⇘A⇙⇙ y1), x1) ∈ lex_L2_word A ∨ ((x1 ⊗⇘F⇘A⇙⇙ y1), y1) ∈ lex_L2_word A"
+  shows "(x1,y1) ∈ lex_L2_word A ∨ (y1, x1) ∈ lex_L2_word A" (*total*)
+proof(cases "((x1 ⊗⇘F⇘A⇙⇙ y1), x1) ∈ lex_L2_word A")
+  case True
+  then show ?thesis sorry
+next
+  case False
+  then show ?thesis sorry
+qed
+
+lemma union_inv_sub_H:
+  assumes "H ≤ freegroup A" "x1 ∈ (union_inv (X (SG (freegroup A) H) A) A)" "y1 ∈ (union_inv (X (SG (freegroup A) H) A) A)"
+  shows "x1 ∈ H ∧ y1 ∈ H"
+  sorry
+
+lemma N1:
+  assumes "H ≤ freegroup A" 
+  shows "∀x ∈ (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). ∀y ∈ (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). N1 x y"
   apply(rule ballI)+
 proof-
-  fix x y assume x: "x \<in> red_rep A ` union_inv (X (SG F\<^bsub>A\<^esub> H) A) A" and  y: "y \<in> red_rep A ` union_inv (X (SG F\<^bsub>A\<^esub> H) A) A"
+  fix x y assume x: "x ∈ red_rep A ` union_inv (X (SG F⇘A⇙ H) A) A" and  y: "y ∈ red_rep A ` union_inv (X (SG F⇘A⇙ H) A) A"
   show "N1 x y"
   proof(rule ccontr)
-    assume N1: "\<not> N1 x y"
-(*Show x \<noteq> wordinverse y*)
-    obtain x1 where x1:"red_rep A x1 = x \<and> x1 \<in> (union_inv (X (SG (freegroup A) H) A) A)" using x by blast
-(*Show x1 and y1 belong to H*)
-    then have x1A: "x1 \<in> carrier (freegroup A)" using assms union_inv_clos by blast
-    obtain y1 where y1:"red_rep A y1 = y \<and> y1 \<in> (union_inv (X (SG (freegroup A) H) A) A)" using y by blast
-    then have y1A: "y1 \<in> carrier (freegroup A)" using assms union_inv_clos by blast
-    have "\<not> (length (red_rep A (x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1)) \<ge> length (red_rep A x1) \<and> length (red_rep A (x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1)) \<ge>  length (red_rep A y1))" using N1 x1 y1 y1A x1A length_N1 by auto
-    then have "length (red_rep A (x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1)) < length (red_rep A x1) \<or> length (red_rep A (x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1)) <  length (red_rep A y1)" by auto
-    moreover have "(x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1) \<in> carrier (freegroup A)" using x1A y1A by (simp add: freegroup_is_group group.subgroupE(4) group.subgroup_self)
-    ultimately have cases:"((x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1), x1) \<in> lex_L2_word A \<or> ((x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1), y1) \<in> lex_L2_word A" using x1A y1A length_lex by blast
-    then have "x1 \<notin> (union_inv (X (SG (freegroup A) H) A) A) \<or> y1 \<notin> (union_inv (X (SG (freegroup A) H) A) A)"
-    proof(cases "((x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1), x1) \<in> lex_L2_word A")
-(*subcase (x1,y1) \<in> lex_L2_word A or (y1,x1) \<in> lex_L2_word A*)
+    assume N1: "¬ N1 x y"
+    then have "x ≠ wordinverse y" using N1_def by auto
+    obtain x1 where x1:"red_rep A x1 = x ∧ x1 ∈ (union_inv (X (SG (freegroup A) H) A) A)" using x by blast
+    then have x1A: "x1 ∈ carrier (freegroup A)" using assms union_inv_clos by blast
+    obtain y1 where y1:"red_rep A y1 = y ∧ y1 ∈ (union_inv (X (SG (freegroup A) H) A) A)" using y by blast
+    then have y1A: "y1 ∈ carrier (freegroup A)" using assms union_inv_clos by blast
+    have H:"x1 ∈ H ∧ y1 ∈ H" using assms x1 x1A y1 using union_inv_sub_H by blast
+    have "¬ (length (red_rep A (x1 ⊗⇘ F⇘A⇙⇙ y1)) ≥ length (red_rep A x1) ∧ length (red_rep A (x1 ⊗⇘ F⇘A⇙⇙ y1)) ≥ length (red_rep A y1))" using N1 x1 y1 y1A x1A length_N1 sorry
+    then have "length (red_rep A (x1 ⊗⇘ F⇘A⇙⇙ y1)) < length (red_rep A x1) ∨ length (red_rep A (x1 ⊗⇘ F⇘A⇙⇙ y1)) <  length (red_rep A y1)" by auto
+    moreover have "(x1 ⊗⇘ F⇘A⇙⇙ y1) ∈ carrier (freegroup A)" using x1A y1A by (simp add: freegroup_is_group group.subgroupE(4) group.subgroup_self)
+    ultimately have cases:"((x1 ⊗⇘ F⇘A⇙⇙ y1), x1) ∈ lex_L2_word A ∨ ((x1 ⊗⇘ F⇘A⇙⇙ y1), y1) ∈ lex_L2_word A" using x1A y1A length_lex by blast
+    then have "x1 ∉ (union_inv (X (SG (freegroup A) H) A) A) ∨ y1 ∉ (union_inv (X (SG (freegroup A) H) A) A)"
+  proof(cases "((x1 ⊗⇘F⇘A⇙⇙ y1), x1) ∈ lex_L2_word A")
+    case True note xy_x = this
+    then have subcases: "(x1,y1) ∈ lex_L2_word A ∨ (y1, x1) ∈ lex_L2_word A" using lex_total by auto
+    then show ?thesis 
+    proof (cases "(x1,y1) ∈ lex_L2_word A")
+      case True
+      then have xy_y:"((x1 ⊗⇘F⇘A⇙⇙ y1), y1) ∈ lex_L2_word A" using xy_x sorry (*transitivity*)
+      then have "y1 ∉ X (SG (F⇘A⇙) H) A" using True assms H x_y_y_noty by (metis mult_SG)
+      moreover have "m_inv ((SG (F⇘A⇙) H)) y1 ∉ (X (SG (F⇘A⇙) H) A)" using True xy_y H assms x_y_y_ninvy by (metis mult_SG)
+      ultimately have "y1 ∉ (union_inv (X (SG (F⇘A⇙) H) A) A)" sorry
+      then show ?thesis by meson
+    next
+      case False
+      then have yx:"(y1, x1) ∈ lex_L2_word A" using subcases by auto
+      then have "x1 ∉ X (SG (F⇘A⇙) H) A" using xy_x H assms y_x_x_notx  by (metis mult_SG)
+      moreover have "m_inv ((SG (F⇘A⇙) H)) x1 ∉ (X (SG (F⇘A⇙) H) A)" using yx xy_x H assms y_x_x_ninvx by (metis mult_SG)
+      ultimately have "x1 ∉ (union_inv (X (SG (F⇘A⇙) H) A) A)" sorry
+      then show ?thesis by blast
+    qed
+  next
+    case False
+    then have xyy:"((x1 ⊗⇘F⇘A⇙⇙ y1), y1) ∈ lex_L2_word A" using cases by auto
+    then have subcases: "(x1,y1) ∈ lex_L2_word A ∨ (y1, x1) ∈ lex_L2_word A" using lex_total by auto
+    then show ?thesis
+    proof (cases "(x1,y1) ∈ lex_L2_word A")
+      case True
+      have "y1 ∉ X (SG (F⇘A⇙) H) A" using True xyy H assms x_y_y_noty by (metis mult_SG)
+      moreover have "m_inv ((SG (F⇘A⇙) H)) y1 ∉ (X (SG (F⇘A⇙) H) A)" using True xyy H assms x_y_y_ninvy by (metis mult_SG)
+      ultimately have "y1 ∉ (union_inv (X (SG (F⇘A⇙) H) A) A)" sorry
+      then show ?thesis by meson
+    next
+      case False
+      then have yx:"(y1, x1) ∈ lex_L2_word A" using subcases by simp
+      then have xy_x:"((x1 ⊗⇘F⇘A⇙⇙ y1), x1) ∈ lex_L2_word A" using xyy sorry (*transitivity*)
+      then have "x1 ∉ X (SG (F⇘A⇙) H) A" using yx H assms y_x_x_notx by (metis mult_SG)
+      moreover have "m_inv ((SG (F⇘A⇙) H)) x1 ∉ (X (SG (F⇘A⇙) H) A)" using yx xy_x H assms y_x_x_ninvx by (metis mult_SG)
+      ultimately have "x1 ∉ (union_inv (X (SG (F⇘A⇙) H) A) A)" sorry
+      then show ?thesis by blast
+     qed
+   qed
