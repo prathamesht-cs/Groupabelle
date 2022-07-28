@@ -154,33 +154,29 @@ proof(rule ccontr)
   then show False using assms(3) by auto
 qed
 
-lemma SG_subgroup:
-  assumes "H \<le> (freegroup A)"
-  shows "group (SG (freegroup A) H)"
-  unfolding SG_def using freegroup_is_group assms group.subgroup_imp_group by blast
-
 lemma notin_union_inv:
   assumes "H \<le> (freegroup A)" "x \<notin> S" "m_inv (SG (freegroup A) H) x \<notin> S" "S \<subseteq> H"
   shows "x \<notin> union_inv S A"
 proof(rule ccontr)
   assume "\<not> x \<notin> union_inv S A"
   then have "x \<in> union_inv S A"  by blast
-  then have "x \<in> S \<or> x \<in> m_inv F\<^bsub>A\<^esub> ` S" unfolding union_inv_def by auto
-  then have c:"x \<in> S \<or> x \<in> m_inv (SG (freegroup A) H) ` S" using inv_SG freegroup_is_group assms(1,4) by (metis (no_types, lifting) image_cong subset_eq)
+  then have c:"x \<in> S \<or> x \<in> m_inv F\<^bsub>A\<^esub> ` S" unfolding union_inv_def by auto
+  then have c:"x \<in> S \<or> x \<in> m_inv (SG (freegroup A) H) ` S" using inv_SG freegroup_is_group assms(1,4) 
   show False
   proof(cases "x \<in> S")
     case True
     then show ?thesis using assms(2) by blast
   next
     case False
-    then have "x \<in> m_inv (SG (freegroup A) H) ` S" using c by blast
-    then obtain y where y:"x = m_inv (SG (freegroup A) H) y \<and> y \<in> S" by blast
-    moreover then have "y \<in> H" using assms(4) by auto
-    moreover then have "y \<in> carrier (SG (freegroup A) H)" unfolding SG_def by simp
-    ultimately have "y = m_inv (SG (freegroup A) H) x" using assms(1) by (simp add: SG_subgroup)
+    then have "x \<in> m_inv F\<^bsub>A\<^esub> ` S" using c by blast
+    then obtain y where y:"x = m_inv F\<^bsub>A\<^esub> y \<and> y \<in> S" by blast
+    then moreover have "y \<in> carrier (freegroup A)" using assms(1) assms(4) subgroup.mem_carrier by fastforce
+    ultimately have "y = m_inv F\<^bsub>A\<^esub> x" by (simp add: freegroup_is_group)
     then show ?thesis using y assms(3) by blast
   qed
 qed
+  
+
 
 lemma N1:
   assumes "H \<le> freegroup A" 
@@ -202,7 +198,6 @@ proof-
     moreover have "(x1 \<otimes>\<^bsub> F\<^bsub>A\<^esub>\<^esub> y1) \<in> carrier (freegroup A)" using x1A y1A by (simp add: freegroup_is_group group.subgroupE(4) group.subgroup_self)
     ultimately have cases:"((x1 \<otimes>\<^bsub> F\<^bsub>A\<^esub>\<^esub> y1), x1) \<in> lex_L2_word A \<or> ((x1 \<otimes>\<^bsub> F\<^bsub>A\<^esub>\<^esub> y1), y1) \<in> lex_L2_word A" using x1A y1A length_lex by blast
     have nxy:"x \<noteq> y" using neq_N1 t x1A y1A x1 y1 by auto
-    have XH: "(X (SG F\<^bsub>A\<^esub> H) A) \<subseteq> H" unfolding X_def SG_def by simp
     have "x1 \<notin> (union_inv (X (SG (freegroup A) H) A) A) \<or> y1 \<notin> (union_inv (X (SG (freegroup A) H) A) A)"
   proof(cases "((x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1), x1) \<in> lex_L2_word A")
     case True note xy_x = this
@@ -213,14 +208,14 @@ proof-
       then have xy_y:"((x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1), y1) \<in> lex_L2_word A" using xy_x trans_lex_L2_word unfolding trans_def by blast
       then have "y1 \<notin> X (SG (F\<^bsub>A\<^esub>) H) A" using True assms H lex_cont2 by (metis mult_SG)
       moreover have "m_inv ((SG (F\<^bsub>A\<^esub>) H)) y1 \<notin> (X (SG (F\<^bsub>A\<^esub>) H) A)" using True xy_y H assms lex_cont2_inv by (metis mult_SG)
-      ultimately have "y1 \<notin> (union_inv (X (SG (F\<^bsub>A\<^esub>) H) A) A)" using notin_union_inv XH assms by blast
+      ultimately have "y1 \<notin> (union_inv (X (SG (F\<^bsub>A\<^esub>) H) A) A)" sorry
       then show ?thesis by meson
     next
       case False
       then have yx:"(y1, x1) \<in> lex_L2_word A" using subcases by auto
       then have "x1 \<notin> X (SG (F\<^bsub>A\<^esub>) H) A" using xy_x H assms lex_cont1 by (metis mult_SG)
       moreover have "m_inv ((SG (F\<^bsub>A\<^esub>) H)) x1 \<notin> (X (SG (F\<^bsub>A\<^esub>) H) A)" using yx xy_x H assms lex_cont1_inv by (metis mult_SG)
-      ultimately have "x1 \<notin> (union_inv (X (SG (F\<^bsub>A\<^esub>) H) A) A)" using notin_union_inv XH assms by blast
+      ultimately have "x1 \<notin> (union_inv (X (SG (F\<^bsub>A\<^esub>) H) A) A)" using notin_union_inv assms(1) inv_SG unfolding X_def sledgehammer
       then show ?thesis by blast
     qed
   next
@@ -232,7 +227,7 @@ proof-
       case True
       have "y1 \<notin> X (SG (F\<^bsub>A\<^esub>) H) A" using True xyy H assms lex_cont2 by (metis mult_SG)
       moreover have "m_inv ((SG (F\<^bsub>A\<^esub>) H)) y1 \<notin> (X (SG (F\<^bsub>A\<^esub>) H) A)" using True xyy H assms lex_cont2_inv by (metis mult_SG)
-      ultimately have "y1 \<notin> (union_inv (X (SG (F\<^bsub>A\<^esub>) H) A) A)" using notin_union_inv XH assms by blast
+      ultimately have "y1 \<notin> (union_inv (X (SG (F\<^bsub>A\<^esub>) H) A) A)" sorry
       then show ?thesis by meson
     next
       case False
@@ -240,7 +235,7 @@ proof-
       then have xy_x: "((x1 \<otimes>\<^bsub>F\<^bsub>A\<^esub>\<^esub> y1), x1) \<in> lex_L2_word A" using xyy trans_lex_L2_word unfolding trans_def by blast
       then have "x1 \<notin> X (SG (F\<^bsub>A\<^esub>) H) A" using yx H assms lex_cont1 by (metis mult_SG)
       moreover have "m_inv ((SG (F\<^bsub>A\<^esub>) H)) x1 \<notin> (X (SG (F\<^bsub>A\<^esub>) H) A)" using yx xy_x H assms lex_cont1_inv by (metis mult_SG)
-      ultimately have "x1 \<notin> (union_inv (X (SG (F\<^bsub>A\<^esub>) H) A) A)" using notin_union_inv XH assms by blast
+      ultimately have "x1 \<notin> (union_inv (X (SG (F\<^bsub>A\<^esub>) H) A) A)" sorry
       then show ?thesis by blast
      qed
    qed

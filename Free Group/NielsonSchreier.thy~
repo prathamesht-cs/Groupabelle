@@ -3179,6 +3179,34 @@ lemma LS: assumes "subgroup S H" "S \<inter> (m_inv H ` S) = {}"
   shows "(free (SG H \<langle>S\<rangle>\<^bsub>H\<^esub>)) \<longleftrightarrow> set l \<subseteq> S \<union> (m_inv H ` S) \<Longrightarrow> l \<noteq> [] \<Longrightarrow> (\<forall>n < (length l - 1). (l!n) \<otimes>\<^bsub>H\<^esub> (l!(n+1)) \<noteq> \<one>\<^bsub>H\<^esub>) \<Longrightarrow>  m_concat H l \<noteq> \<one>\<^bsub>H\<^esub>" 
   sorry
 
+lemma "xs = wordinverse xs \<Longrightarrow> reduced xs \<Longrightarrow> xs = []"
+proof-
+  assume xs:"xs = wordinverse xs " and rxs:"reduced xs"
+  then show "xs = []"
+  proof(cases "odd (length xs)")
+    case True
+      then have 1:"length xs > 0" using True by fastforce
+      then have 2:"length xs > (length xs div 2)" by simp
+      have "length (drop (length xs div 2) xs) = length xs - (length xs div 2) " by simp
+      then have "length (drop (length xs div 2) xs) > 0" using 2 by simp
+      then have "(drop (length xs div 2) xs) \<noteq> []" by fast
+      moreover have "drop ((length xs div 2)+1) xs = tl (drop ((length xs div 2)) xs)" using drop_Suc tl_drop by (simp add: drop_Suc tl_drop)
+      ultimately have  "[hd (drop (length xs div 2) xs)] @  drop ((length xs div 2)+1) xs = (drop (length xs div 2) xs)" by simp
+      moreover have "xs = take (length xs div 2) xs @ drop (length xs div 2) xs" by simp
+      ultimately have 3:"xs = take (length xs div 2) xs @ [hd (drop (length xs div 2) xs)] @ drop ((length xs div 2)+1) xs" by presburger
+      then have "wordinverse xs = (map inverse) (rev (take (length xs div 2) xs @ [hd (drop (length xs div 2) xs)] @ drop ((length xs div 2)+1) xs))" using wordinverse_redef2 by auto
+      then have "wordinverse xs = (map inverse) (rev (drop ((length xs div 2)+1) xs)  @ rev [hd (drop (length xs div 2) xs)] @ rev (take (length xs div 2) xs))" by simp
+      then have "wordinverse xs = ((map inverse) (rev (drop ((length xs div 2)+1) xs))  @ [inverse (hd (drop (length xs div 2) xs))] @ (map inverse) (rev (take (length xs div 2) xs)))" by simp
+      moreover have "length (take (length xs div 2) xs) = length ((map inverse)(rev (drop ((length xs div 2)+1) xs)))" using True drop_odd_length by fastforce 
+      ultimately have "[inverse (hd (drop (length xs div 2) xs))] = [hd (drop (length xs div 2) xs)]" using 3 xs by (metis (no_types, lifting) append_eq_append_conv hd_append2 list.sel(1) not_Cons_self2)
+      then show ?thesis by (metis inverse_neq list.sel(1))
+  next
+    case False
+    then show ?thesis sorry
+  qed
+qed
+
+
 lemma 
   assumes "x \<in> carrier (freegroup S)"
   shows "inv\<^bsub>(freegroup S)\<^esub> x = x \<Longrightarrow> x = \<one>\<^bsub>(freegroup S)\<^esub>"
