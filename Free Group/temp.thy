@@ -121,7 +121,7 @@ proof-
     next
       case False
       then have yx:"(y1, x1) ∈ lex_L2_word A" using subcases by simp
-      then have xy_x:"((x1 ⊗⇘F⇘A⇙⇙ y1), x1) ∈ lex_L2_word A" using xyy sorry (*transitivity*)
+      then have xy_x: "((x1 ⊗⇘F⇘A⇙⇙ y1), x1) ∈ lex_L2_word A" using xyy sorry (*transitivity*)
       then have "x1 ∉ X (SG (F⇘A⇙) H) A" using yx H assms lex_cont1 by (metis mult_SG)
       moreover have "m_inv ((SG (F⇘A⇙) H)) x1 ∉ (X (SG (F⇘A⇙) H) A)" using yx xy_x H assms lex_cont1_inv by (metis mult_SG)
       ultimately have "x1 ∉ (union_inv (X (SG (F⇘A⇙) H) A) A)" sorry
