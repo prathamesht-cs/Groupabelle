@@ -3000,7 +3000,7 @@ lemma mult_SG: "x ⊗⇘H⇙ y = x ⊗⇘SG H K⇙ y"
 lemma inv_SG: "group H ⟹ y ∈ K ⟹ subgroup K H ⟹ inv⇘H⇙ y = inv⇘SG H K⇙ y"
   unfolding SG_def by (simp add: group.m_inv_consistent)
 
-lemma
+lemma lex_cont1:
   assumes "(y,x) ∈ lex_L2_word A"
       and "(x ⊗⇘SG F⇘A⇙ H⇙ y, x) ∈ lex_L2_word A"
       and "x ∈ H"
@@ -3023,7 +3023,7 @@ proof-
   then show ?thesis by (simp add: X_def)
 qed
 
-lemma
+lemma lex_cont1_inv:
   assumes "(y,x) ∈ lex_L2_word A"
       and "(x ⊗⇘SG F⇘A⇙ H⇙ y, x) ∈ lex_L2_word A"
       and "x ∈ H"
@@ -3049,7 +3049,7 @@ proof-
   then show ?thesis by (simp add: X_def)
 qed
 
-lemma
+lemma lex_cont2_inv:
   assumes "(x,y) ∈ lex_L2_word A"
       and "(x ⊗⇘SG F⇘A⇙ H⇙ y, y) ∈ lex_L2_word A"
       and "x ∈ H"
@@ -3075,7 +3075,7 @@ proof-
   then show ?thesis by (simp add: X_def)
 qed
 
-lemma
+lemma lex_cont2:
   assumes "(x,y) ∈ lex_L2_word A"
       and "(x ⊗⇘SG F⇘A⇙ H⇙ y, y) ∈ lex_L2_word A"
       and "x ∈ H"
