@@ -1815,7 +1815,7 @@ proof-
   have "nat_less = less_than" unfolding nat_less_def less_than_def using less_eq by blast
   then show ?thesis using wf_less_than by argo
 qed
-
+                               
 lemma wf_lex_L2_word'_prod:
 "wf (nat_less <*lex*> lex_L2_word' A)"
   by (simp add: wf_lex_L2_word' wf_lex_prod wf_nat_less)
@@ -1837,6 +1837,12 @@ lemma lex_L2_word_length:
       and "length ((red_rep A) x) = length ((red_rep A) y)"
     shows "(x,y) \<in> (lex_L2_word A) \<longleftrightarrow>  (x,y) \<in> (lex_L2_word' A)"
   unfolding lex_L2_word_def by (simp add: assms(1) assms(2) wf_nat_less)
+
+lemma lex_L2_word_length_conv:
+  assumes "x \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>)) \<and> y \<in> (\<langle>A\<rangle> // (reln_tuple \<langle>A\<rangle>))"
+      and "length ((red_rep A) x) = length ((red_rep A) y)"
+    shows "(x,y) \<in> (lex_L2_word' A) \<Longrightarrow> (x,y) \<in> (lex_L2_word A)"
+  unfolding lex_L2_word_def by (simp add: assms(1) assms(2))
 
 lemma total_Id: "total r \<Longrightarrow> total (r - Id)"
   by simp
