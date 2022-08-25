@@ -420,3 +420,35 @@ proof-
   then have "(m_inv (freegroup A) (m_inv (freegroup A) xy), m_inv (freegroup A) (m_inv (freegroup A) x)) \<in> lex_L2_word A" by (simp add: lex_L2_inv)
   then show ?thesis using assms(1,2) by (simp add: freegroup_is_group)
 qed
+
+lemma "x \<in> (A \<union> f ` A) \<Longrightarrow> x \<in> A \<or> f x \<in> A"
+
+lemma N0:
+  assumes "H \<le> freegroup A" 
+  shows "\<forall>x \<in> (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). N0 x"
+proof
+  fix x assume x:"x \<in> red_rep A ` union_inv (X (SG F\<^bsub>A\<^esub> H) A) A"
+  show "N0 x"
+  proof(rule ccontr)
+    assume "\<not> N0 x"
+    then have "x = []" unfolding N0_def by simp
+    moreover obtain x1 where x1:"red_rep A x1 = x \<and> x1 \<in> (union_inv (X (SG (freegroup A) H) A) A)" using x by blast
+    moreover then have xin:"x1 \<in> carrier(freegroup A)" using assms assms union_inv_clos by blast
+    ultimately have 1:"x1 = \<one>\<^bsub>freegroup A\<^esub>" unfolding red_rep_def freegroup_def using red_rep_the x1 by force
+    then have "x1 \<in> (X (SG (freegroup A) H) A) " 
+    proof(cases "x1 \<in> (X (SG (freegroup A) H) A)")
+      case True
+      then show ?thesis  by simp
+    next
+      case False
+      then have "x1 \<in> m_inv (freegroup A) ` (X (SG (freegroup A) H) A)" using x1 unfolding union_inv_def  by simp
+      then obtain x2 where x2:"m_inv (freegroup A) x2 = x1 \<and> x2 \<in> (X (SG (freegroup A) H) A)" by blast
+      moreover then have "x2 \<in> carrier(freegroup A)"  using assms union_inv_clos union_inv_def by fastforce
+      ultimately have "m_inv (freegroup A) x1 = x2" using freegroup_is_group group.inv_inv  by fast
+      then have "x2 = \<one>\<^bsub>freegroup A\<^esub>" using 1 freegroup_is_group by (metis group.inv_eq_1_iff xin)
+      then show ?thesis using x2 1 by simp
+    qed
+    moreover have "\<one>\<^bsub>freegroup A\<^esub> \<in> G (SG (freegroup A) H) A (\<one>\<^bsub>freegroup A\<^esub>)" unfolding G_def by (metis (no_types, lifting) gen_span.simps one_SG)
+    ultimately show False  unfolding X_def using 1 by blast
+  qed
+qed
