@@ -272,6 +272,11 @@ lemma left_includes: "a = x @ y \<Longrightarrow> length x \<le> length y \<Long
 
 lemma take_bigger_half:"length a \<ge> length  b \<Longrightarrow> take (((length (a@b)+1) div 2)) (a@b) = take (((length (a@b)+1) div 2)) a"
   by simp
+  
+lemma lex_word_rightappend:
+  assumes "(x,y) ∈ lex_word"
+  shows "(x@c, y@c) ∈ lex_word"
+  using lex_word_def lenlex_def assms lenlex_append1 by blast
 
 lemma L_inverse_eq:
   assumes "x = (p @ (wordinverse a))"
@@ -332,6 +337,84 @@ proof-
     then show ?thesis using x y 2 4 lex_L2_word_length by blast
   qed
 qed
+
+lemma three_point_six:
+  assumes "x ∈ carrier (freegroup A) ∧ xy ∈ carrier (freegroup A)"      
+          "red_rep A x =  p@c ∧ red_rep A xy = q@c"
+          "length p = length q" "length p ≤ length c" "length q ≤ length c"    
+          "(p,q) ∈ lex_word" "p ≠ q" "N0 (red_rep A x)" "N0 (red_rep A xy)"
+  shows   "(x, xy) ∈ lex_L2_word A"
+proof-
+  let ?X = "(red_rep A x)"
+  let ?XY = "(red_rep A xy)"
+  have rx:"reduced ?X" using freegroup_def[of "A"] assms(1) red_rep_the[of "x" "A"] by (simp add: red_rep_def)
+  have rxy:"reduced ?XY" using freegroup_def[of "A"] assms(1) red_rep_the[of "xy" "A"] by (simp add: red_rep_def)
+  have "L(?X) ≠ L (?XY)" using assms(2,3,4,7) neq_left_neq by fastforce
+  obtain r where r:"L(?X) = (p @ r)" using assms(2,4) left_includes by blast
+  obtain s where s:"L(?XY) = (q @ s)" using assms(2,5) left_includes by blast
+  have lxxy:"length (L(?X)) = length (L(?XY))" using assms(2,3) rx rxy unfolding left_subword_def by auto
+  then have "length (p@r) = length (q@s)" using r s by simp
+  moreover then have "length r = length s" using assms(3) by simp
+  ultimately have "((p@r), (q@s)) ∈ lex_word" using assms(6) lex_word_def lenlex_append1 by blast
+  then have L_lex:"(L(?X), L(?XY)) ∈ lex_word" using r s by simp
+  have L_eq:"L(wordinverse ?X) = L(wordinverse ?XY)" using L_inverse_eq assms(2,3,5) by (metis (no_types, lifting) wordinverse_symm)
+  have length:"length (?X) = length (?XY)" using assms(2,3) length_eq by simp
+  show ?thesis
+  proof(cases "(L(wordinverse ?X), L(?X)) ∈ lex_word")
+    case True
+    then have "min lex_word (L2 (wordinverse ?X)) = L(wordinverse ?X)" unfolding left_tuple_def min.simps by (simp add: wordinverse_of_wordinverse)
+    then have min1:"min lex_word (L2 (?X)) = L(wordinverse ?X)" using min_L2_inv using assms(1) by fastforce
+    moreover then have max1:"max lex_word (L2 (?X)) = L (?X)" by (metis NielsonSchreierFinal.lex_word_one True left_tuple_def max.simps)       
+    ultimately have "min lex_word (L2 ?XY) = L(wordinverse ?XY)" using L_eq L_lex transD lex_word_one trans_lex_word left_tuple_def min.simps by metis
+    then have 1:"(L(wordinverse ?XY), L(?XY)) ∈ lex_word" unfolding left_tuple_def min.simps using L_eq L_lex True lex_word_one lex_word_total by fastforce
+    then have "min lex_word (L2 (wordinverse ?XY)) = L(wordinverse ?XY)" unfolding left_tuple_def min.simps by (simp add: wordinverse_of_wordinverse)
+    then have min2:"min lex_word (L2 (?XY)) = L(wordinverse ?XY)" using min_L2_inv using assms(1) by fastforce
+    then have max2:"max lex_word (L2 (wordinverse ?XY)) = L(?XY)" by (metis FreeGroupMain.wordinverse_symm 1 left_tuple_def max.simps)
+    have "x ∈ ⟨A⟩ // reln_tuple ⟨A⟩ ∧ xy ∈ ⟨A⟩ // reln_tuple ⟨A⟩" using assms(1) freegroup_def[of "A"] by auto
+    moreover have "(min lex_word (L2 (?X))) = (min lex_word (L2 (?XY)))" using min1 min2 L_eq by auto
+    moreover have "((max lex_word (L2 (wordinverse (?X))), max lex_word (L2 (wordinverse (?XY))))) ∈ lex_word" using max1 max2 L_lex by (metis FreeGroupMain.wordinverse_symm True left_tuple_def max.simps)
+    ultimately have "(x, xy) ∈ lex_L2_word' A" unfolding lex_L2_word'_def lex_prod_def left_tuple_def using wordinverse_symm left_tuple_def by (smt (z3) case_prod_conv  max.simps max1 mem_Collect_eq min.simps min1)
+    then show ?thesis by (simp add: ‹x ∈ ⟨A⟩ // reln_tuple ⟨A⟩ ∧ xy ∈ ⟨A⟩ // reln_tuple ⟨A⟩› length lex_L2_word_length)     
+   next
+    case False
+    then have "(L(?X),L(wordinverse ?X)) ∈ lex_word" using L_inv_eq N0_def assms(8) lex_word_total rx by auto
+    then have "min lex_word (L2 (wordinverse ?X)) = L(?X)" unfolding left_tuple_def min.simps by (simp add: False FreeGroupMain.wordinverse_of_wordinverse)
+    then have min1:"min lex_word (L2 (?X)) = L(?X)" using min_L2_inv using assms(1) by fastforce
+    then have max1:"max lex_word (L2 (wordinverse ?X)) = L (wordinverse ?X)" by (metis FreeGroupMain.wordinverse_symm False left_tuple_def max.simps)
+    then show ?thesis
+    proof(cases "(L(wordinverse ?XY), L(?XY)) ∈ lex_word")
+      case True
+      then have "min lex_word (L2 (wordinverse ?XY)) = L(wordinverse ?XY)" unfolding left_tuple_def min.simps by (simp add: wordinverse_of_wordinverse)
+      then have min2:"min lex_word (L2 (?XY)) = L(wordinverse ?XY)" using min_L2_inv using assms(1) by fastforce
+      then have max2:"max lex_word (L2 (wordinverse ?XY)) = L(?XY)" by (metis FreeGroupMain.wordinverse_symm True left_tuple_def max.simps)
+      have "x ∈ ⟨A⟩ // reln_tuple ⟨A⟩ ∧ xy ∈ ⟨A⟩ // reln_tuple ⟨A⟩" using assms(1) freegroup_def[of "A"] by auto
+      moreover have "((min lex_word (L2 (red_rep A x))),(min lex_word (L2 (red_rep A xy)))) ∈ lex_word" using min1 min2 max2 L_eq using ‹(L (red_rep A x), L (wordinverse (red_rep A x))) ∈ lex_word› by auto
+      ultimately have "(x, xy) ∈ lex_L2_word' A" unfolding lex_L2_word'_def lex_prod_def left_tuple_def using wordinverse_symm left_tuple_def by (smt (z3) case_prod_conv  max.simps max1 mem_Collect_eq min.simps min1)
+      then show ?thesis unfolding lex_L2_word'_def using assms(1,6,7) freegroup_def length ‹(x, xy) ∈ lex_L2_word' A› lex_L2_word_length by blast
+    next
+      case False
+      then have subcases:"(L(wordinverse ?XY) = L(?XY)) ∨ (L(?XY),(L(wordinverse ?XY))) ∈ lex_word" using lex_word_total by blast
+      then show ?thesis
+      proof(cases "(L(wordinverse ?XY) = L(?XY))")
+        case True
+        then have "reduced ?XY" using assms(1) freegroup_def red_rep_the by (metis partial_object.select_convs(1))
+        then have "?XY = []" using L_inv_eq True by metis
+        then have "(red_rep A xy) = []" by blast
+        then show ?thesis using assms(9) N0_def by auto
+      next
+        case False
+        then have false:"(L(?XY),(L(wordinverse ?XY))) ∈ lex_word" using subcases by simp
+        then have 2:"min lex_word (L2 ?XY) = L(?XY)" unfolding left_tuple_def min.simps by (simp add: wordinverse_of_wordinverse)
+        have 1:"(L ?XY, L (wordinverse ?X)) ∈ lex_word" using false L_eq by simp 
+        have "x ∈ ⟨A⟩ // reln_tuple ⟨A⟩ ∧ xy ∈ ⟨A⟩ // reln_tuple ⟨A⟩" using assms(1) freegroup_def[of "A"] by auto
+        moreover have "((min lex_word (L2 (red_rep A x))),(min lex_word (L2 (red_rep A xy)))) ∈ lex_word" using 1 2 false L_eq min1 using L_lex by auto
+        ultimately have "(x, xy) ∈ lex_L2_word' A" unfolding lex_L2_word'_def lex_prod_def left_tuple_def using wordinverse_symm left_tuple_def by (smt (z3) case_prod_conv  max.simps max1 mem_Collect_eq min.simps min1)    
+       then show ?thesis unfolding lex_L2_word'_def using assms(1,6,7) freegroup_def length ‹(x, xy) ∈ lex_L2_word' A› lex_L2_word_length by blast
+      qed
+    qed
+  qed
+qed
+
 
 lemma three_point_seven:assumes "x \<in> (carrier (freegroup A))"
           and "xy \<in> (carrier (freegroup A))"
