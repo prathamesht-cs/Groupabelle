@@ -2748,6 +2748,25 @@ proof-
   then show ?thesis using 3 by simp
 qed
 
+lemma cancel_b2_bq3:
+  assumes "reduced x"
+      and "reduced y"
+      and "reduced z"
+      and "N1 x y"
+      and "N1 y z"
+      and "x ≠ wordinverse y"
+      and "y ≠ wordinverse z"
+    shows "b2 (cancel2 x y) =  (b3 (cancel3 x y z)) @ q3 (cancel3 x y z)"
+proof-
+  have 1:"x = a3 (cancel3 x y z) @  (p3 (cancel3 x y z)) ∧ y = wordinverse  (p3 (cancel3 x y z)) @ b3 (cancel3 x y z) @ (q3 (cancel3 x y z)) ∧ z = (wordinverse  (q3 (cancel3 x y z))) @ (c3 (cancel3 x y z)) ∧ reduced (a3 (cancel3 x y z) @ b3 (cancel3 x y z) @ q3 (cancel3 x y z)) ∧ reduced (wordinverse  (p3 (cancel3 x y z)) @ b3 (cancel3 x y z) @ c3 (cancel3 x y z))" using assms cancel3_the by blast
+  have 2:"y = (a2 (cancel2 y z)) @ (p2 (cancel2 y z)) ∧ z = (wordinverse (p2 (cancel2 y z))) @ (b2 (cancel2 y z)) ∧ reduced ((a2 (cancel2 y z)) @ (b2 (cancel2 y z)))" using assms(2,3) by (simp add: cancel2_the)
+  define w2 where 3:"w2 = ((a3 (cancel3 x y z)), ((p3 (cancel3 x y z))), b3 (cancel3 x y z)@ (q3 (cancel3 x y z)))"
+  then have "y = (wordinverse (p2 w2)) @ (b2 w2) ∧ x = ((a2 w2)) @ (p2 w2) ∧ reduced ((a2 w2) @ (b2 w2))" using 1 by auto
+  then have "w2 = (cancel2 x y)" using 2 3 assms(1,2,3) cancel2E' cancel2_the[of "x" "y"] by blast
+  then have "b2 w2 = b2 (cancel2 x y)" by simp
+  then show ?thesis using 3 by simp
+qed
+
 lemma cancel_a2_a3:
   assumes "reduced x"
       and "reduced y"
@@ -2766,6 +2785,21 @@ proof-
   then have "w2 = (cancel2 x y)" using 2 assms(1,2) cancel2E' by blast
   then have "a2 w2 = a2 (cancel2 x y)" by simp
   then show ?thesis using 3 by simp
+qed
+
+lemma cancel_p2_p3:
+  assumes "reduced x"
+      and "reduced y"
+      and "reduced z"
+      and "N1 x y"
+      and "N1 y z"      
+      and "x ≠ wordinverse y"
+      and "y ≠ wordinverse z"
+    shows "p2 (cancel2 x y) = p3 (cancel3 x y z)"
+proof-
+  have "x = a3 (cancel3 x y z) @  (p3 (cancel3 x y z))" using assms cancel3_the by blast
+  moreover have "x = (a2 (cancel2 x y)) @ (p2 (cancel2 x y))" using assms(1,2) by (simp add: cancel2_the)
+  ultimately show ?thesis using cancel_a2_a3 assms by (metis same_append_eq)
 qed
 
 definition G
