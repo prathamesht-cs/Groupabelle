@@ -1,0 +1,4 @@
+theory word_on_generators
+imports UniversalProperty
+begin
+
