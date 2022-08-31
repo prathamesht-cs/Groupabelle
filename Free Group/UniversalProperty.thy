@@ -15,7 +15,7 @@ definition unlift :: "(('a, 'b) word set\<Rightarrow> 'c) \<Rightarrow> ('a, 'b)
   where "unlift f gens S x = f (reln_tuple \<langle>gens\<rangle> `` {x})"  
 
 lemma (in group) genmap_closed:
-  assumes cl: "f \<in> (\<iota> ` (gens ::('a, 'b) monoidgentype set)) \<rightarrow> carrier G"
+  assumes cl: "f \<in> (\<iota> ` (gens ::('c, 'd) monoidgentype set)) \<rightarrow> carrier G"
       and "g \<in> (\<iota> ` gens) \<union> (wordinverse ` (\<iota> ` gens))"
     shows "genmap (\<iota> ` gens) f g \<in> carrier G"
 proof-
@@ -62,7 +62,7 @@ next
 qed
 
 lemma (in group) genmapext_closed:
-  assumes "f \<in> (\<iota> ` (gens ::('a, 'b) monoidgentype set)) \<rightarrow> carrier G"
+  assumes "f \<in> (\<iota> ` (gens ::('c, 'd) monoidgentype set)) \<rightarrow> carrier G"
       and "x \<in> freewords_on  gens"
     shows "genmapext (\<iota> ` gens) f x \<in> carrier G"
   using assms
@@ -74,13 +74,13 @@ next
   have a:"genmapext (\<iota> ` gens) f (a # x) = genmap (\<iota> ` gens) f [a] \<otimes>  (genmapext (\<iota> ` gens)  f x)" by simp
   have "a \<in> gens \<times> {True, False}"  using freewords_on_def gen_spanset invgen_def Cons by (metis list.distinct(1) list.sel(1))
   then have "[a] \<in> (\<iota> ` gens) \<union> (wordinverse ` (\<iota> ` gens))" using inclusion_union  by blast
-  then have " genmap (\<iota> ` gens) f [a] \<in> carrier G" using genmap_closed Cons.prems(1) by meson
+  then have " genmap (\<iota> ` gens) f [a] \<in> carrier G" using genmap_closed Cons.prems(1) by metis
   moreover have "x \<in> \<langle>gens\<rangle>" using Cons.prems(2) freewords_on_def span_cons by blast
   ultimately show ?case using a by (simp add: Cons.IH assms(1))
 qed
 
 lemma (in group) genmapext_append:
-  assumes "f \<in> (\<iota> ` (gens ::('a, 'b) monoidgentype set)) \<rightarrow> carrier G"
+  assumes "f \<in> (\<iota> ` (gens ::('c, 'd) monoidgentype set)) \<rightarrow> carrier G"
       and "x \<in> freewords_on gens"
       and "y \<in> freewords_on gens"
     shows "genmapext (\<iota> ` gens)  f (x @ y) = genmapext (\<iota> ` gens) f x \<otimes> genmapext (\<iota> ` gens) f y"
@@ -97,7 +97,8 @@ next
   then have a:"[a] \<in> (\<iota> ` gens) \<union> (wordinverse ` (\<iota> ` gens))" using inclusion_union  by blast
   have x:"x \<in> \<langle>gens\<rangle>" using Cons.prems(2) freewords_on_def span_cons by blast
   have "genmapext (\<iota> ` gens) f (a # x) \<otimes> genmapext (\<iota> ` gens) f y = genmap (\<iota> ` gens) f [a] \<otimes> genmapext (\<iota> ` gens) f x \<otimes> genmapext (\<iota> ` gens) f y" by simp
-  then have 1: "genmapext (\<iota> ` gens) f (a # x) \<otimes> genmapext (\<iota> ` gens) f y = genmap (\<iota> ` gens) f [a] \<otimes> genmapext (\<iota> ` gens) f (x @ y)" using Cons.IH Cons.prems(1) Cons.prems(3)  a genmap_closed genmapext_closed m_assoc x by presburger
+  then have 1: "genmapext (\<iota> ` gens) f (a # x) \<otimes> genmapext (\<iota> ` gens) f y = genmap (\<iota> ` gens) f [a] \<otimes> genmapext (\<iota> ` gens) f (x @ y)" 
+    using Cons.IH Cons.prems(1) Cons.prems(3)  a genmap_closed genmapext_closed m_assoc x by metis
   have "genmapext  (\<iota> ` gens) f ((a # x) @ y) = genmapext (\<iota> ` gens) f (a # (x  @ y))" by auto
   then have "genmapext (\<iota> ` gens) f ((a #x) @ y) = genmap (\<iota> ` gens) f [a] \<otimes> genmapext (\<iota> ` gens) f (x @ y)" by simp
   then show ?case using 1 by auto
@@ -158,7 +159,7 @@ qed
 
 lemma (in group) inverse_ext:
   assumes  "inverse x1 = x2"
-  and "[x1] \<in> freewords_on (gens ::('a, 'b) monoidgentype set)"
+  and "[x1] \<in> freewords_on (gens ::('c, 'd) monoidgentype set)"
   and "[x2] \<in> freewords_on gens"
   and "f \<in> (\<iota> ` gens) \<rightarrow> carrier G"
   shows "(genmapext (\<iota> ` gens) f [x1] \<otimes> genmapext (\<iota> ` gens) f [x2]) = \<one>"
@@ -203,7 +204,7 @@ qed
 
 lemma (in group) genmapext_cancels_to:
   assumes "cancels_to x y"
-      and "x \<in> freewords_on (gens ::('a, 'b) monoidgentype set)"
+      and "x \<in> freewords_on (gens ::('c, 'd) monoidgentype set)"
       and "y \<in> freewords_on gens"
       and  "f \<in> (\<iota> ` gens) \<rightarrow> carrier G"
   shows "genmapext (\<iota> ` gens) f x = genmapext (\<iota> ` gens) f y"
@@ -227,14 +228,16 @@ obtain c1 x1 x2 c2
   moreover  have c2: "c2 \<in> freewords_on gens" using fx2  freewords_on_def rightappend_span by fastforce
   ultimately have 2: "genmapext (\<iota> ` gens) f (c1 @ [x1] @ [x2] @ c2) = genmapext (\<iota> ` gens) f c1  \<otimes> (genmapext (\<iota> ` gens) f [x1] \<otimes> genmapext (\<iota> ` gens) f [x2]) \<otimes> genmapext (\<iota> ` gens) f c2" using genmapext_append rtrancl_refl.prems(3) by (smt (z3) genmapext_closed m_assoc m_closed)
   then have "genmapext (\<iota> ` gens) f (c1 @ [x1] @ [x2] @ c2) = genmapext (\<iota> ` gens) f c1  \<otimes> \<one> \<otimes> genmapext (\<iota> ` gens) f c2" using inverse_ext i x1 x2 assms(4) by metis
-  then have "genmapext (\<iota> ` gens) f (c1 @ [x1] @ [x2] @ c2) = genmapext (\<iota> ` gens) f c1  \<otimes>  genmapext (\<iota> ` gens) f c2" using c1 c2 assms(4) genmapext_closed by (metis l_cancel_one' one_closed)
-  then have "genmapext (\<iota> ` gens) f (c1 @ [x1] @ [x2] @ c2) = genmapext (\<iota> ` gens) f (c1@c2)" using genmapext_append c1 c2 assms(4) by metis
+  then have "genmapext (\<iota> ` gens) f (c1 @ [x1] @ [x2] @ c2) = genmapext (\<iota> ` gens) f c1  \<otimes>  genmapext (\<iota> ` gens) f c2" 
+    using c1 c2 assms(4) genmapext_closed by (metis l_cancel_one' one_closed)
+  then have "genmapext (\<iota> ` gens) f (c1 @ [x1] @ [x2] @ c2) = genmapext (\<iota> ` gens) f (c1@c2)" 
+    using genmapext_append c1 c2 assms(4) by metis
   then have "genmapext (\<iota> ` gens) f b = genmapext (\<iota> ` gens) f c" using b c by simp
   then show ?case using rtrancl_into_rtrancl by (simp add: bin)
 qed
 
 lemma (in group) genmapext_reln_tuple:
-  assumes "(x,y) \<in> (reln_tuple (freewords_on (gens ::('a, 'b) monoidgentype set)))"
+  assumes "(x,y) \<in> (reln_tuple (freewords_on (gens ::('c, 'd) monoidgentype set)))"
       and "x \<in> freewords_on gens"
       and "y \<in> freewords_on gens"
       and  "f \<in> (\<iota> ` gens) \<rightarrow> carrier G"
@@ -286,7 +289,7 @@ qed *)
 
 
 
-lemma (in group) congruentlift: assumes "f \<in> (\<iota> ` (S::('a,'b) monoidgentype set)) \<rightarrow> carrier G" shows "congruent (reln_tuple (freewords_on S)) (genmapext (\<iota> ` S) f)"
+lemma (in group) congruentlift: assumes "f \<in> (\<iota> ` (S::('c,'d) monoidgentype set)) \<rightarrow> carrier G" shows "congruent (reln_tuple (freewords_on S)) (genmapext (\<iota> ` S) f)"
   unfolding congruent_def
 proof-
   have "(\<And>x y. (x, y) \<in> (reln_tuple \<langle>S\<rangle>) \<Longrightarrow> (genmapext (\<iota> ` S) f x) = (genmapext (\<iota> ` S) f y))"
@@ -302,7 +305,7 @@ qed
 definition (in group) genmapext_proj where "genmapext_proj S f a = (\<Union>x \<in> a. {genmapext S f x})"
 
 lemma (in group) genmapext_proj_wd:
-  assumes " A \<in> quotient \<langle>(S::('a,'b) monoidgentype set)\<rangle> (reln_tuple \<langle>S\<rangle>)" 
+  assumes " A \<in> quotient \<langle>(S::('c,'d) monoidgentype set)\<rangle> (reln_tuple \<langle>S\<rangle>)" 
           "a \<in> A" 
           "f \<in> (\<iota> ` S) \<rightarrow> carrier G" 
           shows "genmapext_proj (\<iota> ` S) f A = {genmapext (\<iota> ` S) f a}"
@@ -313,7 +316,8 @@ proof-
     proof-
       fix x  assume assm: "x \<in> A"
       then have "(x, a)\<in>reln_tuple \<langle>S\<rangle>" by (meson assms(1) assms(2) quotient_eq_iff reln_equiv)
-      then have "genmapext (\<iota> ` S) f x = genmapext (\<iota> ` S) f a" using assms(3) congruentlift unfolding congruent_def by blast
+      then have "genmapext (\<iota> ` S) f x = genmapext (\<iota> ` S) f a" 
+        using assms(3) congruentlift unfolding congruent_def by blast 
       then show "{genmapext (\<iota> ` S) f x} = {genmapext (\<iota> ` S) f a}" by simp
     qed
     then show "\<forall> x \<in> A . ({genmapext (\<iota> ` S) f x} = {genmapext (\<iota> ` S) f a})" by simp
@@ -324,7 +328,7 @@ qed
 definition (in group) genmapext_lift where "genmapext_lift S f a = (THE x. x \<in> genmapext_proj S f a)"
 
 lemma (in group) genmapext_lift_wd:
-assumes " A \<in> quotient \<langle>(S::('a,'b) monoidgentype set)\<rangle> (reln_tuple \<langle>S\<rangle>)" 
+assumes " A \<in> quotient \<langle>(S::('c,'d) monoidgentype set)\<rangle> (reln_tuple \<langle>S\<rangle>)" 
           "a \<in> A" 
           "f \<in> (\<iota> ` S) \<rightarrow> carrier G" 
         shows "genmapext_lift (\<iota> ` S) f A = genmapext (\<iota> ` S) f a"
@@ -335,7 +339,7 @@ proof-
 qed
 
 lemma (in group) genmapext_lift_hom:
-  assumes "f \<in> (\<iota> ` (S::('a,'b) monoidgentype set)) \<rightarrow> carrier G"
+  assumes "f \<in> (\<iota> ` (S::('c,'d) monoidgentype set)) \<rightarrow> carrier G"
   shows "genmapext_lift (\<iota> ` S) f \<in> hom (freegroup S) G"
 proof-
   { 
@@ -345,8 +349,10 @@ proof-
   moreover then obtain x1 where x1:"x1 \<in> x" by (metis all_not_in_conv in_quotient_imp_non_empty reln_equiv)
   ultimately have xx1: "x = ((reln_tuple \<langle>S\<rangle>)``{x1})"  by (metis (no_types, lifting) Image_singleton_iff equiv_class_eq quotientE reln_equiv)
   then have xin: "x1 \<in> \<langle>S\<rangle>" by (meson in_mono in_quotient_imp_subset reln_equiv x1 x2)
-  have "genmapext_lift (\<iota> ` S) f x = genmapext (\<iota> ` S) f x1" using genmapext_lift_wd x2 x1 assms(1) by simp
-  then have "genmapext_lift (\<iota> ` S) f x \<in> carrier G" using genmapext_closed  assms(1) xin by simp
+  have "genmapext_lift (\<iota> ` S) f x = genmapext (\<iota> ` S) f x1" using genmapext_lift_wd x2 x1 assms(1) 
+    by (simp add: genmapext_lift_wd) (* by simp*)
+  then have "genmapext_lift (\<iota> ` S) f x \<in> carrier G" using genmapext_closed  assms(1) xin 
+    by (simp add: genmapext_closed) 
 }
   moreover
   {
@@ -368,7 +374,8 @@ proof-
   moreover have "(x1@y1) \<in> ((reln_tuple \<langle>S\<rangle>)``{x1@y1})" using append_congruent eq_equiv_class equiv_2f_clos reln_equiv x1 x2 y1 y2 by fastforce 
   ultimately have "genmapext_lift (\<iota> ` S) f (x \<otimes>\<^bsub>(freegroup S)\<^esub> y) = genmapext (\<iota> ` S) f (x1@y1)" using genmapext_lift_wd[of "((reln_tuple \<langle>S\<rangle>)``{x1@y1})" "S" "(x1@y1)" "f"] using assms by presburger
   then have "genmapext_lift (\<iota> ` S) f (x \<otimes>\<^bsub>(freegroup S)\<^esub> y) = genmapext (\<iota> ` S) f x1 \<otimes> genmapext (\<iota> ` S) f y1" using genmapext_append xin yin assms(1) by auto
-  then have "genmapext_lift (\<iota> ` S) f (x \<otimes>\<^bsub>(freegroup S)\<^esub> y) = (genmapext_lift (\<iota> ` S) f x) \<otimes> (genmapext_lift (\<iota> ` S) f y)" using genmapext_lift_wd x2 x1 y2 y1  assms(1) by presburger
+  then have "genmapext_lift (\<iota> ` S) f (x \<otimes>\<^bsub>(freegroup S)\<^esub> y) = (genmapext_lift (\<iota> ` S) f x) \<otimes> (genmapext_lift (\<iota> ` S) f y)" using genmapext_lift_wd x2 x1 y2 y1  assms(1) 
+    by metis
 }
   ultimately show ?thesis by (simp add: homI)
 qed
@@ -376,16 +383,17 @@ qed
 definition liftgen where "liftgen S = (\<Union>x \<in> (\<iota> ` S).{reln_tuple \<langle>S\<rangle> ``{x}})"
 
 lemma (in group) unlift_gens: assumes "f \<in> liftgen S \<rightarrow> carrier G"
-  shows "unlift f S (liftgen S) \<in> (\<iota> ` (S::('a,'b) monoidgentype set)) \<rightarrow> carrier G"
+  shows "unlift f S (liftgen S) \<in> (\<iota> ` (S::('c,'d) monoidgentype set)) \<rightarrow> carrier G"
 proof(rule funcsetI)
   fix x assume assm:"x \<in> \<iota> ` S"
-  have "(reln_tuple \<langle>S\<rangle> ``{x}) \<in> (\<Union>x \<in> (\<iota> ` (S::('a,'b) monoidgentype set)).{reln_tuple \<langle>S\<rangle> ``{x}} )" using assm by blast
+  have "(reln_tuple \<langle>S\<rangle> ``{x}) \<in> (\<Union>x \<in> (\<iota> ` (S::('c,'d) monoidgentype set)).{reln_tuple \<langle>S\<rangle> ``{x}} )" using assm by blast
   then have "f (reln_tuple \<langle>S\<rangle> ``{x}) \<in> carrier G" using assms Pi_split_insert_domain unfolding liftgen_def by fastforce
   moreover have "f (reln_tuple \<langle>S\<rangle> ``{x}) = unlift f S (liftgen S) x"  by (simp add: unlift_def)
   ultimately show "unlift f S (liftgen S) x \<in> carrier G" by simp
 qed
 
-lemma (in group) genmapext_unlift_hom: assumes "f \<in> liftgen (S::('a,'b) monoidgentype set) \<rightarrow> carrier G"
+lemma (in group) genmapext_unlift_hom: assumes 
+               "f \<in> liftgen (S::('c,'d) monoidgentype set) \<rightarrow> carrier G"
   shows "genmapext_lift (\<iota> ` S) (unlift f S (liftgen S)) \<in> hom (freegroup S) G"
   by (simp add: assms genmapext_lift_hom unlift_gens)
 
@@ -414,7 +422,8 @@ proof-
   show ?thesis using assms inclusion_def by (metis image_iff list.sel(1))
 qed
 
-lemma (in group) genmapext_unlift_ext: assumes "f \<in> liftgen (S::('a,'b) monoidgentype set) \<rightarrow> carrier G" 
+lemma (in group) genmapext_unlift_ext: 
+  assumes "f \<in> liftgen (S::('c,'d) monoidgentype set) \<rightarrow> carrier G" 
   shows "\<And>x. x \<in> (liftgen S) \<Longrightarrow> f x = genmapext_lift (\<iota> ` S) (unlift f S (liftgen S)) x"
 proof-
   fix x assume assm:"x \<in> (liftgen S)"
@@ -537,7 +546,7 @@ qed
 
 lemma (in group) genmapext_unlift_uni:
   assumes "group G"
-  and "f  \<in> liftgen (S::('a,'b) monoidgentype set) \<rightarrow> carrier G"
+  and "f  \<in> liftgen (S::('c,'d) monoidgentype set) \<rightarrow> carrier G"
   and "h \<in> hom (freegroup S) G"
   and "\<forall> x \<in> (liftgen S) . f x = h x"
 shows "\<forall>y \<in> carrier (freegroup S).  (genmapext_lift (\<iota> ` S) (unlift f S (liftgen S))) y = h y"

@@ -285,7 +285,7 @@ proof(rule ccontr)
   then show False using assms(2) by simp
 qed
 
-(* reln_imp_cancels *)
+
 lemma(in group) not_eq_inv:
   assumes "x \<in> carrier (freegroup S)" "x \<noteq> \<one>\<^bsub>(freegroup S)\<^esub>"
   shows "x \<noteq> inv\<^bsub>(freegroup S)\<^esub> x"

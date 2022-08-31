@@ -1,0 +1,234 @@
+theory nthpower
+imports FreeGroupMain Cancellation
+begin
+
+lemma cancels_transfer:
+assumes "i > 0"
+ and "cancels_to_1_at i (a#b#x) (a#y)"
+ and "b \<noteq> inverse a"
+shows "cancels_to_1_at (i - 1) (b#x) y"
+  using assms
+ proof(cases x)
+   case Nil
+   with assms show ?thesis unfolding cancels_to_1_at_def cancel_at_def by force
+ next
+   case (Cons c list)
+   have i:"i - 1 \<ge> 0" by auto
+   moreover then have "1 + (i - 1) < length (b # x)" using assms unfolding cancels_to_1_at_def
+     by simp
+   moreover then have "inverse ((b # x) ! (i - 1)) = (b # x) ! (1 + (i - 1))" 
+     using i  assms unfolding cancels_to_1_at_def cancel_at_def by simp
+   moreover then have "y = take (i - 1) (b # x) @ drop (2 + (i - 1)) (b # x)"
+     using i assms Cons unfolding cancels_to_1_at_def cancel_at_def 
+     by (metis One_nat_def Suc_pred append_Cons drop_Suc_Cons drop_drop gr_implies_not_zero list.sel(3) take_Cons')
+   ultimately show ?thesis  unfolding cancels_to_1_at_def cancel_at_def by argo
+ qed
+
+lemma non_reduced_words_cancel:
+  "\<not>(reduced wrd) \<longleftrightarrow> (\<exists>x. cancels_to_1 wrd x)"
+proof
+  assume asm:"\<not> (reduced wrd)"
+  show "(\<exists>x. cancels_to_1 wrd x)"
+    using asm
+  proof(induction wrd rule:reduced.induct)
+  case (3 g h wrd)
+  then show ?case
+  proof(cases "inverse g = h")
+    case True
+    then have "cancels_to_1_at 0 (g#h#wrd) wrd" using  Cons
+        unfolding  cancels_to_1_at_def[of 0 "g#h#wrd" wrd]
+        unfolding cancel_at_def take.simps(1) by simp
+    then show ?thesis unfolding cancels_to_1_def by blast 
+  next
+    case False
+    then have "g \<noteq> inverse h" using False 
+      by (metis inverse_of_inverse)
+    then obtain x i where "cancels_to_1_at i (h#wrd) x" using 3 unfolding cancels_to_1_def by fastforce
+    then have "cancels_to_1_at (i+1) (g#h#wrd) (g#x)" unfolding cancels_to_1_at_def
+      by (metis Suc_eq_plus1 add.assoc add_less_cancel_left append.simps(2) cancel_at_def drop_Suc_Cons length_Cons nth_Cons_Suc plus_1_eq_Suc take_Suc_Cons zero_le)
+    then show ?thesis using cancels_transfer unfolding cancels_to_1_def by blast 
+  qed
+  qed (auto)+
+next
+  assume asm:"\<exists>x. cancels_to_1 wrd x"
+  show "\<not>(reduced wrd)"
+    using asm
+  proof(induction wrd rule:reduced.induct)
+    case 1
+    then show ?case unfolding cancels_to_1_def cancels_to_1_at_def by simp
+  next
+    case (2 g)
+    then show ?case unfolding cancels_to_1_def cancels_to_1_at_def by simp
+  next
+    case (3 g h wrd)
+    then show ?case 
+    proof(cases "g = inverse h")
+      case False
+      then have False':"h \<noteq> inverse g" 
+        using inverse_of_inverse by blast
+      obtain x i where x_i:"cancels_to_1_at i (g#h#wrd) x"  using 3(2) unfolding cancels_to_1_def
+        by fast
+      then have i:"i > 0" using False 
+        by (metis cancels_to_1_at_def gr0I inverse_of_inverse nth_Cons_0 nth_Cons_Suc plus_1_eq_Suc)
+      obtain y where y:"x = g # y" 
+        using x_i i  unfolding cancels_to_1_at_def 
+        cancel_at_def 
+        by (simp add: take_Cons')
+      then have "cancels_to_1_at (i - 1) (h#wrd) y" using x_i cancels_transfer[of i g h wrd y] False'
+        i by fastforce
+      then have "\<not>(reduced (h#wrd))" using 3(1)[OF False] unfolding cancels_to_1_def by fast
+      then show ?thesis by simp
+    qed(auto)
+  qed
+qed
+
+lemma not_reduced_sublist:
+  assumes "\<not> (reduced ys)"
+  shows "\<not> (reduced (xs@ys))"
+  using assms 
+proof(induction xs rule:reduced.induct)
+  case (2 g)
+  then show ?case 
+    by (metis append_Cons append_Nil list.exhaust reduced.simps(1) reduced.simps(3))  
+next
+  case (3 g h wrd)
+  then show ?case by (cases "g = inverse h", simp, simp add:3)
+qed (simp)
+
+
+lemma reduced_reverse:
+  assumes "reduced (xs@[x])" 
+      and "reduced (y#ys)"
+      and "x \<noteq> inverse y" 
+    shows "reduced (xs@[x]@(y#ys))"
+proof(rule ccontr)
+  assume asm:"\<not> (reduced (xs@[x]@(y#ys)))"
+  then obtain wrd where wrd:"cancels_to_1 (xs@[x]@(y#ys)) wrd"
+    using  non_reduced_words_cancel by blast
+  then obtain i where i:"cancels_to_1_at i (xs@[x]@(y#ys)) wrd"
+    unfolding cancels_to_1_def by blast
+  then show False
+  proof(cases "i < length (xs)")
+    case True
+    hence "((xs@[x]) ! i) =  (xs@[x]@(y#ys))!i" using i unfolding cancels_to_1_at_def 
+      by (simp add: nth_append)
+    moreover have "(xs @[x])! (i+ 1) =  (xs@[x]@(y#ys))!(i+1)"  using i unfolding cancels_to_1_at_def 
+      by (metis True append_Cons discrete le_neq_implies_less nth_append nth_append_length)
+    ultimately have "inverse ((xs@[x])!i) = (xs@[x])!(i+1)" using  i True unfolding cancels_to_1_at_def 
+      by (metis Suc_eq_plus1  plus_1_eq_Suc)    
+    then have  inv:"((xs@[x])!i) = inverse ((xs@[x])!(i+1))" using inverse_of_inverse by metis
+    then have "drop i (xs@[x]) = ((xs@[x])!i)#((xs@[x])!(i+1))#(drop (i + 2) (xs@[x]))"
+      using True 
+      by (metis Cons_nth_drop_Suc Suc_eq_plus1 add_Suc_right discrete le_imp_less_Suc length_append_singleton less_imp_le_nat nat_1_add_1)
+    then have nr_drop_i: "\<not> reduced (drop i (xs@[x]))" 
+      using inv 
+      by simp
+    moreover have "(xs@[x]) = (take i (xs@[x]))@(drop i (xs@[x]))" 
+      using True by simp
+    then have "\<not> reduced (xs@[x])" using nr_drop_i not_reduced_sublist by metis 
+    then show ?thesis using assms(1) by argo 
+  next
+    case False
+    then have i_len:"i \<ge> length xs" by auto
+    then show ?thesis 
+    proof(cases "i = length xs")
+      case True
+      hence "x =  (xs@[x]@(y#ys))!i" using i unfolding cancels_to_1_at_def 
+       by (simp add: nth_append)
+      moreover have "y =  (xs@[x]@(y#ys))!(i+1)"  using i unfolding cancels_to_1_at_def 
+       by (metis One_nat_def True length_Cons list.size(3) nth_append_length nth_append_length_plus)
+      ultimately have "inverse x = y" using  i True unfolding cancels_to_1_at_def 
+       by (metis Suc_eq_plus1  plus_1_eq_Suc)    
+      then have  inv:"x = inverse y" using inverse_of_inverse by metis
+      then show False using assms(3) by argo
+    next
+      case False
+      define j where "j = i - length xs - 1"
+      have i_len:"i > length xs" using i_len False by linarith
+      hence "([y]@ys) !(i - length xs - 1) =  (xs@[x]@(y#ys))!i" using i unfolding cancels_to_1_at_def 
+        by (metis (no_types, hide_lams) add.commute add_less_le_mono append.assoc append.simps(1) append_Cons diff_diff_eq discrete length_append_singleton nat_less_le nth_append plus_1_eq_Suc)
+      moreover have "([y]@ys)! (i - length xs) =  (xs@[x]@(y#ys))!(i+1)"  using i i_len
+        unfolding cancels_to_1_at_def 
+        by (smt (z3) Nat.le_imp_diff_is_add add_diff_cancel_left' append_Cons append_self_conv2 diff_commute diff_is_0_eq' diffs0_imp_equal le_add1 nat_less_le nth_Cons' nth_append)
+      ultimately have "inverse (([y]@ys)!j) = ([y]@ys)!(j+1)" using  i False  unfolding cancels_to_1_at_def 
+      j_def 
+        by (metis One_nat_def Suc_eq_plus1 Suc_pred i_len plus_1_eq_Suc zero_less_diff)
+     then have  inv:"(([y]@ys)!j) = inverse (([y]@ys)!(j+1))" using inverse_of_inverse by metis
+    then have "drop j ([y]@ys) = (([y]@ys)!j)#(([y]@ys)!(j+1))#(drop (j + 2) ([y]@ys))"
+      using False i unfolding j_def cancels_to_1_at_def
+      by (smt (verit, ccfv_threshold) Cons_nth_drop_Suc add.commute add_Suc_right add_lessD1 add_less_cancel_left discrete i_len le_add_diff_inverse length_Cons length_append linorder_not_less nat_1_add_1 plus_1_eq_Suc)
+    then have nr_drop_i: "\<not> reduced (drop j ([y]@ys))" 
+      using inv 
+      by simp
+    moreover have "([y]@ys) = (take j ([y]@ys))@(drop j ([y]@ys))" 
+      using False unfolding j_def by simp
+    then have "\<not> reduced ([y]@ys)" using nr_drop_i not_reduced_sublist by metis 
+    then show ?thesis using assms(2) by force
+    qed
+  qed  
+qed
+
+lemma reduced_wordinverses:
+  assumes "reduced x"
+  shows "reduced (wordinverse x)"
+  using assms
+proof(induction x rule: reduced.induct)
+  case 1
+  then show ?case by auto 
+next
+  case (2 g)
+then show ?case by simp 
+next
+  case (3 g h wrd)
+  then have "reduced (wordinverse (h#wrd))"by force
+  then have "reduced ((wordinverse wrd)@[inverse h])" by fastforce
+  moreover have "reduced ((inverse g)#[])" by auto
+  moreover have "inverse h \<noteq> inverse (inverse g)" using inverse_of_inverse 3(2) 
+    by (metis reduced.simps(3))
+  ultimately show ?case using reduced_reverse by fastforce
+qed
+
+
+(* Use reflection somewhere 
+To prove the following, do the following: 
+use uncylce
+  a. show that first and last elements are the same
+  b. show that reduced by knocking off first and last letters is still reduced
+  c. do a case analysis for off and even words. *)
+
+
+lemma assumes "xs = wordinverse xs"
+  shows "hd xs = inverse (last xs)"
+proof(induction xs)
+  case Nil
+  then show ?case  sorry
+next
+  case (Cons a xs)
+  then show ?case sorry
+qed
+
+
+lemma assumes "xs \<noteq> []"
+  and "reduced xs"
+shows "xs \<noteq> wordinverse xs"
+  using assms 
+proof-
+  have "wordinverse xs = rev (map inverse xs)"
+    sorry
+
+proof(induction xs rule:reduced.induct)
+  case 1
+  then show ?case  sorry
+next
+  case (2 g)
+  then show ?case sorry
+next
+  case (3 g h wrd)
+  then show ?case sorry
+qed
+  case Nil
+  then show ?case by auto 
+next
+  case (Cons a ys)
+  then show ?case   sorry
+qed

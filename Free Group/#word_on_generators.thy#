@@ -1,0 +1,30 @@
+theory word_on_generators
+imports UniversalProperty CancelLemmas
+begin
+
+lemma gen_ineq_imp_not_cancels:
+  assumes "x \<in> S" "y \<in> S" "x \<noteq> y"
+  shows "\<not> (cancels_eq (\<iota> x) (\<iota> y))"
+proof
+  assume asm:"cancels_eq (\<iota> x) (\<iota> y)"
+  have iter_eq:"iter (length  (\<iota> x)) reduce (\<iota> x) = iter (length  (\<iota> y)) reduce (\<iota> y)"
+    using cancels_imp_iter[OF asm] by argo
+  hence "length (\<iota> x) = 1" using assms(1) 
+    by (simp add: inclusion_def)
+  moreover have "length (\<iota> y) = 1"  by (simp add: inclusion_def)
+  ultimately have "reduce  (\<iota> x) = reduce  (\<iota> y)" using iter_eq by auto
+  then have "[(x, True)] = [(y, True)]" unfolding inclusion_def by simp
+  then have "x = y" by simp
+  thus False using assms(3) by auto
+qed                                          
+
+
+lemma injective_inclusion:
+  assumes "x \<in> (S::('a,'b) monoidgentype set)" "y \<in> S" "x \<noteq> y"
+  shows "\<not> (\<iota> x ~ \<iota> y)"
+  using reln_imp_cancels  gen_ineq_imp_not_cancels[OF assms] by blast
+
+(* To prove, if two elements belonging to quotient are from inclusion image, then they are not equal*)
+
+
+end

@@ -1,0 +1,3 @@
+theory Homomorphism_Eq
+imports Main
+begin

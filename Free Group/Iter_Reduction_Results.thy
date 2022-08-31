@@ -56,6 +56,9 @@ qed
 
 lemma cancels_eq_imp_reln:
   "cancels_eq x y ⟹ x~y"
-  unfolding cancels_eq_def using cancels_imp_iter[of "x" "y"] iter_cancels_to[of "x" "length x"] cancels_imp_rel[of "x" "y"] by (metis cancels_eq_def cancels_imp_rel iter_cancels_to reln.sym reln.trans)
+  unfolding cancels_eq_def 
+  using cancels_imp_iter[of "x" "y"] iter_cancels_to[of "x" "length x"] cancels_imp_rel[of "x" "y"] 
+  by (metis cancels_eq_def cancels_imp_rel iter_cancels_to reln.sym reln.trans)
+
 
 end

@@ -1,0 +1,14 @@
+theory Universal_Property_Free_Groups
+imports FreeGroupMainTemp
+begin
+
+
+
+
+
+lemma 
+  assumes "f ` S \<subset> carrier G"
+  shows "\<exists>h. h \<in> hom (freegroup S) G \<and> h ` (carrier (freegroup S)) \<subseteq> carrier G 
+                 \<and> (\<forall>x \<in> S. h (i x) = f x) "
+
+

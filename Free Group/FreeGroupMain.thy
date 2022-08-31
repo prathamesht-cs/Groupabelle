@@ -386,7 +386,9 @@ proof-
     then show ?thesis using A  by (simp add: assms(2))
   qed
 
-lemma proj2fun_clos:assumes "equiv A r"  "Congruent2 r f" "C1\<in>A//r" "C2\<in>A//r"shows "((ProjFun2 A r f) C1 C2) \<in> A//r"
+lemma proj2fun_clos:
+  assumes "equiv A r"  "Congruent2 r f" "C1\<in>A//r" "C2\<in>A//r"
+  shows "((ProjFun2 A r f) C1 C2) \<in> A//r"
 proof-
   have "\<And>z. z\<in>C1\<times>C2 \<Longrightarrow> f (fst z) (snd z)\<in>A" 
   proof-
@@ -413,15 +415,21 @@ proof-
   then show ?thesis unfolding ProjFun2_def by auto
 qed
 
-lemma proj_append_clos: assumes "C1\<in> quotient \<langle>S\<rangle> (reln_tuple \<langle>S\<rangle>)" "C2\<in> quotient \<langle>S\<rangle> (reln_tuple \<langle>S\<rangle>)"shows "(proj_append \<langle>S\<rangle> C1 C2) \<in>  (quotient \<langle>S\<rangle> (reln_tuple \<langle>S\<rangle>))"
+lemma proj_append_clos: 
+  assumes "C1\<in> quotient \<langle>S\<rangle> (reln_tuple \<langle>S\<rangle>)" "C2\<in> quotient \<langle>S\<rangle> (reln_tuple \<langle>S\<rangle>)"
+  shows "(proj_append \<langle>S\<rangle> C1 C2) \<in>  (quotient \<langle>S\<rangle> (reln_tuple \<langle>S\<rangle>))"
 proof-
   show ?thesis using assms(1) assms(2) reln_equiv[of "S"] append_congruent[of "S"] proj2fun_clos[of "\<langle>S\<rangle>" "(reln_tuple \<langle>S\<rangle>)" "append" "C1" "C2"] unfolding proj_append_def by fastforce
 qed
 
-lemma union_eq_2f_eq: assumes "C1\<times>C2\<noteq>{}"  "\<forall>x\<in>C1\<times>C2. r``{ (b (fst x) (snd x))} = X" shows  "(\<Union>y\<in>C1\<times>C2 .r``{ (b (fst y) (snd y))})=X"
+lemma union_eq_2f_eq: 
+  assumes "C1\<times>C2\<noteq>{}"  "\<forall>x\<in>C1\<times>C2. r``{ (b (fst x) (snd x))} = X" 
+  shows  "(\<Union>y\<in>C1\<times>C2 .r``{ (b (fst y) (snd y))})=X"
     by (metis (no_types, lifting) SUP_eq_const assms(1) assms(2))
 
-lemma equiv_2f_wd:assumes "equiv A r" "Congruent2 r f"  "x\<in>A"  "y\<in>A"shows "(ProjFun2 A r f) (r``{x}) (r``{y}) = r ``{(f x y)}"
+lemma equiv_2f_wd:
+  assumes "equiv A r" "Congruent2 r f"  "x\<in>A"  "y\<in>A"
+  shows "(ProjFun2 A r f) (r``{x}) (r``{y}) = r ``{(f x y)}"
 proof-
   have "(r``{x})\<times> (r``{y}) \<noteq> {}"  by (metis Sigma_empty_iff assms(1) assms(3) assms(4) equals0D equiv_class_self)
   moreover have "\<forall>z\<in>r``{x}\<times>r``{y}. r ``{f (fst z) (snd z)}=r ``{f x y}"
@@ -443,9 +451,12 @@ proof-
   then show ?thesis unfolding ProjFun2_def by simp
 qed
 
-lemma proj_append_wd: assumes "x \<in> \<langle>S\<rangle>" "y \<in> \<langle>S\<rangle>" shows "(proj_append \<langle>S\<rangle> ((reln_tuple \<langle>S\<rangle>)``{x}) ((reln_tuple \<langle>S\<rangle>)``{y})) = (reln_tuple \<langle>S\<rangle>) `` {append x y}"
+lemma proj_append_wd: 
+  assumes "x \<in> \<langle>S\<rangle>" "y \<in> \<langle>S\<rangle>" 
+  shows "(proj_append \<langle>S\<rangle> ((reln_tuple \<langle>S\<rangle>)``{x}) ((reln_tuple \<langle>S\<rangle>)``{y})) = (reln_tuple \<langle>S\<rangle>) `` {append x y}"
 proof-
-  show ?thesis using reln_equiv[of "S"] append_congruent[of "S"] assms equiv_2f_wd[of "\<langle>S\<rangle>" "(reln_tuple \<langle>S\<rangle>)" "append" "x" "y"] unfolding proj_append_def  by simp
+  show ?thesis 
+    using reln_equiv[of "S"] append_congruent[of "S"] assms equiv_2f_wd[of "\<langle>S\<rangle>" "(reln_tuple \<langle>S\<rangle>)" "append" "x" "y"] unfolding proj_append_def  by simp
 qed
 
 lemma projfun2_assoc:assumes "equiv A r" and "Congruent2 r f" and "\<forall>x \<in> A. \<forall> y \<in> A. \<forall> z \<in> A. f x (f y z) = f (f x y) z" "C1\<in>A//r" "C2\<in>A//r" "C3\<in>A//r" "g=(ProjFun2 A r f)" shows "(g (g C1 C2) C3) = (g C1 (g C2 C3))"
