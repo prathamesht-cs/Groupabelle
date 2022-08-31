@@ -3631,7 +3631,7 @@ proof-
   have xyin:"(inv⇘F⇘A⇙⇙ xy) ∈ ⟨A⟩ // reln_tuple ⟨A⟩" using assms(2) freegroup_is_group unfolding freegroup_def using group.inv_closed by fastforce
   have xin: "(inv⇘F⇘A⇙⇙ x) ∈ ⟨A⟩ // reln_tuple ⟨A⟩" using assms(1) freegroup_is_group unfolding freegroup_def using group.inv_closed by fastforce
   have "length ?XY = length ?X" using x xy pq by simp
-  then have "((m_inv (freegroup A) xy, m_inv (freegroup A) x) ∈ lex_L2_word A) = ((m_inv (freegroup A) xy, m_inv (freegroup A) x) ∈ lex_L2_word' A)" unfolding lex_L2_word_def lex_prod_def sorry
+  then have "((m_inv (freegroup A) xy, m_inv (freegroup A) x) ∈ lex_L2_word A) = ((m_inv (freegroup A) xy, m_inv (freegroup A) x) ∈ lex_L2_word' A)" using lex_L2_word_def lex_L2_word_length mem_Collect_eq xin xyin by fastforce
   moreover have "((m_inv (freegroup A) xy, m_inv (freegroup A) x) ∈ lex_L2_word' A)"
   proof(cases "(L (?XY), L (wordinverse ?XY)) ∈ lex_word")
     case True note first = this
@@ -3802,12 +3802,15 @@ proof-
     obtain x1 where x1:"red_rep A x1 = x ∧ x1 ∈ (union_inv (X (SG (freegroup A) H) A) A)" using x by blast
     moreover then have x1A: "x1 ∈ carrier (freegroup A)" using assms union_inv_clos by blast
     ultimately have rx:"reduced x" using red_rep_the unfolding red_rep_def freegroup_def by auto
+    have xA: "x \<in> ⟨A⟩"  using redrep_in x1 x1A by fastforce
     obtain y1 where y1:"red_rep A y1 = y ∧ y1 ∈ (union_inv (X (SG (freegroup A) H) A) A)" using y by blast
     moreover then have y1A: "y1 ∈ carrier (freegroup A)" using assms union_inv_clos by blast
     ultimately have ry:"reduced y" using red_rep_the unfolding red_rep_def freegroup_def by auto
+    have yA: "y \<in> ⟨A⟩"  using redrep_in y1 y1A by fastforce
     obtain z1 where z1:"red_rep A z1 = z ∧ z1 ∈ (union_inv (X (SG (freegroup A) H) A) A)" using z by blast
     moreover then have z1A: "z1 ∈ carrier (freegroup A)" using assms union_inv_clos by blast
     ultimately have rz:"reduced z" using red_rep_the unfolding red_rep_def freegroup_def by auto
+    have zA: "z \<in> ⟨A⟩"  using redrep_in z1 z1A by fastforce
     have H:"x1 ∈ H ∧ y1 ∈ H ∧ z1 ∈ H" using assms x1 x1A y1 z1 z1A using union_inv_sub_H by blast
     have b:"(b3 (⊘⇘3⇙ x y z) = [])" using N2 unfolding N2_def by fastforce
     then have xyz:"x = a3 (⊘⇘3⇙ x y z) @ p3 (⊘⇘3⇙ x y z) ∧
@@ -3829,15 +3832,29 @@ proof-
     have xneqy: "x ≠ y" using xyz neq by (metis append_eq_append_conv leq)
     have yneqz: "y ≠ z" using xyz neq leq neq_imp_invneq by (metis append_eq_conv_conj length_wordinverse)
     have x1y1in:"x1 ⊗⇘freegroup A⇙ y1 ∈ carrier (freegroup A)" by (meson H assms(1) subgroup.m_closed subgroup.mem_carrier)
-    moreover have "(a3 (⊘⇘3⇙ x y z) @ p3 (⊘⇘3⇙ x y z) @ wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z)) ~ (a3 (⊘⇘3⇙ x y z) @ q3 (⊘⇘3⇙ x y z)) ∧ x1 ⊗⇘freegroup A⇙ y1 = reln_tuple ⟨A⟩ `` {a3 (⊘⇘3⇙ x y z) @ p3 (⊘⇘3⇙ x y z) @ wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z)}"
+    have "(a3 (⊘⇘3⇙ x y z) @ p3 (⊘⇘3⇙ x y z) @ wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z)) ~ (a3 (⊘⇘3⇙ x y z) @ q3 (⊘⇘3⇙ x y z)) ∧ x1 ⊗⇘freegroup A⇙ y1 = reln_tuple ⟨A⟩ `` {a3 (⊘⇘3⇙ x y z) @ p3 (⊘⇘3⇙ x y z) @ wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z)}"
       unfolding freegroup_def by (metis (no_types, lifting) append_assoc cancel2_reln freegroup_def monoid.select_convs(1) partial_object.select_convs(1) proj_append_wd red_rep_the redrep_in x1 x1A xyz y1 y1A)
-    ultimately have "x1 ⊗⇘freegroup A⇙ y1 = reln_tuple ⟨A⟩ `` {a3 (⊘⇘3⇙ x y z)  @ q3 (⊘⇘3⇙ x y z)}" sorry
+    moreover have "(a3 (⊘⇘3⇙ x y z) @ p3 (⊘⇘3⇙ x y z) @ wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z)) \<in> \<langle>A\<rangle>"
+    proof-
+      have "x @ y \<in> \<langle>A\<rangle>" using xA yA unfolding freewords_on_def by (simp add: span_append)
+      moreover have "x = a3 (⊘⇘3⇙ x y z) @ p3 (⊘⇘3⇙ x y z) \<and> y = wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z)" using xyz by blast
+      ultimately show ?thesis by (metis append.assoc)
+    qed
+    moreover have "(a3 (⊘⇘3⇙ x y z) @ q3 (⊘⇘3⇙ x y z)) \<in> \<langle>A\<rangle>" 
+    proof-
+      have 1:"x = a3 (⊘⇘3⇙ x y z) @ p3 (⊘⇘3⇙ x y z) \<and> y = wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z)" using xyz by blast
+      then have "a3 (⊘⇘3⇙ x y z) \<in> \<langle>A\<rangle>" unfolding freewords_on_def by (metis freewords_on_def leftappend_span xA)
+      moreover have "q3 (⊘⇘3⇙ x y z) \<in> \<langle>A\<rangle>" unfolding freewords_on_def by (metis freewords_on_def rightappend_span 1 yA)
+      ultimately show ?thesis unfolding freewords_on_def by (simp add: span_append)
+    qed
+    ultimately have "x1 ⊗⇘freegroup A⇙ y1 = reln_tuple ⟨A⟩ `` {a3 (⊘⇘3⇙ x y z)  @ q3 (⊘⇘3⇙ x y z)}"  by (simp add: reln_eq_image)
     then have x1y1:"red_rep A (x1 ⊗⇘freegroup A⇙ y1) = (a3 (⊘⇘3⇙ x y z) @ q3 (⊘⇘3⇙ x y z))" using x1y1in unfolding freegroup_def using red_repI xyz by auto
     have y1z1in:"y1 ⊗⇘freegroup A⇙ z1 ∈ carrier (freegroup A)" by (meson H assms(1) subgroup.m_closed subgroup.mem_carrier)
     moreover have "(wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z) @ wordinverse (q3 (⊘⇘3⇙ x y z)) @ c3 (⊘⇘3⇙ x y z))  ~ (wordinverse (p3 (⊘⇘3⇙ x y z)) @ c3 (⊘⇘3⇙ x y z)) ∧ y1 ⊗⇘freegroup A⇙ z1 = reln_tuple ⟨A⟩ `` {(wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z) @ wordinverse (q3 (⊘⇘3⇙ x y z)) @ c3 (⊘⇘3⇙ x y z))}"
       unfolding freegroup_def 
       by (metis append_assoc cancel2_reln freegroup_def monoid.select_convs(1) partial_object.select_convs(1) proj_append_wd red_rep_the redrep_in xyz y1 y1A z1 z1A)
-    ultimately have "y1 ⊗⇘freegroup A⇙ z1 = reln_tuple ⟨A⟩ `` {(wordinverse (p3 (⊘⇘3⇙ x y z)) @ c3 (⊘⇘3⇙ x y z))}" sorry
+    moreover have "(wordinverse (p3 (⊘⇘3⇙ x y z)) @ q3 (⊘⇘3⇙ x y z) @ wordinverse (q3 (⊘⇘3⇙ x y z)) @ c3 (⊘⇘3⇙ x y z)) \<in> \<langle>A\<rangle> \<and> (wordinverse (p3 (⊘⇘3⇙ x y z)) @ c3 (⊘⇘3⇙ x y z)) \<in> \<langle>A\<rangle>" using xyz xA yA unfolding freewords_on_def by (metis freewords_on_def rightappend_span span_append span_wordinverse zA)
+    ultimately have "y1 ⊗⇘freegroup A⇙ z1 = reln_tuple ⟨A⟩ `` {(wordinverse (p3 (⊘⇘3⇙ x y z)) @ c3 (⊘⇘3⇙ x y z))}" by (simp add: reln_eq_image)
     then have y1z1:"red_rep A (y1 ⊗⇘freegroup A⇙ z1) = (wordinverse (p3 (⊘⇘3⇙ x y z)) @ c3 (⊘⇘3⇙ x y z))" using y1z1in unfolding freegroup_def using red_repI xyz  by auto
     have ineq:"wordinverse (p3 (⊘⇘3⇙ x y z)) ≠ wordinverse (q3 (⊘⇘3⇙ x y z))" by (simp add: neq neq_imp_invneq) 
     then have cases:"(wordinverse (p3 (⊘⇘3⇙ x y z)), wordinverse (q3 (⊘⇘3⇙ x y z))) ∈ lex_word ∨ (wordinverse (q3 (⊘⇘3⇙ x y z)), wordinverse ( p3 (⊘⇘3⇙ x y z))) ∈ lex_word" unfolding lex_word_def using lex_word_def lex_word_total by auto
@@ -3868,15 +3885,47 @@ proof-
       next
         case False
         then have F:"(z1, y1) ∈ lex_L2_word A" using subcases by blast
-        then have "y1 ∉ X (SG (F⇘A⇙) H) A" using lex_cont1[of "z1" "y1" "A" "H"] H assms(1) cont sorry
-        moreover have "inv⇘SG F⇘A⇙ H⇙ y1 ∉ X (SG (F⇘A⇙) H) A" (* using lex_cont1_inv[of "z1" "y1" "A" "H"] H assms(1) cont F*) sorry
+        moreover then have trans:"(y1 ⊗⇘F⇘A⇙⇙ z1, y1) ∈ lex_L2_word A" using cont trans_lex_L2_word transD by fast
+        ultimately have "y1 ∉ X (SG (F⇘A⇙) H) A" using lex_cont1[of "z1" "y1"  "A" "H"] H assms(1) cont by (metis mult_SG)
+        moreover have "inv⇘SG F⇘A⇙ H⇙ y1 ∉ X (SG (F⇘A⇙) H) A"  using lex_cont1_inv[of "z1" "y1" "A" "H"] H assms(1) cont F trans by (metis mult_SG)
         moreover have "X (SG (F⇘A⇙) H) A ⊆ H"  unfolding X_def SG_def by simp
         ultimately have "y1 ∉ (union_inv (X (SG (freegroup A) H) A) A)" using notin_union_inv[of "H" "A" "y1" "X (SG F⇘A⇙ H) A"] assms(1) by simp
         then show ?thesis using y1 by blast
       qed
     next
       case False
-      then show ?thesis sorry
+      then have F:"(wordinverse (q3 (⊘⇘3⇙ x y z)), wordinverse ( p3 (⊘⇘3⇙ x y z))) ∈ lex_word" using cases by simp
+      let ?p = "wordinverse (p3 (⊘⇘3⇙ x y z))"
+      let ?q = "wordinverse (q3 (⊘⇘3⇙ x y z))"
+      let ?a = "a3 (⊘⇘3⇙ x y z)"
+      have "red_rep A x1 = ?a @ wordinverse ?p" using xyz x1  by (metis FreeGroupMain.wordinverse_of_wordinverse)
+      moreover have "red_rep A (x1 ⊗⇘freegroup A⇙ y1) = ?a @ wordinverse ?q" using x1y1 FreeGroupMain.wordinverse_of_wordinverse by metis
+      moreover have "length (wordinverse ?p) = length (wordinverse ?q)" using leq by (metis length_wordinverse)
+      moreover have "?p ≠ ?q" using ineq .
+      moreover have "length (wordinverse ?p) ≤ length ?a" by (metis length_wordinverse pa)
+      moreover have "length (wordinverse ?q) ≤ length ?a" by (metis length_wordinverse qa)
+      moreover have "red_rep A (x1 ⊗⇘freegroup A⇙ y1) ≠ []" using x1y1 FreeGroupMain.wordinverse_symm invxyz xyz by fastforce
+      moreover have "red_rep A x1 ≠ []" using N0_def assms(2) x1 by auto
+      ultimately have cont:"((x1 ⊗⇘freegroup A⇙ y1), x1) ∈ lex_L2_word A" using F x1A x1y1in xyz three_point_seven[of "x1" "A" "(x1 ⊗⇘freegroup A⇙ y1)" "?p" "?a" "?q"] by (metis three_point_seven)
+      have subcases:"(x1, y1) ∈ lex_L2_word A ∨ (y1, x1) ∈ lex_L2_word A" by (simp add: invxyz lex_total x1 x1A xneqy y1 y1A)
+      then show ?thesis
+      proof(cases "(x1, y1) ∈ lex_L2_word A")
+        case True
+        then have trans:"((x1 ⊗⇘freegroup A⇙ y1), y1) ∈ lex_L2_word A" using cont trans_lex_L2_word transD by fast
+        then have "y1 ∉ X (SG (F⇘A⇙) H) A" using lex_cont2[of "x1" "y1" "A" "H"] H assms(1) True by (metis mult_SG)
+        moreover then have "inv⇘SG F⇘A⇙ H⇙ y1 ∉ X (SG (F⇘A⇙) H) A"  using lex_cont2_inv[of "x1" "y1" "A" "H"] H assms(1) trans True by (metis mult_SG)
+        moreover have "X (SG (F⇘A⇙) H) A ⊆ H"  unfolding X_def SG_def by simp
+        ultimately have "y1 ∉ (union_inv (X (SG (freegroup A) H) A) A)" using notin_union_inv[of "H" "A" "y1" "X (SG F⇘A⇙ H) A"] assms(1) by simp
+        then show ?thesis using y1 by blast
+      next
+        case False
+        then have F:"(y1, x1) ∈ lex_L2_word A" using subcases by simp
+        then have "x1 ∉ X (SG (F⇘A⇙) H) A" using lex_cont1[of "y1" "x1" "A" "H"] cont H assms(1) by (metis mult_SG)
+        moreover have "inv⇘SG F⇘A⇙ H⇙ x1 ∉ X (SG (F⇘A⇙) H) A"  using lex_cont1_inv[of "y1" "x1" "A" "H"] H assms(1) F cont by (metis mult_SG)
+        moreover have "X (SG (F⇘A⇙) H) A ⊆ H"  unfolding X_def SG_def by simp
+        ultimately have "x1 ∉ (union_inv (X (SG (freegroup A) H) A) A)" using notin_union_inv[of "H" "A" "x1" "X (SG F⇘A⇙ H) A"] assms(1) by simp
+        then show ?thesis using x1 by blast
+      qed   
     qed
   qed
 qed
@@ -3887,6 +3936,19 @@ definition N_reduced ("N")
 "N_reduced S A = ((\<forall>x \<in> (red_rep A) ` (union_inv S A). N0 x) \<and> 
                   (\<forall>x \<in> (red_rep A) ` (union_inv S A). \<forall>y \<in> (red_rep A) ` (union_inv S A). N1 x y) \<and> 
                   (\<forall>x \<in> (red_rep A) ` (union_inv S A). \<forall>y \<in> (red_rep A) ` (union_inv S A). \<forall>z \<in> (red_rep A) ` (union_inv S A). N2 x y z))"
+
+
+lemma N_reduced_X: assumes "H \<le> freegroup A"
+  shows "N_reduced (X (SG (freegroup A) H) A) A"
+proof-
+  have N0: "((\<forall>x \<in> (red_rep A) ` (union_inv  (X (SG (freegroup A) H) A) A). N0 x))"
+    using assms N0 by blast
+  moreover have N1: "∀x ∈ (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). ∀y ∈ (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). N1 x y"
+    using assms N1 by blast
+  moreover have "∀x ∈ (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). ∀y ∈ (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). ∀z ∈ (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). N2 x y z"
+    using N0 N1 N2 assms by blast
+  ultimately show ?thesis unfolding N_reduced_def by blast
+qed
 
 definition minimal_set
   where
