@@ -617,18 +617,10 @@ qed
 lemma neq_imp_invneq: "p \<noteq> q \<Longrightarrow> wordinverse p \<noteq> wordinverse q"
   by (metis FreeGroupMain.wordinverse_symm)
 
-lemma reln_eq_image: "x \<in> \<langle>A\<rangle> \<Longrightarrow> y \<in> \<langle>A\<rangle> \<Longrightarrow> x ~ y \<Longrightarrow> reln_tuple \<langle>A\<rangle> `` {x} = reln_tuple \<langle>A\<rangle> `` {y}"
-  unfolding reln_tuple_def
-  sorry
-(*
-  assume "x \<in> \<langle>A\<rangle>" and " y \<in> \<langle>A\<rangle>" and "x ~ y"
-  show " {(x, y). x ~ y \<and> x \<in> \<langle>A\<rangle> \<and> y \<in> \<langle>A\<rangle>} `` {x} \<subseteq> {(x, y). x ~ y \<and> x \<in> \<langle>A\<rangle> \<and> y \<in> \<langle>A\<rangle>} `` {y}"
-  proof
-    fix xa assume "xa \<in> {(x, y). x ~ y \<and> x \<in> \<langle>A\<rangle> \<and> y \<in> \<langle>A\<rangle>} `` {x}"
-    then have "x ~ xa \<and> xa \<in> \<langle>A\<rangle>" by blast
-    then 
-*)
-
+lemma reln_eq_image:
+  assumes "x ∈ ⟨S⟩ ∧ y ∈ ⟨S⟩ ∧ x~y"
+  shows "((reln_tuple ⟨S⟩)`` {x}) =( (reln_tuple ⟨S⟩)`` {y})" using assms reln_tuple_def[of "⟨S⟩"] equiv_class_eq reln_equiv by fastforce
+  
 lemma N2:
   assumes "H \<le> freegroup A" 
     and "\<forall>x \<in> (red_rep A) ` (union_inv (X (SG (freegroup A) H) A) A). N0 x"
