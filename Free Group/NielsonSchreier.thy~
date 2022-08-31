@@ -3775,6 +3775,14 @@ lemma neq_imp_invneq: "p ≠ q ⟹ wordinverse p ≠ wordinverse q"
 lemma reln_eq_image: "x ∈ ⟨A⟩ ⟹ y ∈ ⟨A⟩ ⟹ x ~ y ⟹ reln_tuple ⟨A⟩ `` {x} = reln_tuple ⟨A⟩ `` {y}"
   unfolding reln_tuple_def
   sorry
+(*
+  assume "x ∈ ⟨A⟩" and " y ∈ ⟨A⟩" and "x ~ y"
+  show " {(x, y). x ~ y ∧ x ∈ ⟨A⟩ ∧ y ∈ ⟨A⟩} `` {x} ⊆ {(x, y). x ~ y ∧ x ∈ ⟨A⟩ ∧ y ∈ ⟨A⟩} `` {y}"
+  proof
+    fix xa assume "xa ∈ {(x, y). x ~ y ∧ x ∈ ⟨A⟩ ∧ y ∈ ⟨A⟩} `` {x}"
+    then have "x ~ xa ∧ xa ∈ ⟨A⟩" by blast
+    then 
+*)
 
 lemma red_repI: assumes "x1 ∈ ⟨A⟩ // reln_tuple ⟨A⟩"
               "x1 = reln_tuple ⟨A⟩ `` {x}"
@@ -3786,6 +3794,7 @@ proof-
   then have "x ∈ x1 ∧ reduced x ∧ x1 = reln_tuple ⟨A⟩ `` {x}" using assms by auto
   then show ?thesis  using assms(1) red_rep_the[of "x1" "A"] unfolding red_rep_def using redelem_unique by fastforce
 qed
+
 
 definition N_reduced ("N")
   where
